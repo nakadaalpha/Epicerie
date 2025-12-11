@@ -1,0 +1,33 @@
+/vendor
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/debugbar
+.env
+.env.backup
+.env.production
+.phpunit.result.cache
+.turbolinkscache
+
+# Homestead / Valet / Docker
+Homestead.json
+Homestead.yaml
+auth.json
+npm-debug.log
+yarn-error.log
+docker-compose.override.yml
+
+# IDE & Editor Config
+/.idea
+/.vscode
+/.fleet
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Test & Coverage
+/coverage
+.phpunit.result.cache
