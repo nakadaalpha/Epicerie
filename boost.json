@@ -1,6 +1,6 @@
 {
     "agents": [
-        "cursor"
+        "gemini"
     ],
     "editors": [
         "cursor",
