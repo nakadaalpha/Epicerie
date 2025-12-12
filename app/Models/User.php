@@ -12,15 +12,20 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
+    protected $table = 'user';
+
+    protected $primaryKey = 'id_user';
+
     /**
      * The attributes that are mass assignable.
      *
      * @var list<string>
      */
     protected $fillable = [
-        'name',
-        'email',
+        'nama',      // Ganti 'name' jadi 'nama'
+        'username',  // Ganti 'email' jadi 'username'
         'password',
+        'role',      // Tambahkan 'role'
     ];
 
     /**
@@ -41,7 +46,7 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
+            // Hapus 'email_verified_at' karena di tabel kamu gak ada kolom itu
             'password' => 'hashed',
         ];
     }
