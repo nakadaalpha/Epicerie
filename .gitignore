@@ -31,3 +31,4 @@ Thumbs.db
 # Test & Coverage
 /coverage
 .phpunit.result.cache
+node_modules
