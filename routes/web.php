@@ -1,26 +1,66 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Dashboard;
+use App\Http\Controllers\Dashboard; 
+use App\Http\Controllers\InventarisController;
+use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\KioskController; 
 use App\Http\Controllers\KaryawanController;
-use App\Http\Controllers\ProdukController;
+
+// Route::get('/', function () {
+//     return view('welcome');
+// });
+
+// // Gunakan ini agar bisa langsung melihat hasil tanpa login
+// Route::get('/dashboard', [App\Http\Controllers\Dashboard::class, 'index']);
+// // Panggil Controller yang baru kita buat biar dikenal
+
+
+// /*
+// |--------------------------------------------------------------------------
+// | Web Routes (Jalan Raya Aplikasi Épicerie)
+// |--------------------------------------------------------------------------
+// */
 
 Route::get('/', function () {
     return view('welcome');
 });
 Route::get('/admin', [App\Http\Controllers\Dashboard::class, 'index']);
+
 // Gunakan ini agar bisa langsung melihat hasil tanpa login
 Route::get('/dashboard', [App\Http\Controllers\Dashboard::class, 'index']);
+//=======
+// Panggil Controller yang baru kita buat biar dikenal
 
+
+/*
+|--------------------------------------------------------------------------
+| Web Routes (Jalan Raya Aplikasi Épicerie)
+|--------------------------------------------------------------------------
+*/
+
+// // 1. Halaman Utama (Katalog Produk)
+// // Jadi pas buka http://localhost:8000 langsung muncul barang dagangan
+// // Route::get('/', [KioskController::class, 'index'])->name('kiosk.index');
 // 1. Halaman Utama (Katalog Produk)
 Route::get('/', [KioskController::class, 'index'])->name('kiosk.index');
 
+// // 2. Aksi Tambah ke Keranjang
+// // URL-nya nanti kayak: /add-to-cart/5 (Artinya tambah barang ID 5)
+// Route::get('/add-to-cart/{id}', [KioskController::class, 'addToCart'])->name('kiosk.add');
 // 2. Aksi Tambah ke Keranjang
 Route::get('/add-to-cart/{id}', [KioskController::class, 'addToCart'])->name('kiosk.add');
 
-// 3. Halaman Checkout (Lihat Keranjang & Bayar)
+// // 3. Halaman Checkout (Lihat Keranjang & Bayar)
 Route::get('/checkout', [KioskController::class, 'checkout'])->name('kiosk.checkout');
+
+// // 4. Proses Bayar (Aksi tekan tombol "Proses Transaksi")
+// // Pakai POST karena ngirim data form (metode pembayaran)
+Route::post('/pay', [KioskController::class, 'processPayment'])->name('kiosk.pay');
+
+// // 5. Halaman Inventaris (Stok Barang)
+
+Route::get('/inventaris', [InventarisController::class, 'index']);
 
 // 4. Proses Bayar (Aksi tekan tombol "Proses Transaksi")
 Route::post('/pay', [KioskController::class, 'processPayment'])->name('kiosk.pay');
@@ -35,6 +75,8 @@ Route::prefix('karyawan')->name('karyawan.')->group(function () {
     Route::get('/hapus/{id}', [KaryawanController::class, 'destroy'])->name('hapus');   // Aksi Hapus
 });
 
+
+
 // Grouping Route Produk
 Route::prefix('produk')->name('produk.')->group(function () {
     Route::get('/', [ProdukController::class, 'index'])->name('index');
@@ -44,3 +86,4 @@ Route::prefix('produk')->name('produk.')->group(function () {
     Route::post('/update/{id}', [ProdukController::class, 'update'])->name('update');
     Route::get('/hapus/{id}', [ProdukController::class, 'destroy'])->name('hapus');
 });
+
