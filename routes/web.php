@@ -1,32 +1,17 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-<<<<<<< HEAD
-use App\Http\Controllers\KioskController; 
-=======
-//<<<<<<< HEAD
->>>>>>> c805f41a3d1ab147aba1b0d8b973b51148702e1d
 use App\Http\Controllers\Dashboard;
+use App\Http\Controllers\KioskController; 
+use App\Http\Controllers\KaryawanController;
+use App\Http\Controllers\ProdukController;
 
-// Route::get('/', function () {
-//     return view('welcome');
-// });
-
-<<<<<<< HEAD
+Route::get('/', function () {
+    return view('welcome');
+});
 Route::get('/admin', [App\Http\Controllers\Dashboard::class, 'index']);
-=======
 // Gunakan ini agar bisa langsung melihat hasil tanpa login
 Route::get('/dashboard', [App\Http\Controllers\Dashboard::class, 'index']);
-//=======
-// Panggil Controller yang baru kita buat biar dikenal
-use App\Http\Controllers\KioskController; 
-
-/*
-|--------------------------------------------------------------------------
-| Web Routes (Jalan Raya Aplikasi Épicerie)
-|--------------------------------------------------------------------------
-*/
->>>>>>> c805f41a3d1ab147aba1b0d8b973b51148702e1d
 
 // 1. Halaman Utama (Katalog Produk)
 Route::get('/', [KioskController::class, 'index'])->name('kiosk.index');
@@ -39,11 +24,6 @@ Route::get('/checkout', [KioskController::class, 'checkout'])->name('kiosk.check
 
 // 4. Proses Bayar (Aksi tekan tombol "Proses Transaksi")
 Route::post('/pay', [KioskController::class, 'processPayment'])->name('kiosk.pay');
-<<<<<<< HEAD
-=======
-//>>>>>>> 960f8e587b6d1a775c0d8e430c975a71ae83c361
-
-use App\Http\Controllers\KaryawanController;
 
 // Grouping Route Karyawan
 Route::prefix('karyawan')->name('karyawan.')->group(function () {
@@ -55,8 +35,6 @@ Route::prefix('karyawan')->name('karyawan.')->group(function () {
     Route::get('/hapus/{id}', [KaryawanController::class, 'destroy'])->name('hapus');   // Aksi Hapus
 });
 
-use App\Http\Controllers\ProdukController;
-
 // Grouping Route Produk
 Route::prefix('produk')->name('produk.')->group(function () {
     Route::get('/', [ProdukController::class, 'index'])->name('index');
@@ -66,4 +44,3 @@ Route::prefix('produk')->name('produk.')->group(function () {
     Route::post('/update/{id}', [ProdukController::class, 'update'])->name('update');
     Route::get('/hapus/{id}', [ProdukController::class, 'destroy'])->name('hapus');
 });
->>>>>>> c805f41a3d1ab147aba1b0d8b973b51148702e1d
