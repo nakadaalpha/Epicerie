@@ -72,23 +72,52 @@
                     </ul>
                 </div>
 
-                <div class="bg-white rounded-3xl p-8 shadow-2xl">
-                    <h3 class="text-blue-500 font-semibold mb-4 ml-1 flex items-center">
+                <div class="bg-white rounded-3xl p-6 shadow-xl relative overflow-hidden min-h-[300px]">
+
+                    <h3 class="font-bold text-gray-700 mb-4 flex items-center">
                         <i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i> Stok Hampir Habis
                     </h3>
-                    <ul class="space-y-3">
+
+                    <div class="space-y-3">
                         @forelse($stokHampirHabis as $item)
-                        <li class="flex justify-between items-center p-3 bg-red-50 rounded-2xl text-red-700 border border-red-100">
-                            <div class="flex items-center">
-                                <span class="mr-3 font-bold text-xs">•</span>
-                                <span>{{ $item->nama_produk }}</span>
+
+                        <div class="group bg-red-50 rounded-xl p-3 border border-red-100 transition-all duration-300 hover:shadow-md hover:bg-red-100">
+
+                            <div class="flex justify-between items-center">
+
+                                <div class="flex items-center overflow-hidden mr-2">
+                                    <div class="w-2 h-2 bg-red-500 rounded-full mr-3 flex-shrink-0 animate-pulse"></div>
+                                    <span class="font-bold text-gray-700 text-sm truncate">
+                                        {{ $item->nama_produk }}
+                                    </span>
+                                </div>
+
+                                <div class="flex items-center gap-2">
+
+                                    <span class="text-red-600 font-bold text-sm bg-white px-3 py-1.5 rounded-lg shadow-sm border border-red-100 whitespace-nowrap z-10">
+                                        {{ $item->stok }} Unit
+                                    </span>
+
+                                    <a href="{{ route('produk.edit', $item->id_produk) }}"
+                                        class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md 
+                              opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 
+                              transition-all duration-300 ease-out"
+                                        title="Tambah Stok">
+                                        <i class="fa-solid fa-plus text-xs"></i>
+                                    </a>
+
+                                </div>
                             </div>
-                            <span class="text-sm font-bold">{{ $item->stok }} Unit</span>
-                        </li>
+
+                        </div>
+
                         @empty
-                        <li class="text-gray-400 text-sm italic text-center py-2">Stok aman semua.</li>
+                        <div class="flex flex-col items-center justify-center h-40 text-gray-400 opacity-60">
+                            <i class="fa-solid fa-check-circle text-4xl text-green-300 mb-2"></i>
+                            <p class="text-sm">Stok aman terkendali.</p>
+                        </div>
                         @endforelse
-                    </ul>
+                    </div>
                 </div>
             </div>
 

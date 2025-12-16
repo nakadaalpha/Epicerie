@@ -72,18 +72,24 @@
                         </div>
                     </div>
 
-                    <div class="flex space-x-2 ...">
-                        <a href="{{ route('produk.edit', $p->id_produk) }}" class="...">
+                    <div class="flex space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 absolute right-4 bg-white/80 backdrop-blur-sm p-1 rounded-full shadow-sm">
+
+                        <a href="{{ route('produk.edit', $p->id_produk) }}"
+                            class="bg-white text-yellow-500 w-8 h-8 rounded-full flex items-center justify-center shadow hover:bg-yellow-50 transition"
+                            title="Edit">
                             <i class="fa-solid fa-pen text-xs"></i>
                         </a>
 
-                        <form action="{{ route('produk.destroy', $p->id_produk) }}" method="POST" onsubmit="return confirm('Yakin hapus produk ini?');" class="inline">
+                        <form action="{{ route('produk.destroy', $p->id_produk) }}" method="POST" onsubmit="return confirm('Yakin hapus produk ini?');" class="inline-block">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="bg-white text-red-500 w-8 h-8 rounded-full flex items-center justify-center shadow hover:bg-red-50 transition" title="Hapus">
+                            <button type="submit"
+                                class="bg-white text-red-500 w-8 h-8 rounded-full flex items-center justify-center shadow hover:bg-red-50 transition"
+                                title="Hapus">
                                 <i class="fa-solid fa-trash text-xs"></i>
                             </button>
                         </form>
+
                     </div>
                 </div>
                 @empty
