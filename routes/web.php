@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Dashboard;
 use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\KioskController;
+use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\InventarisController;
 use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\KaryawanController;
@@ -59,8 +60,23 @@ Route::get('/checkout', [KioskController::class, 'checkout'])->name('kiosk.check
 // Pakai POST karena ngirim data form (metode pembayaran)
 Route::post('/pay', [KioskController::class, 'processPayment'])->name('kiosk.pay');
 
-// 5. Halaman Inventaris (Stok Barang)
+Route::prefix('kategori')->name('kategori.')->group(function () {
+    Route::get('/', [KategoriController::class, 'index'])->name('index');
+    Route::get('/create', [KategoriController::class, 'create'])->name('create');
+    Route::post('/store', [KategoriController::class, 'store'])->name('store');
+    Route::get('/edit/{id}', [KategoriController::class, 'edit'])->name('edit');
+    Route::post('/update/{id}', [KategoriController::class, 'update'])->name('update');
+    Route::get('/delete/{id}', [KategoriController::class, 'destroy'])->name('destroy');
+});
+
+// Halaman Utama Inventaris
 Route::get('/inventaris', [InventarisController::class, 'index'])->name('inventaris');
+
+// Form Tambah Produk
+Route::get('/inventaris/create', [InventarisController::class, 'create'])->name('inventaris.create');
+
+// Proses Simpan Produk
+Route::post('/inventaris', [InventarisController::class, 'store'])->name('inventaris.store');
 
 //Transaksi
 Route::get('/transaksi', [TransaksiController::class, 'index'])->name('transaksi.index');

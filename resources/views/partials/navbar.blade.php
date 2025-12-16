@@ -11,11 +11,16 @@
                 Dashboard
             </a>
 
+            <a href="{{ route('kategori.index') }}"
+                class="{{ request()->routeIs('kategori*') ? 'border-b-2 border-white pb-1 font-bold' : 'opacity-80 hover:opacity-100 transition' }}">
+                Kategori
+            </a>
+
             <a href="{{ route('inventaris') }}"
                 class="{{ request()->routeIs('inventaris*') || request()->routeIs('produk*') ? 'border-b-2 border-white pb-1 font-bold' : 'opacity-80 hover:opacity-100 transition' }}">
                 Inventaris
             </a>
-            
+
             <a href="{{ route('karyawan.index') }}"
                 class="{{ request()->routeIs('karyawan*') ? 'border-b-2 border-white pb-1 font-bold' : 'opacity-80 hover:opacity-100 transition' }}">
                 Karyawan

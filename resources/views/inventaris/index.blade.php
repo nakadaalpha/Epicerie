@@ -23,7 +23,7 @@
         <div class="mb-6 relative">
             <form action="{{ route('inventaris') }}" method="GET">
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari Nama Produk..."
-                    class="w-full p-3 pl-5 rounded-full shadow-lg outline-none focus:ring-2 focus:ring-blue-300 text-gray-600 transition">
+                    class="w-full p-3 pl-5 rounded-full shadow-lg outline-none focus:ring-2 focus:ring-blue-300 text-gray-600 transition bg-white/90 backdrop-blur-sm">
                 <button type="submit" class="absolute right-5 top-3.5 text-gray-400 hover:text-blue-500 transition">
                     <i class="fa-solid fa-magnifying-glass"></i>
                 </button>
@@ -38,88 +38,69 @@
             </div>
             @endif
 
-            <div class="flex justify-between items-center mb-6 ml-2">
+            <div class="flex justify-between items-center mb-6 ml-1">
                 <h2 class="text-blue-500 font-bold text-xl">Daftar Inventaris</h2>
-                <span class="text-xs text-gray-400 bg-gray-100 px-2 py-1 rounded-md">Total: {{ $produk->count() }}</span>
+                <span class="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">Total: {{ $produk->count() }}</span>
             </div>
 
-            <div class="space-y-5">
-                @foreach($produk as $index => $p)
-                <div class="group relative">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
-                    <div class="flex justify-between items-end px-3 mb-1">
-                        <div class="flex items-center text-gray-700 font-semibold">
-                            <span class="mr-3 text-gray-400 text-sm font-bold">{{ $index + 1 }}.</span>
-                            <span class="text-lg capitalize">{{ $p->nama_produk }}</span>
+                @forelse($produk as $p)
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-2xl hover:bg-blue-50 transition duration-300 border border-transparent hover:border-blue-100 group relative">
+
+                    <div class="flex items-center w-full">
+                        @if($p->gambar)
+                        <img src="{{ asset('storage/' . $p->gambar) }}" class="w-12 h-12 rounded-full object-cover mr-4 border-2 border-white shadow-sm flex-shrink-0">
+                        @else
+                        <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-4 font-bold border-2 border-white shadow-sm text-lg flex-shrink-0">
+                            <i class="fa-solid fa-box-open"></i>
                         </div>
-                        <span class="text-gray-400 text-xs uppercase font-bold tracking-wider bg-gray-100 px-2 py-1 rounded">
-                            {{ $p->kategori->nama_kategori ?? 'UMUM' }}
-                        </span>
-                    </div>
+                        @endif
 
-                    <div class="bg-[#3b4bbd] text-white py-3 px-4 rounded-xl shadow-md relative group-hover:bg-[#2f3c9e] transition-all duration-300 transform group-hover:-translate-y-1">
+                        <div class="flex-1 min-w-0">
+                            <h3 class="font-bold text-gray-800 capitalize text-sm md:text-base truncate">{{ $p->nama_produk }}</h3>
 
-                        <div class="flex justify-between items-center">
-
-                            <span class="text-sm font-medium tracking-wide">
-                                Rp {{ number_format($p->harga_produk, 0, ',', '.') }}
-                            </span>
-
-                            <div class="flex items-center text-sm font-bold mr-6">
-                                @if($p->stok < 10)
-                                    <i class="fa-solid fa-triangle-exclamation text-yellow-300 mr-2 animate-pulse" title="Stok Menipis!"></i>
-                                    @endif
-                                    {{ $p->stok }} Unit
+                            <div class="flex flex-col text-xs text-gray-500 mt-1 space-y-0.5">
+                                <span class="font-semibold text-blue-500">Rp {{ number_format($p->harga_produk, 0, ',', '.') }}</span>
+                                <span class="flex items-center">
+                                    @if($p->stok < 10)
+                                        <i class="fa-solid fa-triangle-exclamation text-yellow-500 mr-1 animate-pulse"></i>
+                                        @endif
+                                        Stok: {{ $p->stok }} | {{ $p->kategori->nama_kategori ?? '-' }}
+                                </span>
                             </div>
-
-                            <i class="fa-solid fa-chevron-right text-xs opacity-50 group-hover:hidden absolute right-4"></i>
-                        </div>
-
-                        <div class="absolute inset-y-0 right-2 flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                            <a href="{{ route('produk.edit', $p->id_produk) }}"
-                                class="bg-white text-yellow-500 w-8 h-8 rounded-lg flex items-center justify-center shadow hover:bg-yellow-100 hover:scale-110 transition"
-                                title="Edit Produk">
-                                <i class="fa-solid fa-pen text-xs"></i>
-                            </a>
-
-                            <a href="{{ route('produk.hapus', $p->id_produk) }}"
-                                onclick="return confirm('Hapus produk {{ $p->nama_produk }}?')"
-                                class="bg-white text-red-500 w-8 h-8 rounded-lg flex items-center justify-center shadow hover:bg-red-100 hover:scale-110 transition"
-                                title="Hapus Produk">
-                                <i class="fa-solid fa-trash text-xs"></i>
-                            </a>
                         </div>
                     </div>
 
-                    @php $persen = min(($p->stok / ($maxStock > 0 ? $maxStock : 1)) * 100, 100); @endphp
-                    <div class="w-full bg-gray-100 rounded-full h-1 mt-1 overflow-hidden opacity-0 group-hover:opacity-100 transition duration-500">
-                        <div class="bg-blue-400 h-1 rounded-full shadow-sm" style="width: {{ $persen }}%"></div>
+                    <div class="flex space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 absolute right-4 bg-white/80 backdrop-blur-sm p-1 rounded-full shadow-sm">
+                        <a href="{{ route('produk.edit', $p->id_produk) }}" class="bg-white text-yellow-500 w-8 h-8 rounded-full flex items-center justify-center shadow hover:bg-yellow-50 transition" title="Edit">
+                            <i class="fa-solid fa-pen text-xs"></i>
+                        </a>
+                        <a href="{{ route('produk.hapus', $p->id_produk) }}" onclick="return confirm('Hapus produk {{ $p->nama_produk }}?')" class="bg-white text-red-500 w-8 h-8 rounded-full flex items-center justify-center shadow hover:bg-red-50 transition" title="Hapus">
+                            <i class="fa-solid fa-trash text-xs"></i>
+                        </a>
                     </div>
                 </div>
-                @endforeach
-
-                @if($produk->isEmpty())
-                <div class="flex flex-col items-center justify-center text-gray-400 py-20">
-                    <div class="bg-gray-100 p-6 rounded-full mb-4">
-                        <i class="fa-solid fa-box-open text-4xl text-gray-300"></i>
-                    </div>
-                    <p class="font-medium">Inventaris kosong.</p>
-                    <p class="text-sm opacity-60">Belum ada produk yang ditambahkan.</p>
-                </div>
-                @endif
+                @empty
+                @endforelse
             </div>
 
-            <div class="absolute bottom-8 right-8 flex flex-col space-y-4 z-10">
-                <button class="bg-gray-200 text-gray-500 w-10 h-10 rounded-full shadow hover:bg-gray-300 flex items-center justify-center transition opacity-0 group-hover:opacity-100 transform translate-y-full group-hover:translate-y-0 duration-300">
-                    <i class="fa-solid fa-pen"></i>
-                </button>
+            @if($produk->isEmpty())
+            <div class="absolute inset-0 flex flex-col items-center justify-center text-gray-400 pointer-events-none">
+                <div class="bg-gray-100 p-6 rounded-full mb-4 animate-bounce">
+                    <i class="fa-solid fa-box-open text-4xl text-gray-300"></i>
+                </div>
+                <h3 class="font-bold text-gray-500 text-lg">Inventaris Kosong.</h3>
+                <p class="text-sm opacity-60">Belum ada produk yang ditambahkan.</p>
+            </div>
+            @endif
 
-                <a href="{{ route('produk.create') }}"
-                    class="bg-[#3b4bbd] text-white w-14 h-14 rounded-full shadow-xl hover:bg-blue-800 flex items-center justify-center transform hover:scale-110 hover:rotate-90 transition duration-300 z-20"
-                    title="Tambah Produk">
+            <div class="absolute bottom-8 right-8 z-10">
+                <a href="{{ route('inventaris.create') }}"
+                    class="bg-[#3b4bbd] text-white w-14 h-14 rounded-full hover:bg-blue-800 flex items-center justify-center transform hover:scale-110 hover:rotate-90 transition duration-300"
+                    title="Tambah Karyawan Baru">
                     <i class="fa-solid fa-plus text-2xl"></i>
                 </a>
-
             </div>
 
         </div>
