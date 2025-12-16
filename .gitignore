@@ -20,7 +20,7 @@ yarn-error.log
 docker-compose.override.yml
 
 # IDE & Editor Config
-/.idea
+/.ideal
 /.vscode
 /.fleet
 *.swp
