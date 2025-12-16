@@ -7,23 +7,7 @@ use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\KioskController;
 use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\InventarisController;
-use App\Http\Controllers\ProdukController;
 use App\Http\Controllers\KaryawanController;
-
-// Route::get('/', function () {
-//     return view('welcome');
-// });
-
-// // Gunakan ini agar bisa langsung melihat hasil tanpa login
-// Route::get('/dashboard', [App\Http\Controllers\Dashboard::class, 'index']);
-// // Panggil Controller yang baru kita buat biar dikenal
-
-
-// /*
-// |--------------------------------------------------------------------------
-// | Web Routes (Jalan Raya Aplikasi Épicerie)
-// |--------------------------------------------------------------------------
-// */
 
 Route::get('/', function () {
     return view('welcome');
@@ -35,14 +19,6 @@ Route::middleware(['guest'])->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'authenticate'])->name('login.proses');
 });
-
-// // 2. Route yang butuh Login (Dashboard)
-// Route::middleware(['auth'])->group(function () {
-//     Route::get('/dashboard', [Dashboard::class, 'index'])->name('dashboard');
-
-//     // Route Logout
-//     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-// });
 
 Route::get('/admin', [App\Http\Controllers\Dashboard::class, 'index'])->name('dashboard');
 
@@ -89,14 +65,4 @@ Route::prefix('karyawan')->name('karyawan.')->group(function () {
     Route::get('/edit/{id}', [KaryawanController::class, 'edit'])->name('edit');  // Form Edit
     Route::post('/update/{id}', [KaryawanController::class, 'update'])->name('update'); // Aksi Update
     Route::get('/hapus/{id}', [KaryawanController::class, 'destroy'])->name('hapus');   // Aksi Hapus
-});
-
-// Grouping Route Produk
-Route::prefix('produk')->name('produk.')->group(function () {
-    Route::get('/', [ProdukController::class, 'index'])->name('index');
-    Route::get('/create', [ProdukController::class, 'create'])->name('create');
-    Route::post('/store', [ProdukController::class, 'store'])->name('store');
-    Route::get('/edit/{id}', [ProdukController::class, 'edit'])->name('edit');
-    Route::post('/update/{id}', [ProdukController::class, 'update'])->name('update');
-    Route::get('/hapus/{id}', [ProdukController::class, 'destroy'])->name('hapus');
 });
