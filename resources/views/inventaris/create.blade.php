@@ -23,7 +23,7 @@
                 <h2 class="text-2xl font-bold text-gray-800">Tambah Produk Baru</h2>
             </div>
 
-            <form action="{{ route('inventaris.store') }}" method="POST" enctype="multipart/form-data">
+            <form action="{{ route('produk.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-8">

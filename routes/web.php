@@ -45,14 +45,24 @@ Route::prefix('kategori')->name('kategori.')->group(function () {
     Route::get('/delete/{id}', [KategoriController::class, 'destroy'])->name('destroy');
 });
 
-// Halaman Utama Inventaris
-Route::get('/inventaris', [InventarisController::class, 'index'])->name('inventaris');
 
-// Form Tambah Produk
-Route::get('/inventaris/create', [InventarisController::class, 'create'])->name('inventaris.create');
+// --- INVENTARIS (MANAJEMEN PRODUK) --- // 
 
-// Proses Simpan Produk
-Route::post('/inventaris', [InventarisController::class, 'store'])->name('inventaris.store');
+// 1. READ (Index)
+Route::get('/inventaris', [InventarisController::class, 'index'])->name('inventaris'); // Nama route ini tetap biar navbar tidak error
+
+// 2. CREATE
+Route::get('/produk/create', [InventarisController::class, 'create'])->name('produk.create');
+Route::post('/produk', [InventarisController::class, 'store'])->name('produk.store');
+
+// 3. EDIT & UPDATE
+Route::get('/produk/{id}/edit', [InventarisController::class, 'edit'])->name('produk.edit');
+Route::put('/produk/{id}', [InventarisController::class, 'update'])->name('produk.update');
+
+// 4. DELETE
+Route::delete('/produk/{id}', [InventarisController::class, 'destroy'])->name('produk.destroy');
+
+// --- TRANSAKSI --- // 
 
 //Transaksi
 Route::get('/transaksi', [TransaksiController::class, 'index'])->name('transaksi.index');
