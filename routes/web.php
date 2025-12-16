@@ -1,16 +1,12 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
-<<<<<<< HEAD
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Dashboard;
+use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\KioskController;
-=======
-use App\Http\Controllers\Dashboard; 
 use App\Http\Controllers\InventarisController;
 use App\Http\Controllers\ProdukController;
-use App\Http\Controllers\KioskController; 
->>>>>>> 79d4cdbe5c1ab7e01aac0564fae0b650fe09984a
 use App\Http\Controllers\KaryawanController;
 
 // Route::get('/', function () {
@@ -39,56 +35,35 @@ Route::middleware(['guest'])->group(function () {
     Route::post('/login', [AuthController::class, 'authenticate'])->name('login.proses');
 });
 
-// 2. Route yang butuh Login (Dashboard)
-Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', [Dashboard::class, 'index'])->name('dashboard');
+// // 2. Route yang butuh Login (Dashboard)
+// Route::middleware(['auth'])->group(function () {
+//     Route::get('/dashboard', [Dashboard::class, 'index'])->name('dashboard');
 
-    // Route Logout
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-});
+//     // Route Logout
+//     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+// });
 
-Route::get('/admin', [App\Http\Controllers\Dashboard::class, 'index']);
-<<<<<<< HEAD
-=======
+Route::get('/admin', [App\Http\Controllers\Dashboard::class, 'index'])->name('dashboard');
 
-// Gunakan ini agar bisa langsung melihat hasil tanpa login
-Route::get('/dashboard', [App\Http\Controllers\Dashboard::class, 'index']);
-//=======
-// Panggil Controller yang baru kita buat biar dikenal
->>>>>>> 79d4cdbe5c1ab7e01aac0564fae0b650fe09984a
-
-
-/*
-|--------------------------------------------------------------------------
-| Web Routes (Jalan Raya Aplikasi Épicerie)
-|--------------------------------------------------------------------------
-*/
-
-// // 1. Halaman Utama (Katalog Produk)
-// // Jadi pas buka http://localhost:8000 langsung muncul barang dagangan
-// // Route::get('/', [KioskController::class, 'index'])->name('kiosk.index');
 // 1. Halaman Utama (Katalog Produk)
 Route::get('/', [KioskController::class, 'index'])->name('kiosk.index');
 
-// // 2. Aksi Tambah ke Keranjang
-// // URL-nya nanti kayak: /add-to-cart/5 (Artinya tambah barang ID 5)
 // Route::get('/add-to-cart/{id}', [KioskController::class, 'addToCart'])->name('kiosk.add');
 // 2. Aksi Tambah ke Keranjang
 Route::get('/add-to-cart/{id}', [KioskController::class, 'addToCart'])->name('kiosk.add');
 
-// // 3. Halaman Checkout (Lihat Keranjang & Bayar)
+// 3. Halaman Checkout (Lihat Keranjang & Bayar)
 Route::get('/checkout', [KioskController::class, 'checkout'])->name('kiosk.checkout');
 
-// // 4. Proses Bayar (Aksi tekan tombol "Proses Transaksi")
-// // Pakai POST karena ngirim data form (metode pembayaran)
-Route::post('/pay', [KioskController::class, 'processPayment'])->name('kiosk.pay');
-
-// // 5. Halaman Inventaris (Stok Barang)
-
-Route::get('/inventaris', [InventarisController::class, 'index']);
-
 // 4. Proses Bayar (Aksi tekan tombol "Proses Transaksi")
+// Pakai POST karena ngirim data form (metode pembayaran)
 Route::post('/pay', [KioskController::class, 'processPayment'])->name('kiosk.pay');
+
+// 5. Halaman Inventaris (Stok Barang)
+Route::get('/inventaris', [InventarisController::class, 'index'])->name('inventaris');
+
+//Transaksi
+Route::get('/transaksi', [TransaksiController::class, 'index'])->name('transaksi.index');
 
 // Grouping Route Karyawan
 Route::prefix('karyawan')->name('karyawan.')->group(function () {
@@ -100,8 +75,6 @@ Route::prefix('karyawan')->name('karyawan.')->group(function () {
     Route::get('/hapus/{id}', [KaryawanController::class, 'destroy'])->name('hapus');   // Aksi Hapus
 });
 
-
-
 // Grouping Route Produk
 Route::prefix('produk')->name('produk.')->group(function () {
     Route::get('/', [ProdukController::class, 'index'])->name('index');
@@ -111,4 +84,3 @@ Route::prefix('produk')->name('produk.')->group(function () {
     Route::post('/update/{id}', [ProdukController::class, 'update'])->name('update');
     Route::get('/hapus/{id}', [ProdukController::class, 'destroy'])->name('hapus');
 });
-

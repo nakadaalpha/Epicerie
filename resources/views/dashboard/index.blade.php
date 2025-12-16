@@ -4,40 +4,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Épicerie</title>
+    <title>Dashboard - ÈPICERIE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 
-<body class="bg-teal-500 font-sans">
+<body class="bg-gradient-to-br from-blue-500 to-teal-400 min-h-screen font-sans">
 
-    <nav class="bg-blue-600 text-white p-4 flex justify-between items-center">
-        <div class="text-xl font-bold tracking-widest">ÈPICERIE</div>
-        <div class="flex space-x-6 text-sm">
-            <a href="#" class="font-bold border-b-2 border-white pb-1">Dashboard</a>
-            <a href="#" class="opacity-80 hover:opacity-100">Inventaris</a>
-            <a href="#" class="opacity-80 hover:opacity-100">Laporan</a>
-            <a href="#" class="opacity-80 hover:opacity-100">Karyawan</a>
-        </div>
-        <div class="w-8 h-8 bg-gray-300 rounded-full"></div>
-    </nav>
+    @include('partials.navbar')
 
-    <div class="container mx-auto p-6">
+    <div class="container mx-auto p-6 max-w-5xl">
 
-        <div class="text-center text-white mb-8">
-            <h1 class="text-2xl">Selamat Datang,</h1>
-            <h2 class="text-3xl font-bold">Mas Acheng</h2>
-            <div class="flex justify-end mt-2">
-                <button class="bg-white text-gray-700 px-4 py-1 rounded-full text-sm flex items-center shadow">
-                    🕒 Riwayat Transaksi
-                </button>
+        <div class="text-white mb-8 flex justify-between items-end">
+            <div>
+                <h1 class="text-xl opacity-90">Selamat Datang,</h1>
+                <h2 class="text-3xl font-bold">Mas Acheng</h2>
             </div>
+            <button class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full text-sm flex items-center shadow backdrop-blur-sm transition">
+                <i class="fa-solid fa-clock-rotate-left mr-2"></i> Riwayat Transaksi
+            </button>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
             <div class="space-y-6">
-                <div class="bg-white rounded-xl p-6 shadow-lg">
+                <div class="bg-white rounded-3xl p-8 shadow-2xl">
                     <div class="flex justify-between items-center mb-4">
                         <div>
                             <h3 class="text-gray-500 text-sm font-semibold">Laporan Penjualan</h3>
@@ -46,52 +38,55 @@
                             </p>
                             <p class="text-xs text-gray-400">Total Periode Ini</p>
                         </div>
-                        <select class="text-xs border rounded p-1">
+                        <select class="text-xs border rounded p-1 bg-gray-50 outline-none">
                             <option>Minggu Ini</option>
                         </select>
                     </div>
                     <canvas id="salesChart" height="150"></canvas>
                 </div>
 
-                <div class="bg-white rounded-xl p-6 shadow-lg flex justify-between items-center">
-                    <h3 class="text-blue-500 font-semibold text-sm">Total Transaksi Hari Ini</h3>
-                    <div class="bg-blue-600 text-white px-4 py-2 rounded-lg font-bold text-xl">
+                <div class="bg-white rounded-3xl p-8 shadow-2xl flex justify-between items-center">
+                    <div>
+                        <h3 class="text-blue-500 font-semibold text-sm">Total Transaksi</h3>
+                        <p class="text-xs text-gray-400">Hari ini</p>
+                    </div>
+                    <div class="bg-[#3b4bbd] text-white px-6 py-3 rounded-full font-bold text-xl shadow-lg">
                         Rp {{ number_format($omzetHariIni, 0, ',', '.') }}
                     </div>
                 </div>
             </div>
 
             <div class="space-y-6">
-                <div class="bg-white rounded-xl p-6 shadow-lg">
-                    <h3 class="text-blue-500 font-semibold mb-4">Produk Terlaris</h3>
-                    <ul class="space-y-2">
+                <div class="bg-white rounded-3xl p-8 shadow-2xl">
+                    <h3 class="text-blue-500 font-semibold mb-4 ml-1">Produk Terlaris</h3>
+                    <ul class="space-y-3">
                         @foreach($produkTerlaris as $index => $item)
-                        <li class="flex justify-between items-center p-2 rounded {{ $index == 0 ? 'bg-green-500 text-white' : 'bg-gray-100 text-gray-700' }}">
+                        <li class="flex justify-between items-center p-3 rounded-2xl {{ $index == 0 ? 'bg-[#3b4bbd] text-white shadow-md' : 'bg-gray-50 text-gray-700' }}">
                             <div class="flex items-center">
-                                <span class="mr-3 font-bold">{{ $index + 1 }}.</span>
-                                <span>{{ $item->produk->nama_produk ?? 'Produk Dihapus' }}</span>
+                                <span class="mr-3 font-bold w-6 text-center">{{ $index + 1 }}.</span>
+                                <span class="font-medium">{{ $item->produk->nama_produk ?? 'Produk Dihapus' }}</span>
                             </div>
-                            <span class="text-sm font-semibold">{{ $item->total_terjual }} Unit</span>
+                            <span class="text-sm font-bold bg-white/20 px-3 py-1 rounded-full">{{ $item->total_terjual }} Unit</span>
                         </li>
                         @endforeach
                     </ul>
                 </div>
 
-                <div class="bg-white rounded-xl p-6 shadow-lg">
-                    <h3 class="text-blue-500 font-semibold mb-4 flex items-center">
-                        <span class="mr-2 text-red-500">⚠️</span> Stok Hampir Habis
+                <div class="bg-white rounded-3xl p-8 shadow-2xl">
+                    <h3 class="text-blue-500 font-semibold mb-4 ml-1 flex items-center">
+                        <i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i> Stok Hampir Habis
                     </h3>
-                    <ul class="space-y-2">
+                    <ul class="space-y-3">
                         @forelse($stokHampirHabis as $item)
-                        <li class="flex justify-between items-center p-3 bg-gray-100 rounded text-gray-700">
+                        <li class="flex justify-between items-center p-3 bg-red-50 rounded-2xl text-red-700 border border-red-100">
                             <div class="flex items-center">
-                                <span class="mr-3 font-bold">1.</span>
+                                <span class="mr-3 font-bold text-xs">•</span>
                                 <span>{{ $item->nama_produk }}</span>
                             </div>
-                            <span class="text-sm font-bold text-red-600">{{ $item->stok }} Unit</span>
+                            <span class="text-sm font-bold">{{ $item->stok }} Unit</span>
                         </li>
                         @empty
-                        <li class="text-gray-400 text-sm italic">Stok aman semua.</li>
+                        <li class="text-gray-400 text-sm italic text-center py-2">Stok aman semua.</li>
                         @endforelse
                     </ul>
                 </div>
@@ -102,8 +97,6 @@
 
     <script>
         const ctx = document.getElementById('salesChart').getContext('2d');
-
-        // Data dari Controller Laravel
         const labels = @json($chartData->pluck('bulan'));
         const dataValues = @json($chartData->pluck('total'));
 
@@ -114,10 +107,14 @@
                 datasets: [{
                     label: 'Penjualan',
                     data: dataValues,
-                    borderColor: '#6366f1', // Warna ungu/biru
-                    backgroundColor: 'rgba(99, 102, 241, 0.2)',
-                    tension: 0.4, // Membuat garis melengkung (smooth)
-                    pointRadius: 4
+                    borderColor: '#3b4bbd', // Sesuaikan warna dengan tema Karyawan
+                    backgroundColor: 'rgba(59, 75, 189, 0.1)',
+                    tension: 0.4,
+                    pointRadius: 4,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#3b4bbd',
+                    pointBorderWidth: 2,
+                    fill: true
                 }]
             },
             options: {
@@ -131,12 +128,23 @@
                     y: {
                         beginAtZero: true,
                         grid: {
-                            color: '#f3f4f6'
+                            color: '#f3f4f6',
+                            drawBorder: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 10
+                            }
                         }
                     },
                     x: {
                         grid: {
                             display: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 10
+                            }
                         }
                     }
                 }

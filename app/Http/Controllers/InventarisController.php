@@ -14,9 +14,9 @@ class InventarisController extends Controller
 
         // 2. Cari stok tertinggi untuk acuan lebar grafik (bar)
         // Jika data kosong, set 0 agar tidak error pembagian
-        $maxStock = $produk->max('stok'); 
+        $maxStock = $produk->max('stok');
         $maxStock = $maxStock == 0 ? 1 : $maxStock;
 
-        return view('inventaris', compact('produk', 'maxStock'));
+        return view('inventaris.index', compact('produk', 'maxStock'));
     }
 }
