@@ -1,17 +1,32 @@
 <?php
 
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\Dashboard;
-use App\Http\Controllers\KioskController; 
+use App\Http\Controllers\KioskController;
 use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\ProdukController;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+// 1. Route untuk Halaman Login (Guest Only)
+Route::middleware(['guest'])->group(function () {
+    // Nama route 'login' ini WAJIB ada agar middleware auth tidak error
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'authenticate'])->name('login.proses');
+});
+
+// 2. Route yang butuh Login (Dashboard)
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', [Dashboard::class, 'index'])->name('dashboard');
+
+    // Route Logout
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+});
+
 Route::get('/admin', [App\Http\Controllers\Dashboard::class, 'index']);
-// Gunakan ini agar bisa langsung melihat hasil tanpa login
-Route::get('/dashboard', [App\Http\Controllers\Dashboard::class, 'index']);
 
 // 1. Halaman Utama (Katalog Produk)
 Route::get('/', [KioskController::class, 'index'])->name('kiosk.index');
