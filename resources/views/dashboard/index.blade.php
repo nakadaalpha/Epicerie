@@ -81,9 +81,10 @@
                     <div class="space-y-3">
                         @forelse($stokHampirHabis as $item)
 
-                        <div class="group bg-red-50 rounded-xl p-3 border border-red-100 transition-all duration-300 hover:shadow-md hover:bg-red-100">
+                        <a href="{{ route('produk.edit', $item->id_produk) }}"
+                            class="group block relative bg-red-50 rounded-xl p-3 border border-red-100 transition-all duration-300 hover:shadow-md hover:bg-red-100 cursor-pointer overflow-hidden">
 
-                            <div class="flex justify-between items-center">
+                            <div class="flex justify-between items-center transition-all duration-300 group-hover:opacity-20 group-hover:blur-[1px]">
 
                                 <div class="flex items-center overflow-hidden mr-2">
                                     <div class="w-2 h-2 bg-red-500 rounded-full mr-3 flex-shrink-0 animate-pulse"></div>
@@ -93,23 +94,19 @@
                                 </div>
 
                                 <div class="flex items-center gap-2">
-
-                                    <span class="text-red-600 font-bold text-sm bg-white px-3 py-1.5 rounded-lg shadow-sm border border-red-100 whitespace-nowrap z-10">
+                                    <span class="text-red-600 font-bold text-sm bg-white px-3 py-1.5 rounded-lg shadow-sm border border-red-100 whitespace-nowrap">
                                         {{ $item->stok }} Unit
                                     </span>
-
-                                    <a href="{{ route('produk.edit', $item->id_produk) }}"
-                                        class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center shadow-md 
-                              opacity-0 -translate-x-4 group-hover:opacity-100 group-hover:translate-x-0 
-                              transition-all duration-300 ease-out"
-                                        title="Tambah Stok">
-                                        <i class="fa-solid fa-plus text-xs"></i>
-                                    </a>
-
                                 </div>
                             </div>
 
-                        </div>
+                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-10">
+                                <div class="bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-2 transform scale-90 group-hover:scale-100 transition-transform">
+                                    <i class="fa-solid fa-plus"></i> Tambah Stok
+                                </div>
+                            </div>
+
+                        </a>
 
                         @empty
                         <div class="flex flex-col items-center justify-center h-40 text-gray-400 opacity-60">

@@ -2,62 +2,53 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Casts\Attribute; // Tambahkan ini untuk sanitasi data
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class User extends Authenticatable
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
+    // 1. Konfigurasi Tabel (Sesuai Database Anda)
     protected $table = 'user';
     protected $primaryKey = 'id_user';
 
     /**
-     * The attributes that are mass assignable.
-     * * CATATAN KEAMANAN:
-     * Saya MENGHAPUS 'role' dari sini.
-     * Tujuannya agar user tidak bisa memanipulasi role mereka sendiri
-     * melalui input form (Mass Assignment Attack).
-     * Role harus di-set secara manual di Controller.
+     * 2. Mass Assignment (PENTING!)
+     * 'role' HARUS ada di sini agar kita bisa set 'karyawan' saat register.
+     * Keamanan dijaga di Controller (jangan gunakan $request->all()).
      */
     protected $fillable = [
         'nama',
         'username',
         'password',
-        // 'role', <--- Dihapus demi keamanan
+        'role', // <-- Wajib di-uncomment agar fitur register berfungsi
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     * Menyembunyikan data sensitif saat model di-convert jadi JSON/Array.
+     * 3. Hidden Attributes
      */
     protected $hidden = [
         'password',
         'remember_token',
-        'role', // Opsi tambahan: Sembunyikan role jika tidak ingin diekspos di API publik
     ];
 
     /**
-     * The attributes that should be cast.
+     * 4. Casting
+     * 'password' => 'hashed' akan otomatis mengenkripsi password saat save/update.
      */
     protected function casts(): array
     {
         return [
-            'password' => 'hashed', // Otomatis hash password saat disimpan
-            // Jika Anda menggunakan PHP Enum untuk role, bisa ditambahkan di sini:
-            // 'role' => \App\Enums\UserRole::class, 
+            'password' => 'hashed',
         ];
     }
 
     /**
-     * KEAMANAN & KONSISTENSI DATA:
-     * Memastikan username selalu lowercase (huruf kecil) dan tanpa spasi
-     * sebelum masuk ke database.
-     * Contoh: Input " Admin " -> Tersimpan "admin"
+     * 5. Mutator: Username
+     * Otomatis huruf kecil & tanpa spasi saat disimpan.
      */
     protected function username(): Attribute
     {
@@ -67,9 +58,8 @@ class User extends Authenticatable
     }
 
     /**
-     * KEAMANAN & KONSISTENSI DATA:
-     * Memastikan Nama selalu Title Case (Huruf Depan Besar).
-     * Contoh: "mas acheng" -> "Mas Acheng"
+     * 6. Mutator: Nama
+     * Otomatis Huruf Kapital di awal kata (Title Case).
      */
     protected function nama(): Attribute
     {
@@ -79,11 +69,15 @@ class User extends Authenticatable
     }
 
     /**
-     * Memberi tahu Laravel kolom mana yang dipakai untuk Login.
-     * Defaultnya adalah 'email', kita ubah jadi 'username'.
+     * 7. Custom Auth Login
+     * Memberi tahu Laravel kita login pakai kolom 'username', bukan 'email'.
      */
-    public function getAuthIdentifierName()
-    {
-        return 'username';
-    }
+    // public function getAuthIdentifierName()
+    // {
+    //     return 'username';
+    // }
+    
+    // Opsional: Jika Anda menggunakan timestamp tapi nama kolomnya beda
+    // const CREATED_AT = 'created_at';
+    // const UPDATED_AT = 'updated_at';
 }

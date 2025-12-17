@@ -13,12 +13,21 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-// 1. Route untuk Halaman Login (Guest Only)
+// Group Middleware Guest (Hanya bisa diakses jika belum login)
 Route::middleware(['guest'])->group(function () {
-    // Nama route 'login' ini WAJIB ada agar middleware auth tidak error
+
+    // --- LOGIN ---
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'authenticate'])->name('login.proses');
+    // Perbaikan: Menggunakan nama 'login.authenticate' agar cocok dengan view
+    Route::post('/login', [AuthController::class, 'authenticate'])->name('login.authenticate');
+
+    // --- REGISTER (BARU) ---
+    Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+    Route::post('/register', [AuthController::class, 'register'])->name('register.proses');
 });
+
+// Route Logout
+Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
 Route::get('/admin', [App\Http\Controllers\Dashboard::class, 'index'])->name('dashboard');
 

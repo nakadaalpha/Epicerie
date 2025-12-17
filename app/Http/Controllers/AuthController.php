@@ -4,53 +4,50 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use App\Models\LogAktivitas; // Import Model Log
+use Illuminate\Support\Facades\Hash;
+use App\Models\User;
+use App\Models\LogAktivitas; // Pastikan model ini ada
 use Carbon\Carbon;
 
 class AuthController extends Controller
 {
-    // Menampilkan halaman login (LoginView)
+    // --- FITUR LOGIN ---
+
+    // 1. Menampilkan Halaman Login (Perbaikan Error "Undefined method")
     public function showLoginForm()
     {
         return view('auth.login');
     }
 
-    // Logic: authenticate(username, password)
+    // 2. Proses Login
     public function authenticate(Request $request)
     {
-        // 1. Validasi Input
         $credentials = $request->validate([
             'username' => ['required'],
             'password' => ['required'],
         ]);
 
-        // 2. Cek Autentikasi ke Database (UserModel->findByUsername & validasiPassword)
         if (Auth::attempt($credentials)) {
-
-            // 3. SessionManager: createSession (Regenerate ID untuk keamanan)
             $request->session()->regenerate();
 
-            // 4. LogAktivitasModel: record()
+            // Log Aktivitas Login
             LogAktivitas::create([
-                'id_user' => Auth::id(), // Ambil ID user yang sedang login
+                'id_user' => Auth::id(),
                 'waktu_aktivitas' => Carbon::now(),
                 'jenis_aktivitas' => 'Login'
             ]);
 
-            // Redirect ke Dashboard
-            return redirect()->intended('dashboard');
+            return redirect()->intended('login');
         }
 
-        // Jika Gagal
         return back()->withErrors([
             'username' => 'Username atau password salah.',
         ]);
     }
 
-    // Logic: logoutUser(id_user)
+    // 3. Proses Logout
     public function logout(Request $request)
     {
-        // Catat Log Logout sebelum menghapus sesi
         if (Auth::check()) {
             LogAktivitas::create([
                 'id_user' => Auth::id(),
@@ -59,12 +56,49 @@ class AuthController extends Controller
             ]);
         }
 
-        // 1. SessionManager: destroySession
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        // Redirect kembali ke halaman login
         return redirect('/login');
+    }
+
+    // --- FITUR REGISTRASI BARU ---
+
+    // 4. Menampilkan Halaman Register
+    public function showRegisterForm()
+    {
+        return view('auth.register');
+    }
+
+    // 5. Proses Simpan User Baru
+    // ... method register ...
+    public function register(Request $request)
+    {
+        // Validasi Input
+        $request->validate([
+            'nama_lengkap' => 'required|string|max:255',
+            // Perbaikan: Gunakan 'unique:user' (nama tabel singular)
+            'username'     => 'required|string|max:255|unique:user',
+            'password'     => 'required|string|min:6|confirmed',
+        ]);
+
+        // Buat User
+        $user = User::create([
+            // Perbaikan: Mapping ke kolom database 'nama'
+            'nama'     => $request->nama_lengkap,
+            'username' => $request->username,
+            'password' => Hash::make($request->password), // Enkripsi password
+            'role'     => 'karyawan',
+        ]);
+
+        // Log Register
+        LogAktivitas::create([
+            'id_user' => $user->id_user, // Perbaikan: Ambil ID dari 'id_user'
+            'waktu_aktivitas' => Carbon::now(),
+            'jenis_aktivitas' => 'Registrasi Akun Baru'
+        ]);
+
+        return redirect()->route('login')->with('success', 'Registrasi berhasil! Silakan login.');
     }
 }
