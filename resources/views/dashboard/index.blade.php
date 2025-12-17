@@ -19,7 +19,7 @@
         <div class="text-white mb-8 flex justify-between items-end">
             <div>
                 <h1 class="text-xl opacity-90">Selamat Datang,</h1>
-                <h2 class="text-3xl font-bold">Mas Acheng</h2>
+                <h2 class="text-3xl font-bold">{{ Auth::user()->nama }}</h2>
             </div>
             <button class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full text-sm flex items-center shadow backdrop-blur-sm transition">
                 <i class="fa-solid fa-clock-rotate-left mr-2"></i> Riwayat Transaksi
