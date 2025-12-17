@@ -18,6 +18,17 @@
 
     <div class="max-w-md mx-auto p-4 pb-32">
         
+        @if(session('success'))
+        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 text-sm">
+            {{ session('success') }}
+        </div>
+        @endif
+        @if(session('error'))
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4 text-sm">
+            {{ session('error') }}
+        </div>
+        @endif
+
         <div class="bg-white rounded-2xl p-4 shadow-sm mb-6">
             <h3 class="text-sm font-bold text-gray-500 mb-3">ITEM DIBELI</h3>
             @foreach($keranjang as $item)
@@ -29,7 +40,22 @@
                         <p class="text-blue-600 text-sm font-medium">Rp{{ number_format($item->produk->harga_produk, 0, ',', '.') }}</p>
                     </div>
                 </div>
-                <div class="font-bold text-gray-600">x{{ $item->jumlah }}</div>
+                
+                <div class="flex items-center gap-2 bg-gray-50 rounded-lg p-1">
+                    <a href="{{ route('kiosk.decrease', $item->id_produk) }}" class="w-7 h-7 bg-white text-gray-600 rounded shadow-sm flex items-center justify-center hover:bg-gray-100 active:scale-95 transition">
+                        <i class="fa-solid fa-minus text-xs"></i>
+                    </a>
+
+                    <span class="font-bold text-gray-700 w-6 text-center text-sm">{{ $item->jumlah }}</span>
+
+                    <a href="{{ route('kiosk.increase', $item->id_produk) }}" class="w-7 h-7 bg-blue-600 text-white rounded shadow-sm flex items-center justify-center hover:bg-blue-700 active:scale-95 transition">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                    </a>
+
+                    <a href="{{ route('kiosk.remove', $item->id_produk) }}" class="w-7 h-7 bg-red-100 text-red-500 rounded shadow-sm flex items-center justify-center hover:bg-red-200 active:scale-95 transition ml-1" onclick="return confirm('Yakin hapus produk ini?')">
+                        <i class="fa-solid fa-trash text-xs"></i>
+                    </a>
+                </div>
             </div>
             @endforeach
         </div>
@@ -69,6 +95,17 @@
             </div>
         </form>
     </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function(event) { 
+            var scrollpos = sessionStorage.getItem('scrollpos_checkout');
+            if (scrollpos) window.scrollTo(0, scrollpos);
+        });
+
+        window.onbeforeunload = function(e) {
+            sessionStorage.setItem('scrollpos_checkout', window.scrollY);
+        };
+    </script>
 
 </body>
 </html>
