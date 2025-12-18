@@ -131,10 +131,10 @@
                 $qty = $keranjangItems[$p->id_produk] ?? 0; 
             @endphp
 
-            <div class="{{ $qty > 0 ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-100' }} flex flex-col justify-between transition-all hover:shadow-md">
-
-            <!-- Bungkus bagian visual dan teks dengan link -->
-            <a href="{{ route('produk.show', $p->id_produk) }}" class="bg-white p-3 rounded-2xl shadow-sm block hover:shadow-lg transition">
+            <div class="bg-white p-3 rounded-2xl shadow-sm border {{ $qty > 0 ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-100' }} flex flex-col justify-between transition-all hover:shadow-md">
+            
+            <!-- Bagian visual dan teks produk -->
+            <a href="{{ route('produk.show', $p->id_produk) }}" class="block">
                 <div class="aspect-square bg-blue-50 rounded-xl mb-3 flex items-center justify-center overflow-hidden relative group">
                 <span class="text-4xl group-hover:scale-110 transition duration-300">📦</span>
                 @if($qty > 0)
@@ -149,36 +149,24 @@
                 </button>
                 </div>
 
-                <div>
                 <h3 class="font-bold text-gray-800 text-sm leading-tight mb-1 truncate">{{ $p->nama_produk }}</h3>
                 <p class="text-xs text-gray-500 mb-2 truncate">{{ $p->deskripsi_produk }}</p>
                 <span class="text-blue-600 font-bold text-sm mb-1 block">Rp{{ number_format($p->harga_produk, 0, ',', '.') }}</span>
-                </div>
             </a>
 
-            <!-- Tombol plus/minus tetap di luar link -->
-            <div class="mt-2">
+            <!-- Tombol plus biru di kanan bawah -->
+            <div class="flex justify-end mt-2">
                 @if($p->stok > 0)
-                @if($qty > 0)
-                    <div class="flex items-center bg-gray-100 rounded-full p-1 gap-2 shadow-inner">
-                    <a href="{{ route('kiosk.decrease', $p->id_produk) }}" class="w-6 h-6 bg-white text-gray-600 rounded-full flex items-center justify-center shadow-sm active:scale-90 transition hover:bg-red-100 hover:text-red-600">
-                        <i class="fa-solid fa-minus text-[10px]"></i>
-                    </a>
-                    <span class="text-xs font-bold text-gray-700 w-3 text-center">{{ $qty }}</span>
-                    <a href="{{ route('kiosk.add', $p->id_produk) }}" class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-sm active:scale-90 transition hover:bg-blue-700">
-                        <i class="fa-solid fa-plus text-[10px]"></i>
-                    </a>
-                    </div>
-                @else
-                    <a href="{{ route('kiosk.add', $p->id_produk) }}" class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full shadow-md active:scale-90 transition hover:bg-blue-700">
+                <a href="{{ route('kiosk.add', $p->id_produk) }}"
+                    class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full shadow-md active:scale-90 transition hover:bg-blue-700">
                     <i class="fa-solid fa-plus"></i>
-                    </a>
-                @endif
+                </a>
                 @else
                 <span class="text-xs text-red-500 font-bold mb-1">Habis</span>
                 @endif
             </div>
             </div>
+
             @empty
             <div class="col-span-full text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
                 <i class="fa-solid fa-box-open text-4xl text-gray-300 mb-3"></i>

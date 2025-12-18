@@ -11,6 +11,14 @@
 <body class="bg-gray-50">
 
   <div class="max-w-3xl mx-auto px-4 py-8">
+    <!-- Tombol kembali di atas -->
+    <div class="mb-4">
+      <a href="{{ route('kiosk.index') }}"
+         class="text-blue-600 hover:underline text-sm font-medium flex items-center gap-1">
+        <i class="fa-solid fa-arrow-left"></i> Kembali ke daftar produk
+      </a>
+    </div>
+
     <!-- Breadcrumb -->
     <p class="text-sm text-gray-500 mb-4">Home > {{ $produk->nama_produk }}</p>
 
@@ -34,10 +42,6 @@
          class="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-lg shadow transition">
         + Keranjang
       </a>
-      <a href="{{ route('kiosk.index') }}"
-         class="text-blue-600 hover:underline text-sm font-medium">
-        ← Kembali ke daftar produk
-      </a>
     </div>
 
     <!-- Deskripsi -->
@@ -49,7 +53,7 @@
     <div class="mt-10">
       <h2 class="text-lg font-bold text-gray-800 mb-4">Rekomendasi Produk</h2>
 
-      <div x-data="{ scroll: 0 }" class="relative">
+      <div x-data class="relative">
         <!-- Tombol scroll kiri -->
         <button @click="$refs.slider.scrollLeft -= 300"
                 class="absolute left-0 top-1/2 transform -translate-y-1/2 z-10 bg-white shadow px-2 py-2 rounded-full hover:bg-blue-100">
