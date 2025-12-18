@@ -139,6 +139,7 @@
             $qty = $keranjangItems[$p->id_produk] ?? 0;
             @endphp
 
+<<<<<<< HEAD
             <div class="bg-white p-3 rounded-2xl shadow-sm border {{ $qty > 0 ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-100' }} flex flex-col justify-between transition-all hover:shadow-md">
                 <div class="aspect-square rounded-xl mb-3 flex items-center justify-center overflow-hidden relative group">
                     <div class="text-4xl m-5 group-hover:scale-110 transition duration-300">
@@ -181,8 +182,55 @@
                         @else
                         <span class="text-xs text-red-500 font-bold mb-1">Habis</span>
                         @endif
+=======
+            <div class="{{ $qty > 0 ? 'border-blue-500 ring-1 ring-blue-500' : 'border-gray-100' }} flex flex-col justify-between transition-all hover:shadow-md">
+
+            <!-- Bungkus bagian visual dan teks dengan link -->
+            <a href="{{ route('produk.show', $p->id_produk) }}" class="bg-white p-3 rounded-2xl shadow-sm block hover:shadow-lg transition">
+                <div class="aspect-square bg-blue-50 rounded-xl mb-3 flex items-center justify-center overflow-hidden relative group">
+                <span class="text-4xl group-hover:scale-110 transition duration-300">📦</span>
+                @if($qty > 0)
+                    <div class="absolute top-2 right-2 bg-blue-600 text-white text-[10px] font-bold px-2 py-1 rounded-full shadow z-10">
+                    {{ $qty }}x
+>>>>>>> 2def2f0b1d872010fadd827cd237023ba6ebb6e1
                     </div>
+                @endif
+                <button onclick="openQtyModal({{ $p->id_produk }}, '{{ $p->nama_produk }}', {{ $qty }})"
+                        class="absolute top-2 left-2 bg-white/90 text-gray-700 w-8 h-8 rounded-full flex items-center justify-center shadow-md hover:bg-orange-500 hover:text-white transition z-20"
+                        title="Input Jumlah Manual">
+                    <i class="fa-solid fa-calculator text-xs"></i>
+                </button>
                 </div>
+
+                <div>
+                <h3 class="font-bold text-gray-800 text-sm leading-tight mb-1 truncate">{{ $p->nama_produk }}</h3>
+                <p class="text-xs text-gray-500 mb-2 truncate">{{ $p->deskripsi_produk }}</p>
+                <span class="text-blue-600 font-bold text-sm mb-1 block">Rp{{ number_format($p->harga_produk, 0, ',', '.') }}</span>
+                </div>
+            </a>
+
+            <!-- Tombol plus/minus tetap di luar link -->
+            <div class="mt-2">
+                @if($p->stok > 0)
+                @if($qty > 0)
+                    <div class="flex items-center bg-gray-100 rounded-full p-1 gap-2 shadow-inner">
+                    <a href="{{ route('kiosk.decrease', $p->id_produk) }}" class="w-6 h-6 bg-white text-gray-600 rounded-full flex items-center justify-center shadow-sm active:scale-90 transition hover:bg-red-100 hover:text-red-600">
+                        <i class="fa-solid fa-minus text-[10px]"></i>
+                    </a>
+                    <span class="text-xs font-bold text-gray-700 w-3 text-center">{{ $qty }}</span>
+                    <a href="{{ route('kiosk.add', $p->id_produk) }}" class="w-6 h-6 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-sm active:scale-90 transition hover:bg-blue-700">
+                        <i class="fa-solid fa-plus text-[10px]"></i>
+                    </a>
+                    </div>
+                @else
+                    <a href="{{ route('kiosk.add', $p->id_produk) }}" class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full shadow-md active:scale-90 transition hover:bg-blue-700">
+                    <i class="fa-solid fa-plus"></i>
+                    </a>
+                @endif
+                @else
+                <span class="text-xs text-red-500 font-bold mb-1">Habis</span>
+                @endif
+            </div>
             </div>
             @empty
             <div class="col-span-full text-center py-20 bg-white rounded-xl border border-dashed border-gray-300">
