@@ -27,7 +27,7 @@ Route::get('/', [KioskController::class, 'index'])->name('kiosk.index');
 // Fitur Cart & Checkout
 Route::get('/add-to-cart/{id}', [KioskController::class, 'addToCart'])->name('kiosk.add');
 Route::get('/checkout', [KioskController::class, 'checkout'])->name('kiosk.checkout');
-Route::post('/pay', [KioskController::class, 'processPayment'])->name('kiosk.pay');
+Route::post('/pay', [KiwoskController::class, 'processPayment'])->name('kiosk.pay');
 
 // Fitur Manajemen Item di Cart
 Route::get('/kiosk/decrease/{id}', [KioskController::class, 'decreaseItem'])->name('kiosk.decrease');
