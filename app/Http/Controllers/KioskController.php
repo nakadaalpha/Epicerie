@@ -23,7 +23,7 @@ class KioskController extends Controller
                 'nama' => 'Paket Anak Kos',
                 'ikon' => '🎓',
                 'warna' => 'bg-gradient-to-r from-orange-400 to-red-500',
-                'harga_display' => 'Hemat banget!', 
+                'harga_display' => 'Hemat banget!',
                 'items' => [
                     ['keyword' => 'Indomie', 'qty' => 5],
                     ['keyword' => 'Telur', 'qty' => 2],
@@ -64,7 +64,7 @@ class KioskController extends Controller
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where('nama_produk', 'LIKE', '%' . $search . '%')
-                  ->orWhere('deskripsi_produk', 'LIKE', '%' . $search . '%');
+                ->orWhere('deskripsi_produk', 'LIKE', '%' . $search . '%');
         }
 
         if ($request->has('kategori') && $request->kategori != 'semua') {
@@ -72,11 +72,11 @@ class KioskController extends Controller
         }
 
         $produk = $query->get();
-        $kategoriList = Kategori::all(); 
+        $kategoriList = Kategori::all();
 
         $keranjangItems = Keranjang::where('id_user', $this->tabletUserId)
-                                   ->pluck('jumlah', 'id_produk')
-                                   ->toArray();
+            ->pluck('jumlah', 'id_produk')
+            ->toArray();
         $totalItemKeranjang = array_sum($keranjangItems);
 
         // Ambil Daftar Paket buat ditampilin
@@ -85,18 +85,28 @@ class KioskController extends Controller
         return view('kiosk.index', compact('produk', 'totalItemKeranjang', 'keranjangItems', 'kategoriList', 'daftarPaket'));
     }
 
+    // Tambahkan method ini di dalam class KioskController
+    public function show($id)
+    {
+        // Cari produk berdasarkan ID
+        $produk = \App\Models\Produk::findOrFail($id);
+
+        // Tampilkan view detail
+        return view('kiosk.show', compact('produk'));
+    }
+
     // === 2. LOGIKA TAMBAH KE KERANJANG ===
     public function addToCart($id)
     {
         $produk = Produk::find($id);
-        
-        if($produk->stok < 1) {
-            return back()->with('error', 'Stok Habis!'); 
+
+        if ($produk->stok < 1) {
+            return back()->with('error', 'Stok Habis!');
         }
 
         $cekKeranjang = Keranjang::where('id_user', $this->tabletUserId)
-                                 ->where('id_produk', $id)
-                                 ->first();
+            ->where('id_produk', $id)
+            ->first();
 
         $rekomendasi = collect();
 
@@ -112,11 +122,11 @@ class KioskController extends Controller
 
             // LOGIKA REKOMENDASI
             $kamusJodoh = [
-                'Selai'   => ['Roti', 'Tawar'],       
-                'Roti'    => ['Selai', 'Mentega', 'Susu'], 
-                'Indomie' => ['Telur', 'Sawi', 'Kornet'], 
+                'Selai'   => ['Roti', 'Tawar'],
+                'Roti'    => ['Selai', 'Mentega', 'Susu'],
+                'Indomie' => ['Telur', 'Sawi', 'Kornet'],
                 'Mie'     => ['Telur', 'Sawi'],
-                'Kopi'    => ['Gula', 'Susu', 'Krimer'],   
+                'Kopi'    => ['Gula', 'Susu', 'Krimer'],
                 'Teh'     => ['Gula', 'Lemon'],
                 'Tepung'  => ['Minyak', 'Gula'],
                 'Rokok'   => ['Korek', 'Permen'],
@@ -135,13 +145,13 @@ class KioskController extends Controller
 
             if (!empty($keywordPencarian)) {
                 $barangDiKeranjang = Keranjang::where('id_user', $this->tabletUserId)
-                                              ->pluck('id_produk')
-                                              ->toArray();
+                    ->pluck('id_produk')
+                    ->toArray();
 
                 $rekomendasi = Produk::where('id_produk', '!=', $id)
                     ->whereNotIn('id_produk', $barangDiKeranjang)
                     ->where('stok', '>', 0)
-                    ->where(function($query) use ($keywordPencarian) {
+                    ->where(function ($query) use ($keywordPencarian) {
                         foreach ($keywordPencarian as $word) {
                             $query->orWhere('nama_produk', 'LIKE', '%' . $word . '%');
                         }
@@ -154,7 +164,7 @@ class KioskController extends Controller
 
         return redirect()->route('kiosk.index')->with([
             'success' => 'Berhasil masuk keranjang!',
-            'rekomendasi_produk' => $rekomendasi 
+            'rekomendasi_produk' => $rekomendasi
         ]);
     }
 
@@ -164,7 +174,7 @@ class KioskController extends Controller
         $keranjang = Keranjang::with('produk')->where('id_user', $this->tabletUserId)->get();
 
         $totalBayar = 0;
-        foreach($keranjang as $item) {
+        foreach ($keranjang as $item) {
             $totalBayar += $item->produk->harga_produk * $item->jumlah;
         }
 
@@ -184,15 +194,15 @@ class KioskController extends Controller
 
         DB::transaction(function () use ($request) {
             $keranjang = Keranjang::with('produk')->where('id_user', $this->tabletUserId)->get();
-            
+
             $totalBayar = 0;
-            foreach($keranjang as $item){
+            foreach ($keranjang as $item) {
                 $totalBayar += $item->produk->harga_produk * $item->jumlah;
             }
 
             $transaksiBaru = Transaksi::create([
-                'kode_transaksi' => 'TRX-' . time(), 
-                'id_user_pembeli' => $this->tabletUserId, 
+                'kode_transaksi' => 'TRX-' . time(),
+                'id_user_pembeli' => $this->tabletUserId,
                 'id_user_kasir' => $this->tabletUserId,
                 'total_bayar' => $totalBayar,
                 'metode_pembayaran' => $request->metode_pembayaran,
@@ -200,7 +210,7 @@ class KioskController extends Controller
                 'status' => 'selesai'
             ]);
 
-            foreach($keranjang as $item){
+            foreach ($keranjang as $item) {
                 DetailTransaksi::create([
                     'id_transaksi' => $transaksiBaru->id_transaksi,
                     'id_produk' => $item->id_produk,
@@ -226,18 +236,18 @@ class KioskController extends Controller
 
         DB::transaction(function () use ($request) {
             $keranjang = Keranjang::with('produk')->where('id_user', $this->tabletUserId)->get();
-            
+
             if ($keranjang->isEmpty()) return;
 
             $totalBayar = 0;
-            foreach($keranjang as $item) {
+            foreach ($keranjang as $item) {
                 $totalBayar += $item->produk->harga_produk * $item->jumlah;
             }
 
             $transaksi = Transaksi::create([
-                'id_user_kasir' => $this->tabletUserId, 
+                'id_user_kasir' => $this->tabletUserId,
                 'id_user_pembeli' => $this->tabletUserId,
-                'kode_transaksi' => 'HLD-' . time(), 
+                'kode_transaksi' => 'HLD-' . time(),
                 'total_bayar' => $totalBayar,
                 'tanggal_transaksi' => now(),
                 'status' => 'pending',
@@ -264,9 +274,9 @@ class KioskController extends Controller
     public function listPending()
     {
         $pendingOrders = Transaksi::where('status', 'pending')
-                                  ->orderBy('tanggal_transaksi', 'desc')
-                                  ->get();
-                                  
+            ->orderBy('tanggal_transaksi', 'desc')
+            ->get();
+
         return view('kiosk.pending', compact('pendingOrders'));
     }
 
@@ -284,7 +294,7 @@ class KioskController extends Controller
                 ]);
             }
             DetailTransaksi::where('id_transaksi', $id)->delete();
-            $transaksi->delete(); 
+            $transaksi->delete();
         });
 
         return redirect()->route('kiosk.index')->with('success', 'Pesanan dikembalikan ke kasir!');
@@ -294,14 +304,14 @@ class KioskController extends Controller
     public function decreaseItem($id)
     {
         $item = Keranjang::where('id_user', $this->tabletUserId)
-                         ->where('id_produk', $id)
-                         ->first();
+            ->where('id_produk', $id)
+            ->first();
         if ($item) {
             if ($item->jumlah > 1) {
                 $item->jumlah -= 1;
                 $item->save();
             } else {
-                $item->delete(); 
+                $item->delete();
             }
         }
         return back()->with('success', 'Item berhasil dikurangi');
@@ -311,8 +321,8 @@ class KioskController extends Controller
     public function removeItem($id)
     {
         Keranjang::where('id_user', $this->tabletUserId)
-                 ->where('id_produk', $id)
-                 ->delete();
+            ->where('id_produk', $id)
+            ->delete();
         return back()->with('success', 'Item dihapus dari keranjang');
     }
 
@@ -320,11 +330,11 @@ class KioskController extends Controller
     public function increaseItem($id)
     {
         $item = Keranjang::where('id_user', $this->tabletUserId)
-                         ->where('id_produk', $id)
-                         ->first();
-        
+            ->where('id_produk', $id)
+            ->first();
+
         $produk = Produk::find($id);
-        
+
         if ($item && $produk->stok > $item->jumlah) {
             $item->jumlah += 1;
             $item->save();
@@ -348,8 +358,8 @@ class KioskController extends Controller
         }
 
         $item = Keranjang::where('id_user', $this->tabletUserId)
-                         ->where('id_produk', $id)
-                         ->first();
+            ->where('id_produk', $id)
+            ->first();
 
         if ($item) {
             $item->jumlah = $jumlahBaru;
@@ -368,7 +378,7 @@ class KioskController extends Controller
     public function addPacketToCart($key)
     {
         $configs = $this->getPaketConfig();
-        
+
         // Cek apakah paket ada di resep
         if (!array_key_exists($key, $configs)) {
             return back()->with('error', 'Paket tidak ditemukan!');
@@ -382,13 +392,13 @@ class KioskController extends Controller
                 // Cari produk yg namanya mengandung Keyword (misal: "Indomie")
                 // Ambil yg pertama ketemu aja
                 $produk = Produk::where('nama_produk', 'LIKE', '%' . $item['keyword'] . '%')
-                                ->where('stok', '>', 0)
-                                ->first();
+                    ->where('stok', '>', 0)
+                    ->first();
 
                 if ($produk) {
                     $cekKeranjang = Keranjang::where('id_user', $this->tabletUserId)
-                                             ->where('id_produk', $produk->id_produk)
-                                             ->first();
+                        ->where('id_produk', $produk->id_produk)
+                        ->first();
 
                     if ($cekKeranjang) {
                         $cekKeranjang->jumlah += $item['qty'];

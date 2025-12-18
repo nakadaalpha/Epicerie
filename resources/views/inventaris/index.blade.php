@@ -21,7 +21,7 @@
     <div class="container mx-auto p-6 max-w-5xl">
 
         <div class="mb-6 relative">
-            <form action="{{ route('inventaris') }}" method="GET">
+            <form action="{{ route('inventaris.index') }}" method="GET">
                 <input type="text" name="search" value="{{ request('search') }}" placeholder="Cari Nama Produk..."
                     class="w-full p-3 pl-5 rounded-full shadow-lg outline-none focus:ring-2 focus:ring-blue-300 text-gray-600 transition bg-white/90 backdrop-blur-sm">
                 <button type="submit" class="absolute right-5 top-3.5 text-gray-400 hover:text-blue-500 transition">

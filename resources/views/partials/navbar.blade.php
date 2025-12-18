@@ -16,7 +16,7 @@
                 Kategori
             </a>
 
-            <a href="{{ route('inventaris') }}"
+            <a href="{{ route('inventaris.index') }}"
                 class="{{ request()->routeIs('inventaris*') || request()->routeIs('produk*') ? 'border-b-2 border-white pb-1 font-bold' : 'opacity-80 hover:opacity-100 transition' }}">
                 Inventaris
             </a>
