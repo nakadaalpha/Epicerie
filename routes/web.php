@@ -8,6 +8,7 @@ use App\Http\Controllers\KioskController;
 use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\InventarisController;
 use App\Http\Controllers\KaryawanController;
+use App\Http\Controllers\ProdukController;
 // Pastikan ProdukController ada jika ingin dipakai (jika tidak, hapus baris ini)
 // use App\Http\Controllers\ProdukController; 
 
@@ -41,6 +42,8 @@ Route::post('/kiosk/hold', [KioskController::class, 'holdOrder'])->name('kiosk.h
 Route::get('/kiosk/pending', [KioskController::class, 'listPending'])->name('kiosk.pending');
 Route::get('/kiosk/recall/{id}', [KioskController::class, 'recallOrder'])->name('kiosk.recall');
 
+// Halaman Detail Produk
+Route::get('/produk/{id}', [ProdukController::class, 'show'])->name('produk.show');
 
 // ====================================================
 // 2. ROUTE AUTHENTICATION (Login/Register/Logout)
