@@ -57,32 +57,82 @@ class KioskController extends Controller
     }
 
     // === 1. MENAMPILKAN HALAMAN DEPAN ===
+    // === 1. METHOD INDEX (DASHBOARD) ===
     public function index(Request $request)
     {
-        $query = Produk::query();
-
-        if ($request->has('search') && $request->search != '') {
-            $search = $request->search;
-            $query->where('nama_produk', 'LIKE', '%' . $search . '%')
-                ->orWhere('deskripsi_produk', 'LIKE', '%' . $search . '%');
+        // LOGIKA PERCABANGAN: Jika ada filter/search, oper ke method search
+        if ($request->has('search') || $request->has('kategori') || $request->has('min_price')) {
+            return $this->search($request);
         }
 
-        if ($request->has('kategori') && $request->kategori != 'semua') {
-            $query->where('id_kategori', $request->kategori);
-        }
-
-        $produk = $query->get();
+        // --- Logika Dashboard Normal ---
+        $produk = Produk::inRandomOrder()->limit(10)->get();
         $kategoriList = Kategori::all();
+        $daftarPaket = $this->getPaketConfig();
 
+        // Data Keranjang (PENTING untuk Navbar)
         $keranjangItems = Keranjang::where('id_user', $this->tabletUserId)
+            ->pluck('jumlah', 'id_produk')->toArray();
+        $totalItemKeranjang = array_sum($keranjangItems);
+
+        return view('kiosk.index', compact('produk', 'totalItemKeranjang', 'keranjangItems', 'kategoriList', 'daftarPaket'));
+    }
+
+    // === METHOD KHUSUS PENCARIAN (SIDEBAR LAYOUT) ===
+    public function search(Request $request)
+    {
+        // 1. TANGKAP INPUT
+        $keyword = $request->input('search');
+
+        $selectedKategori = $request->input('kategori', []);
+        if (!is_array($selectedKategori)) {
+            $selectedKategori = [$selectedKategori];
+        }
+
+        $minPrice = $request->input('min_price');
+        $maxPrice = $request->input('max_price');
+
+        // 2. QUERY PENCARIAN
+        $query = \App\Models\Produk::query();
+
+        if ($keyword) {
+            $query->where('nama_produk', 'LIKE', "%{$keyword}%");
+        }
+
+        if (!empty($selectedKategori)) {
+            $query->whereIn('id_kategori', $selectedKategori);
+        }
+
+        if ($minPrice) {
+            $query->where('harga_produk', '>=', str_replace('.', '', $minPrice));
+        }
+        if ($maxPrice) {
+            $query->where('harga_produk', '<=', str_replace('.', '', $maxPrice));
+        }
+
+        // --- PERBAIKAN DI SINI (Ubah $products jadi $produk) ---
+        $produk = $query->get();
+        // -------------------------------------------------------
+
+        // 3. DATA PENDUKUNG VIEW
+        $allCategories = \App\Models\Kategori::withCount('produk')->get();
+
+        $keranjangItems = \App\Models\Keranjang::where('id_user', $this->tabletUserId)
             ->pluck('jumlah', 'id_produk')
             ->toArray();
         $totalItemKeranjang = array_sum($keranjangItems);
 
-        // Ambil Daftar Paket buat ditampilin
-        $daftarPaket = $this->getPaketConfig();
-
-        return view('kiosk.index', compact('produk', 'totalItemKeranjang', 'keranjangItems', 'kategoriList', 'daftarPaket'));
+        // 4. RETURN VIEW
+        return view('kiosk.search', compact(
+            'produk', // Pastikan ini namanya 'produk', bukan 'products'
+            'allCategories',
+            'keyword',
+            'selectedKategori',
+            'minPrice',
+            'maxPrice',
+            'totalItemKeranjang',
+            'keranjangItems'
+        ));
     }
 
     public function profile()

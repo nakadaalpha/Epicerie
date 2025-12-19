@@ -93,32 +93,15 @@
 
                 <hr class="border-gray-100 my-2">
 
-                <div class="border-b border-gray-200">
-                    <div class="flex gap-6">
-                        <button class="text-blue-600 border-b-2 border-blue-600 pb-3 font-bold text-sm">Detail Produk</button>
-                        <button class="text-gray-500 pb-3 font-medium text-sm hover:text-blue-600">Info Penting</button>
-                    </div>
-                </div>
-
-                <div class="py-4 space-y-4">
-                    <div class="text-sm text-gray-600">
-                        <p class="mb-2"><span class="text-gray-400 w-24 inline-block">Kondisi:</span> <span class="font-bold text-gray-800">Baru</span></p>
-
-                        <p class="mb-2"><span class="text-gray-400 w-24 inline-block">Kategori:</span>
-                            <a href="{{ route('kiosk.index', ['kategori' => $produk->id_kategori]) }}" class="text-blue-600 font-bold hover:underline">{{ $produk->kategori->nama_kategori ?? 'Umum' }}</a>
-                        </p>
-
-                        <p class="mb-2"><span class="text-gray-400 w-24 inline-block">Etalase:</span> <span class="font-bold text-blue-600">Semua Produk</span></p>
-                    </div>
-
+                <div class="space-y-4">
                     <div class="prose prose-sm max-w-none text-gray-700 leading-relaxed">
-                        <p>{{ $produk->deskripsi ?? 'Tidak ada deskripsi detail.' }}</p>
+                        <p>{{ $produk->deskripsi ?? 'Tidak ada deskripsi' }}</p>
                     </div>
                 </div>
             </div>
 
             <div class="lg:col-span-3">
-                <div class="sticky-card bg-white border border-gray-200 rounded-xl shadow-xl p-5">
+                <div class="sticky-card bg-white border border-gray-200 rounded-xl p-5">
                     <h3 class="font-bold text-gray-900 mb-4">Atur jumlah dan catatan</h3>
 
                     <div class="flex items-center gap-4 mb-6">
