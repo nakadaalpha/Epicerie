@@ -43,7 +43,7 @@ class InventarisController extends Controller
 
         Produk::create($validatedData);
 
-        return redirect()->route('inventaris')->with('success', 'Produk berhasil ditambahkan!');
+        return redirect()->route('inventaris.index')->with('success', 'Produk berhasil ditambahkan!');
     }
 
     // --- 4. EDIT (FORM UPDATE) ---
@@ -81,7 +81,7 @@ class InventarisController extends Controller
 
         $produk->update($validatedData);
 
-        return redirect()->route('inventaris')->with('success', 'Produk berhasil diperbarui!');
+        return redirect()->route('inventaris.index')->with('success', 'Produk berhasil diperbarui!');
     }
 
     // --- 6. DESTROY (HAPUS) ---
@@ -96,6 +96,6 @@ class InventarisController extends Controller
 
         $produk->delete();
 
-        return redirect()->route('inventaris')->with('success', 'Produk berhasil dihapus!');
+        return redirect()->route('inventaris.index')->with('success', 'Produk berhasil dihapus!');
     }
 }

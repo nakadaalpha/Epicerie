@@ -85,14 +85,27 @@ class KioskController extends Controller
         return view('kiosk.index', compact('produk', 'totalItemKeranjang', 'keranjangItems', 'kategoriList', 'daftarPaket'));
     }
 
+    public function profile()
+    {
+        // Karena statis, kita langsung return view saja
+        return view('kiosk.profile');
+    }
+
     // Tambahkan method ini di dalam class KioskController
     public function show($id)
     {
-        // Cari produk berdasarkan ID
         $produk = \App\Models\Produk::findOrFail($id);
 
-        // Tampilkan view detail
-        return view('kiosk.show', compact('produk'));
+        // LOGIKA REKOMENDASI:
+        // Ambil produk lain dari kategori yang sama, selain produk yang sedang dilihat.
+        // Diambil secara acak (inRandomOrder) maksimal 6 item.
+        $produkLain = \App\Models\Produk::where('id_kategori', $produk->id_kategori)
+            ->where('id_produk', '!=', $id)
+            ->inRandomOrder()
+            ->limit(6)
+            ->get();
+
+        return view('kiosk.show', compact('produk', 'produkLain'));
     }
 
     // === 2. LOGIKA TAMBAH KE KERANJANG ===

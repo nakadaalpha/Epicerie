@@ -17,7 +17,7 @@
         <div class="bg-white rounded-3xl p-8 shadow-2xl w-full max-w-4xl">
 
             <div class="flex items-center mb-8 border-b border-gray-100 pb-4">
-                <a href="{{ route('inventaris') }}" class="mr-4 text-blue-600 hover:text-blue-800 transition transform hover:-translate-x-1">
+                <a href="{{ route('inventaris.index') }}" class="mr-4 text-blue-600 hover:text-blue-800 transition transform hover:-translate-x-1">
                     <i class="fa-solid fa-arrow-left text-xl"></i>
                 </a>
                 <h2 class="text-2xl font-bold text-gray-800">Tambah Produk Baru</h2>
@@ -93,7 +93,7 @@
                 </div>
 
                 <div class="flex items-center justify-end space-x-4 mt-8 pt-6 border-t border-gray-100">
-                    <a href="{{ route('inventaris') }}" class="text-gray-500 hover:text-gray-700 font-medium px-4 py-2">Batal</a>
+                    <a href="{{ route('inventaris.index') }}" class="text-gray-500 hover:text-gray-700 font-medium px-4 py-2">Batal</a>
                     <button type="submit" class="bg-[#3b4bbd] text-white px-8 py-3 rounded-full hover:bg-blue-800 transition font-bold shadow-lg flex items-center">
                         <i class="fa-solid fa-save mr-2"></i> Simpan Produk
                     </button>

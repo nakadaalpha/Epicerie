@@ -21,6 +21,8 @@ use App\Http\Controllers\KaryawanController;
 
 // Halaman Utama langsung ke Kiosk (Katalog)
 Route::get('/', [KioskController::class, 'index'])->name('kiosk.index');
+// Tambahkan baris ini (misalnya di bawah route kiosk.index)
+Route::get('/profile', [App\Http\Controllers\KioskController::class, 'profile'])->name('kiosk.profile');
 
 // Halaman Detail Produk (Hanya 1 ini saja, yang lama diduplikat saya hapus)
 Route::get('/produk/{id}', [KioskController::class, 'show'])->name('produk.show');
