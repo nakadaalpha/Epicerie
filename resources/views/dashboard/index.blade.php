@@ -21,9 +21,10 @@
                 <h1 class="text-xl opacity-90">Selamat Datang,</h1>
                 <h2 class="text-3xl font-bold">{{ Auth::user()->nama }}</h2>
             </div>
-            <button class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full text-sm flex items-center shadow backdrop-blur-sm transition">
+            
+            <a href="{{ route('transaksi.index') }}" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full text-sm flex items-center shadow backdrop-blur-sm transition cursor-pointer text-decoration-none">
                 <i class="fa-solid fa-clock-rotate-left mr-2"></i> Riwayat Transaksi
-            </button>
+            </a>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -34,12 +35,12 @@
                         <div>
                             <h3 class="text-gray-500 text-sm font-semibold">Laporan Penjualan</h3>
                             <p class="text-2xl font-bold text-blue-600">
-                                Rp. {{ number_format($chartData->sum('total'), 0, ',', '.') }}
+                                Rp {{ number_format($omzetHariIni ?? 0, 0, ',', '.') }}
                             </p>
-                            <p class="text-xs text-gray-400">Total Periode Ini</p>
+                            <p class="text-xs text-gray-400">Total Hari Ini</p>
                         </div>
                         <select class="text-xs border rounded p-1 bg-gray-50 outline-none">
-                            <option>Minggu Ini</option>
+                            <option>Hari Ini</option>
                         </select>
                     </div>
                     <canvas id="salesChart" height="150"></canvas>
@@ -47,28 +48,30 @@
 
                 <div class="bg-white rounded-3xl p-8 shadow-2xl flex justify-between items-center">
                     <div>
-                        <h3 class="text-blue-500 font-semibold text-sm">Total Transaksi</h3>
+                        <h3 class="text-blue-500 font-semibold text-sm">Jumlah Transaksi</h3>
                         <p class="text-xs text-gray-400">Hari ini</p>
                     </div>
                     <div class="bg-[#3b4bbd] text-white px-6 py-3 rounded-full font-bold text-xl shadow-lg">
-                        Rp {{ number_format($omzetHariIni, 0, ',', '.') }}
+                        {{ $totalTransaksiHariIni ?? 0 }} Pesanan
                     </div>
                 </div>
             </div>
 
             <div class="space-y-6">
                 <div class="bg-white rounded-3xl p-8 shadow-2xl">
-                    <h3 class="text-blue-500 font-semibold mb-4 ml-1">Produk Terlaris</h3>
+                    <h3 class="text-blue-500 font-semibold mb-4 ml-1">Produk Terlaris (Top 4)</h3>
                     <ul class="space-y-3">
-                        @foreach($produkTerlaris as $index => $item)
+                        @forelse($produkTerlaris as $index => $item)
                         <li class="flex justify-between items-center p-3 rounded-2xl {{ $index == 0 ? 'bg-[#3b4bbd] text-white shadow-md' : 'bg-gray-50 text-gray-700' }}">
                             <div class="flex items-center">
                                 <span class="mr-3 font-bold w-6 text-center">{{ $index + 1 }}.</span>
-                                <span class="font-medium">{{ $item->produk->nama_produk ?? 'Produk Dihapus' }}</span>
+                                <span class="font-medium truncate max-w-[150px]">{{ $item->nama_produk ?? 'Produk' }}</span>
                             </div>
-                            <span class="text-sm font-bold bg-white/20 px-3 py-1 rounded-full">{{ $item->total_terjual }} Unit</span>
+                            <span class="text-sm font-bold bg-white/20 px-3 py-1 rounded-full text-xs">Stok: {{ $item->stok }}</span>
                         </li>
-                        @endforeach
+                        @empty
+                        <li class="text-center text-gray-400 text-sm py-4">Belum ada data penjualan.</li>
+                        @endforelse
                     </ul>
                 </div>
 
@@ -122,18 +125,17 @@
     </div>
 
     <script>
+        // SAYA BUAT DATA DUMMY DULU AGAR TIDAK ERROR (Karena controller belum kirim $chartData)
         const ctx = document.getElementById('salesChart').getContext('2d');
-        const labels = @json($chartData->pluck('bulan'));
-        const dataValues = @json($chartData->pluck('total'));
-
+        
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: labels,
+                labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
                 datasets: [{
                     label: 'Penjualan',
-                    data: dataValues,
-                    borderColor: '#3b4bbd', // Sesuaikan warna dengan tema Karyawan
+                    data: [12, 19, 3, 5, 2, 3, 10], // Data Dummy Sementara
+                    borderColor: '#3b4bbd',
                     backgroundColor: 'rgba(59, 75, 189, 0.1)',
                     tension: 0.4,
                     pointRadius: 4,
@@ -146,32 +148,17 @@
             options: {
                 responsive: true,
                 plugins: {
-                    legend: {
-                        display: false
-                    }
+                    legend: { display: false }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        grid: {
-                            color: '#f3f4f6',
-                            drawBorder: false
-                        },
-                        ticks: {
-                            font: {
-                                size: 10
-                            }
-                        }
+                        grid: { color: '#f3f4f6', drawBorder: false },
+                        ticks: { font: { size: 10 } }
                     },
                     x: {
-                        grid: {
-                            display: false
-                        },
-                        ticks: {
-                            font: {
-                                size: 10
-                            }
-                        }
+                        grid: { display: false },
+                        ticks: { font: { size: 10 } }
                     }
                 }
             }

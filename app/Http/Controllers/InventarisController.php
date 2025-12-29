@@ -20,7 +20,6 @@ class InventarisController extends Controller
     public function create()
     {
         $kategori = Kategori::all();
-        // Pastikan file view ada di resources/views/inventaris/create.blade.php
         return view('inventaris.create', compact('kategori'));
     }
 
@@ -36,7 +35,9 @@ class InventarisController extends Controller
             'gambar'      => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048'
         ]);
 
+        // Upload Gambar
         if ($request->hasFile('gambar')) {
+            // Simpan ke folder: storage/app/public/produk
             $path = $request->file('gambar')->store('produk', 'public');
             $validatedData['gambar'] = $path;
         }
@@ -70,7 +71,7 @@ class InventarisController extends Controller
 
         // Cek apakah user upload gambar baru
         if ($request->hasFile('gambar')) {
-            // Hapus gambar lama jika ada
+            // Hapus gambar lama jika ada (Biar storage ga penuh)
             if ($produk->gambar) {
                 Storage::disk('public')->delete($produk->gambar);
             }
@@ -89,7 +90,7 @@ class InventarisController extends Controller
     {
         $produk = Produk::findOrFail($id);
 
-        // Hapus gambar dari folder storage
+        // Hapus gambar dari folder storage saat produk dihapus
         if ($produk->gambar) {
             Storage::disk('public')->delete($produk->gambar);
         }

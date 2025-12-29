@@ -2,39 +2,29 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Transaksi extends Model
 {
+    use HasFactory;
+
     protected $table = 'transaksi';
     protected $primaryKey = 'id_transaksi';
+    protected $guarded = [];
 
-    protected $casts = [
-        'tanggal_transaksi' => 'datetime',
-    ];
-
-    // Relasi ke User (Kasir)
-    public function kasir()
+    // Relasi ke PEMBELI
+    public function user()
     {
-        return $this->belongsTo(User::class, 'id_user_kasir', 'id_user');
+        return $this->belongsTo(User::class, 'id_user_pembeli', 'id_user');
     }
 
+    // Relasi ke KURIR/KARYAWAN (Kolom Baru)
+    public function kurir()
+    {
+        return $this->belongsTo(User::class, 'id_karyawan', 'id_user');
+    }
 
-    
-    // Kita pakai $fillable biar lebih aman dan spesifik kolom mana yang boleh diisi
-    protected $fillable = [
-        'id_user_pembeli',
-        'id_user_kasir',
-        'kode_transaksi',
-        'total_bayar',
-        'metode_pembayaran',
-        'tanggal_transaksi',
-        // 👇 Ini kolom baru buat fitur Hold
-        'status', 
-        'nama_pelanggan_hold',
-    ];
-
-    // Relasi ke Detail Transaksi (biar bisa dipanggil $transaksi->detailTransaksi)
     public function detailTransaksi()
     {
         return $this->hasMany(DetailTransaksi::class, 'id_transaksi', 'id_transaksi');

@@ -12,8 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('kategori', function (Blueprint $table) {
-            $table->id('id_kategori'); // Sesuai ERD
+            // KITA PAKAI CARA MANUAL YANG PALING AMAN:
+            // Ini membuat kolom Unsigned Big Integer Auto Increment
+            $table->bigIncrements('id_kategori');
+
             $table->string('nama_kategori');
+            $table->string('gambar')->nullable();
             $table->timestamps();
         });
     }

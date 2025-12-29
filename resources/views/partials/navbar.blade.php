@@ -26,9 +26,14 @@
                 Karyawan
             </a>
 
-            <a href="{{ route('transaksi.index') }}"
-                class="{{ request()->routeIs('transaksi*') ? 'border-b-2 border-white pb-1 font-bold' : 'opacity-80 hover:opacity-100 transition' }}">
+            <a href="{{ route('laporan.index') }}"
+                class="{{ request()->routeIs('laporan*') ? 'border-b-2 border-white pb-1 font-bold' : 'opacity-80 hover:opacity-100 transition' }}">
                 Laporan
+            </a>
+
+            <a href="{{ route('kurir.index') }}"
+                class="{{ request()->routeIs('kurir*') ? 'border-b-2 border-white pb-1 font-bold' : 'opacity-80 hover:opacity-100 transition' }}">
+                Kirim
             </a>
 
         </div>
@@ -85,12 +90,10 @@
                         Profil Saya
                     </a>
 
-                    <a href="#" class="flex items-center px-4 py-3 text-sm font-bold text-gray-700 hover:bg-gray-100 hover:text-blue-600 rounded-xl transition group">
-                        <div class="w-6 flex justify-center mr-2">
-                            <i class="fa-solid fa-gear text-gray-400 group-hover:text-blue-600 transition text-base"></i>
-                        </div>
-                        Pengaturan
-                    </a>
+                    <a href="{{ route('kiosk.index') }}" class="flex items-center px-4 py-3 text-sm font-bold text-gray-700 hover:bg-gray-100 hover:text-blue-600 rounded-xl transition group">
+                            <div class="w-6 flex justify-center mr-2"><i class="fa-solid fa-store text-gray-400 group-hover:text-blue-600 transition text-base"></i></div>
+                            Lihat Toko
+                        </a>
                 </div>
 
                 <div class="p-2 pt-0">

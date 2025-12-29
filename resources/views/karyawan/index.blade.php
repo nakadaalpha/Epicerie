@@ -71,15 +71,22 @@
                         <span class="w-2 h-2 bg-green-500 rounded-full block" title="Aktif"></span>
                     </div>
 
+                    @if(Auth::user()->role == 'Pemilik')
                     <div class="flex space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0 absolute right-4 bg-white/80 backdrop-blur-sm p-1 rounded-full shadow-sm">
+                        
                         <a href="{{ route('karyawan.edit', $k->id_user) }}" class="bg-white text-yellow-500 w-8 h-8 rounded-full flex items-center justify-center shadow hover:bg-yellow-50 transition" title="Edit">
                             <i class="fa-solid fa-pen text-xs"></i>
                         </a>
+
+                        @if($k->id_user != Auth::id())
                         <a href="{{ route('karyawan.hapus', $k->id_user) }}" onclick="return confirm('Hapus karyawan ini?')" class="bg-white text-red-500 w-8 h-8 rounded-full flex items-center justify-center shadow hover:bg-red-50 transition" title="Hapus">
                             <i class="fa-solid fa-trash text-xs"></i>
                         </a>
+                        @endif
+
                     </div>
-                </div>
+                    @endif
+                    </div>
                 @empty
                 @endforelse
             </div>
@@ -94,6 +101,7 @@
             </div>
             @endif
 
+            @if(Auth::user()->role == 'Pemilik')
             <div class="absolute bottom-8 right-8 z-10">
                 <a href="{{ route('karyawan.create') }}"
                     class="bg-[#3b4bbd] text-white w-14 h-14 rounded-full hover:bg-blue-800 flex items-center justify-center transform hover:scale-110 hover:rotate-90 transition duration-300"
@@ -101,10 +109,9 @@
                     <i class="fa-solid fa-plus text-2xl"></i>
                 </a>
             </div>
-
-        </div>
+            @endif
+            </div>
     </div>
 
 </body>
-
 </html>
