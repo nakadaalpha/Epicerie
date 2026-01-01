@@ -73,6 +73,11 @@
                     </div>
                 </div>
 
+                <button type="submit" class="w-full bg-[#3b4bbd] text-white font-bold py-3.5 rounded-2xl shadow-lg hover:bg-blue-800 hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 mt-4 flex justify-center items-center group">
+                    <span>Masuk Aplikasi</span>
+                    <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
+                </button>
+
                 <div class="flex items-center justify-between text-sm text-gray-500 pt-2">
                     <label class="flex items-center cursor-pointer hover:text-gray-700">
                         <input type="checkbox" class="form-checkbox h-4 w-4 text-[#3b4bbd] rounded border-gray-300 focus:ring-[#3b4bbd]">
@@ -81,10 +86,6 @@
                     <a href="#" class="hover:text-[#3b4bbd] transition">Lupa Password?</a>
                 </div>
 
-                <button type="submit" class="w-full bg-[#3b4bbd] text-white font-bold py-3.5 rounded-2xl shadow-lg hover:bg-blue-800 hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-300 mt-4 flex justify-center items-center group">
-                    <span>Masuk Aplikasi</span>
-                    <i class="fa-solid fa-arrow-right ml-2 group-hover:translate-x-1 transition-transform"></i>
-                </button>
 
                 <div class="mt-6 text-center border-t border-gray-100 pt-4">
                     <p class="text-gray-500 text-sm">Belum terdaftar?</p>

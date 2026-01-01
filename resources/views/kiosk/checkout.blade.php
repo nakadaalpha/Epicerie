@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,12 +9,59 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script src="https://app.sandbox.midtrans.com/snap/snap.js" data-client-key="{{ config('midtrans.client_key') }}"></script>
-    <style>@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap'); body { font-family: 'Nunito', sans-serif; }.custom-checkbox { accent-color: #2563eb; width: 1.2rem; height: 1.2rem; cursor: pointer; border-radius: 4px; }.payment-option { transition: all 0.2s; border: 1px solid #e5e7eb; }.payment-option:hover { border-color: #3b82f6; background-color: #eff6ff; }.payment-option input:checked + div { border-color: #2563eb; background-color: #eff6ff; }.payment-option input:checked + div .check-icon { display: block; }
-    /* Animasi Pop Up */
-    @keyframes slideInDown { from { transform: translate(-50%, -100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
-    .toast-enter { animation: slideInDown 0.4s ease-out forwards; }
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+        body {
+            font-family: 'Nunito', sans-serif;
+        }
+
+        .custom-checkbox {
+            accent-color: #2563eb;
+            width: 1.2rem;
+            height: 1.2rem;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+
+        .payment-option {
+            transition: all 0.2s;
+            border: 1px solid #e5e7eb;
+        }
+
+        .payment-option:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+
+        .payment-option input:checked+div {
+            border-color: #2563eb;
+            background-color: #eff6ff;
+        }
+
+        .payment-option input:checked+div .check-icon {
+            display: block;
+        }
+
+        /* Animasi Pop Up */
+        @keyframes slideInDown {
+            from {
+                transform: translate(-50%, -100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+
+        .toast-enter {
+            animation: slideInDown 0.4s ease-out forwards;
+        }
     </style>
 </head>
+
 <body class="bg-gray-50 text-gray-700 pb-20">
 
     @include('partials.navbar-kiosk')
@@ -51,7 +99,7 @@
                     <div class="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100">
                         <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white">
                             <span class="font-bold text-gray-700 text-base">Daftar Barang <span class="text-gray-400 font-normal">({{ count($keranjang) }})</span></span>
-                            
+
                             @if(count($keranjang) > 0)
                             <button type="button" onclick="openDeleteModal('{{ route('kiosk.empty') }}')" class="text-red-500 hover:text-red-700 text-sm font-bold transition flex items-center gap-1">
                                 <i class="fa-regular fa-trash-can"></i> Hapus Semua
@@ -72,30 +120,30 @@
                                     </div>
                                     <div class="h-4"></div>
                                     <div class="flex justify-end items-center gap-4 mt-auto">
-    <a href="{{ route('kiosk.remove', $item->id_produk) }}" 
-       class="text-gray-400 hover:text-red-500 transition p-2" 
-       onclick="return confirm('Hapus item ini?')">
-        <i class="fa-regular fa-trash-can text-lg"></i>
-    </a>
+                                        <a href="{{ route('kiosk.remove', $item->id_produk) }}"
+                                            class="text-gray-400 hover:text-red-500 transition p-2"
+                                            onclick="return confirm('Hapus item ini?')">
+                                            <i class="fa-regular fa-trash-can text-lg"></i>
+                                        </a>
 
-    <div class="flex items-center border border-gray-300 rounded-full h-9 w-[120px] bg-white overflow-hidden">
-        
-        <a href="{{ route('kiosk.decrease', $item->id_produk) }}" 
-           class="w-10 h-full flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition border-r border-gray-100">
-            <i class="fa-solid fa-minus text-xs"></i>
-        </a>
+                                        <div class="flex items-center border border-gray-300 rounded-full h-9 w-[120px] bg-white overflow-hidden">
 
-        <input type="text" value="{{ $item->jumlah }}" 
-               class="flex-1 w-full text-center text-sm font-bold text-gray-700 border-none focus:ring-0 bg-transparent p-0 cursor-default" 
-               readonly>
+                                            <a href="{{ route('kiosk.decrease', $item->id_produk) }}"
+                                                class="w-10 h-full flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition border-r border-gray-100">
+                                                <i class="fa-solid fa-minus text-xs"></i>
+                                            </a>
 
-        <a href="{{ route('kiosk.increase', $item->id_produk) }}" 
-           class="w-10 h-full flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition border-l border-gray-100">
-            <i class="fa-solid fa-plus text-xs"></i>
-        </a>
+                                            <input type="text" value="{{ $item->jumlah }}"
+                                                class="flex-1 w-full text-center text-sm font-bold text-gray-700 border-none focus:ring-0 bg-transparent p-0 cursor-default"
+                                                readonly>
 
-    </div>
-</div>
+                                            <a href="{{ route('kiosk.increase', $item->id_produk) }}"
+                                                class="w-10 h-full flex items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-blue-600 transition border-l border-gray-100">
+                                                <i class="fa-solid fa-plus text-xs"></i>
+                                            </a>
+
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                             @if(!$loop->last) <div class="border-b border-gray-100 w-full"></div> @endif
@@ -110,11 +158,15 @@
                         <div class="space-y-2 mb-5">
                             <label class="block cursor-pointer payment-option rounded-lg relative">
                                 <input type="radio" name="metode_pembayaran" value="Tunai" class="peer sr-only" checked>
-                                <div class="p-3 rounded-lg flex items-center justify-between"><div class="flex items-center gap-2"><i class="fa-solid fa-money-bill text-green-500"></i><span class="text-sm font-bold text-gray-700">Tunai (COD)</span></div><i class="fa-solid fa-circle-check text-blue-600 hidden check-icon"></i></div>
+                                <div class="p-3 rounded-lg flex items-center justify-between">
+                                    <div class="flex items-center gap-2"><i class="fa-solid fa-money-bill text-green-500"></i><span class="text-sm font-bold text-gray-700">Tunai (COD)</span></div><i class="fa-solid fa-circle-check text-blue-600 hidden check-icon"></i>
+                                </div>
                             </label>
                             <label class="block cursor-pointer payment-option rounded-lg relative">
                                 <input type="radio" name="metode_pembayaran" value="QRIS" class="peer sr-only">
-                                <div class="p-3 rounded-lg flex items-center justify-between"><div class="flex items-center gap-2"><i class="fa-solid fa-credit-card text-blue-500"></i><span class="text-sm font-bold text-gray-700">QRIS/Transfer Bank</span></div><i class="fa-solid fa-circle-check text-blue-600 hidden check-icon"></i></div>
+                                <div class="p-3 rounded-lg flex items-center justify-between">
+                                    <div class="flex items-center gap-2"><i class="fa-solid fa-credit-card text-blue-500"></i><span class="text-sm font-bold text-gray-700">QRIS/Transfer Bank</span></div><i class="fa-solid fa-circle-check text-blue-600 hidden check-icon"></i>
+                                </div>
                             </label>
                         </div>
                         <input type="hidden" name="pengiriman" value="0">
@@ -143,6 +195,7 @@
                 window.location.href = url;
             }
         }
+
         function closeModal() {
             modal.classList.add('hidden');
         }
@@ -170,62 +223,94 @@
             }
 
             toast.classList.add('toast-enter'); // Animasi Masuk
-            setTimeout(() => { toast.classList.add('hidden'); }, 3000); // Hilang dalam 3 detik
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000); // Hilang dalam 3 detik
         }
 
         // --- LOGIKA PEMBAYARAN ---
         payButton.addEventListener('click', async function(e) {
             e.preventDefault();
             const metode = document.querySelector('input[name="metode_pembayaran"]:checked').value;
-            payButton.innerText = "Memproses..."; payButton.disabled = true;
+            payButton.innerText = "Memproses...";
+            payButton.disabled = true;
 
             try {
                 const response = await fetch("{{ route('kiosk.pay') }}", {
-                    method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": csrfToken },
-                    body: JSON.stringify({ metode_pembayaran: metode, pengiriman: 0 })
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": csrfToken
+                    },
+                    body: JSON.stringify({
+                        metode_pembayaran: metode,
+                        pengiriman: 0
+                    })
                 });
                 const data = await response.json();
                 if (!response.ok) throw new Error(data.error || "Gagal");
 
                 if (metode === 'Tunai') {
                     showToast("Pembayaran Tunai Berhasil!", "success");
-                    setTimeout(() => { window.location.href = data.redirect_url; }, 1500);
+                    setTimeout(() => {
+                        window.location.href = data.redirect_url;
+                    }, 1500);
                 } else {
                     window.snap.pay(data.snap_token, {
-                        onSuccess: function (result) {
+                        onSuccess: function(result) {
                             payButton.innerText = "Menyimpan Data...";
                             fetch("{{ route('kiosk.midtrans.success') }}", {
-                                method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": csrfToken },
-                                body: JSON.stringify({ result_data: result })
+                                method: "POST",
+                                headers: {
+                                    "Content-Type": "application/json",
+                                    "X-CSRF-TOKEN": csrfToken
+                                },
+                                body: JSON.stringify({
+                                    result_data: result
+                                })
                             }).then(async res => {
-                    const finalData = await res.json();
-        
-                    if(res.ok && finalData.status === 'success') {
-                    showToast("Sukses! Keranjang Kosong.", "success");
-            
-                    // === UPDATE BAGIAN INI: Redirect ke Halaman Sukses ===
-                    setTimeout(() => { 
-                // Kita ambil ID transaksi dari respon controller
-                // Pastikan Controller Langkah 1 sudah dikerjakan
-                let successUrl = "{{ route('kiosk.success', ':id') }}";
-                successUrl = successUrl.replace(':id', finalData.id_transaksi);
-                
-                window.location.href = successUrl; 
-                }, 1500);
-            
-                 } else {
-                showToast("DB ERROR: " + finalData.message, "error");
-                payButton.disabled = false;
-                }
-            });
+                                const finalData = await res.json();
+
+                                if (res.ok && finalData.status === 'success') {
+                                    showToast("Sukses! Keranjang Kosong.", "success");
+
+                                    // === UPDATE BAGIAN INI: Redirect ke Halaman Sukses ===
+                                    setTimeout(() => {
+                                        // Kita ambil ID transaksi dari respon controller
+                                        // Pastikan Controller Langkah 1 sudah dikerjakan
+                                        let successUrl = "{{ route('kiosk.success', ':id') }}";
+                                        successUrl = successUrl.replace(':id', finalData.id_transaksi);
+
+                                        window.location.href = successUrl;
+                                    }, 1500);
+
+                                } else {
+                                    showToast("DB ERROR: " + finalData.message, "error");
+                                    payButton.disabled = false;
+                                }
+                            });
                         },
-                        onPending: function() { showToast("Menunggu pembayaran...", "success"); setTimeout(() => window.location.reload(), 2000); },
-                        onError: function() { showToast("Pembayaran Gagal!", "error"); setTimeout(() => window.location.reload(), 2000); },
-                        onClose: function() { payButton.innerText = "Bayar Sekarang"; payButton.disabled = false; }
+                        onPending: function() {
+                            showToast("Menunggu pembayaran...", "success");
+                            setTimeout(() => window.location.reload(), 2000);
+                        },
+                        onError: function() {
+                            showToast("Pembayaran Gagal!", "error");
+                            setTimeout(() => window.location.reload(), 2000);
+                        },
+                        onClose: function() {
+                            payButton.innerText = "Bayar Sekarang";
+                            payButton.disabled = false;
+                        }
                     });
                 }
-            } catch (err) { showToast("Error: " + err.message, "error"); payButton.disabled = false; payButton.innerText = "Bayar Sekarang"; }
+            } catch (err) {
+                showToast("Error: " + err.message, "error");
+                payButton.disabled = false;
+                payButton.innerText = "Bayar Sekarang";
+            }
         });
     </script>
 </body>
+
 </html>

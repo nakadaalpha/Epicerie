@@ -9,7 +9,10 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
-        body { font-family: 'Nunito', sans-serif; }
+
+        body {
+            font-family: 'Nunito', sans-serif;
+        }
     </style>
 </head>
 
@@ -30,7 +33,7 @@
                 </nav>
                 <h1 class="text-2xl font-bold text-gray-800">Detail Transaksi</h1>
             </div>
-            
+
             <div class="text-right">
                 <p class="text-xs text-gray-500 uppercase tracking-wider mb-1">Tanggal Pesanan</p>
                 <p class="font-bold text-gray-700">{{ date('d F Y, H:i', strtotime($transaksi->created_at)) }} WIB</p>
@@ -40,17 +43,17 @@
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
             <div class="lg:col-span-2 space-y-6">
-                
+
                 <div class="bg-white border border-gray-200 rounded-xl p-6 shadow-sm flex items-center justify-between">
                     <div>
                         <p class="text-xs text-gray-500 uppercase font-bold mb-1">Status Pesanan</p>
                         @php
-                            $status = $transaksi->status ?? 'Dikemas';
-                            $colorClass = 'text-yellow-600 bg-yellow-50 border-yellow-200';
-                            $icon = 'fa-box-open';
-                            
-                            if(strtolower($status) == 'dikirim') { $colorClass = 'text-blue-600 bg-blue-50 border-blue-200'; $icon = 'fa-truck-fast'; }
-                            if(strtolower($status) == 'selesai') { $colorClass = 'text-green-600 bg-green-50 border-green-200'; $icon = 'fa-circle-check'; }
+                        $status = $transaksi->status ?? 'Dikemas';
+                        $colorClass = 'text-yellow-600 bg-yellow-50 border-yellow-200';
+                        $icon = 'fa-box-open';
+
+                        if(strtolower($status) == 'dikirim') { $colorClass = 'text-blue-600 bg-blue-50 border-blue-200'; $icon = 'fa-truck-fast'; }
+                        if(strtolower($status) == 'selesai') { $colorClass = 'text-green-600 bg-green-50 border-green-200'; $icon = 'fa-circle-check'; }
                         @endphp
                         <div class="flex items-center gap-2">
                             <h2 class="text-xl font-extrabold text-gray-800">{{ strtoupper($status) }}</h2>
@@ -75,7 +78,7 @@
                                 <i class="fa-solid fa-box text-gray-300 text-2xl"></i>
                                 @endif
                             </div>
-                            
+
                             <div class="flex-1">
                                 <h4 class="font-bold text-gray-800 text-sm line-clamp-2 mb-1">{{ $item->nama_produk }}</h4>
                                 <p class="text-xs text-gray-500 mb-2">{{ $item->jumlah }} barang x Rp{{ number_format($item->harga_produk_saat_beli, 0, ',', '.') }}</p>
@@ -95,29 +98,32 @@
                         <div class="mt-1"><i class="fa-solid fa-location-dot text-blue-600"></i></div>
                         <div>
                             <p class="text-sm font-bold text-gray-800">Alamat Penerima</p>
-                            
+
                             @php
-                                // --- LOGIKA ALAMAT DINAMIS (ANTI ERROR) ---
-                                
-                                // 1. Tentukan ID User (Ambil dari transaksi atau yang login)
-                                $userId = $transaksi->id_user ?? Auth::id();
+                            // --- LOGIKA ALAMAT DINAMIS (ANTI ERROR) ---
 
-                                // 2. Ambil Data User (Nama & HP)
-                                $pembeli = \Illuminate\Support\Facades\DB::table('user')->where('id_user', $userId)->first();
-                                $namaPenerima = $pembeli ? $pembeli->nama : 'Pelanggan';
-                                $hpPenerima = $pembeli ? $pembeli->no_hp : '-';
+                            // 1. Tentukan ID User (Prioritaskan id_user_pembeli sesuai struktur database Anda)
+                            // Kita gunakan Null Coalescing (??) untuk mengecek mana yang tersedia
+                            $userId = $transaksi->id_user_pembeli ?? $transaksi->id_user ?? Auth::id();
 
-                                // 3. Cari Alamat di Database (Ambil yang paling baru diinput)
-                                $alamatDb = \Illuminate\Support\Facades\DB::table('alamat_pengiriman')
-                                                ->where('id_user', $userId)
-                                                ->orderBy('created_at', 'desc') // Ambil yang terbaru
-                                                ->first();
-                                
-                                if($alamatDb) {
-                                    $alamatFix = $alamatDb->detail_alamat . ' (' . $alamatDb->label . ')';
-                                } else {
-                                    $alamatFix = 'Alamat belum diatur oleh pengguna.';
-                                }
+                            // 2. Ambil Data User (Nama & HP)
+                            $pembeli = \Illuminate\Support\Facades\DB::table('user')->where('id_user', $userId)->first();
+
+                            // Gunakan tanda '??' agar jika kolom tidak ditemukan/kosong, tidak terjadi error (fallback ke default)
+                            $namaPenerima = $pembeli->nama ?? 'Pelanggan';
+                            $hpPenerima = $pembeli->no_hp ?? '-';
+
+                            // 3. Cari Alamat di Database
+                            $alamatDb = \Illuminate\Support\Facades\DB::table('alamat_pengiriman')
+                            ->where('id_user', $userId)
+                            ->orderBy('created_at', 'desc')
+                            ->first();
+
+                            if($alamatDb) {
+                            $alamatFix = $alamatDb->detail_alamat . ' (' . $alamatDb->label . ')';
+                            } else {
+                            $alamatFix = 'Alamat belum diatur oleh pengguna.';
+                            }
                             @endphp
 
                             <p class="text-sm text-gray-600 mt-1 leading-relaxed">
@@ -136,7 +142,7 @@
                     <div class="p-6 border-b border-gray-100">
                         <h3 class="font-bold text-gray-800 text-sm">Rincian Pembayaran</h3>
                     </div>
-                    
+
                     <div class="p-6 space-y-3">
                         <div class="flex justify-between text-sm text-gray-600">
                             <span>Metode Bayar</span>
@@ -161,17 +167,17 @@
                         <button onclick="window.print()" class="w-full border border-gray-300 bg-white text-gray-700 font-bold py-3 rounded-lg hover:bg-gray-50 transition text-sm flex items-center justify-center gap-2">
                             <i class="fa-solid fa-print"></i> Cetak Invoice
                         </button>
-                        
-                        <a href="{{ route('kiosk.tracking', $transaksi->id_transaksi) }}" class="w-full bg-orange-500 text-white font-bold py-3 rounded-lg hover:bg-orange-600 transition text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-200">
+
+                        <a href="{{ route('kiosk.tracking', $transaksi->id_transaksi) }}" class="w-full bg-orange-500 text-white font-bold py-3 rounded-lg hover:bg-orange-600 transition text-sm flex items-center justify-center gap-2">
                             <i class="fa-solid fa-map-location-dot"></i> Lacak Pesanan
                         </a>
 
-                        <a href="{{ route('kiosk.index') }}" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-200">
+                        <a href="{{ route('kiosk.index') }}" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition text-sm flex items-center justify-center gap-2">
                             <i class="fa-solid fa-bag-shopping"></i> Belanja Lagi
                         </a>
 
                         <div class="text-center mt-2">
-                             <a href="#" class="text-xs text-gray-400 hover:text-blue-600">Butuh bantuan? Hubungi CS</a>
+                            <a href="#" class="text-xs text-gray-400 hover:text-blue-600">Butuh bantuan? Hubungi CS</a>
                         </div>
                     </div>
                 </div>
@@ -182,4 +188,5 @@
     </div>
 
 </body>
+
 </html>

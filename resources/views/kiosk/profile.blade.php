@@ -9,12 +9,23 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
-        body { font-family: 'Nunito', sans-serif; }
-        
-        @keyframes popIn {
-            0% { transform: translate(-50%, -50%) scale(0.9); opacity: 0; }
-            100% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+
+        body {
+            font-family: 'Nunito', sans-serif;
         }
+
+        @keyframes popIn {
+            0% {
+                transform: translate(-50%, -50%) scale(0.9);
+                opacity: 0;
+            }
+
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 1;
+            }
+        }
+
         .toast-center {
             position: fixed;
             top: 50%;
@@ -47,20 +58,20 @@
     </script>
     @endif
 
-    <div class="max-w-[1000px] mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
+    <div class="max-w-[1100px] mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
 
         <div class="w-full md:w-[300px] shrink-0">
             <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm sticky top-24">
-                
+
                 <div class="aspect-square bg-gray-50 rounded-2xl overflow-hidden mb-5 flex items-center justify-center relative group border border-gray-100">
                     @if(Auth::check() && Auth::user()->foto_profil)
-                        <img src="{{ asset('storage/' . Auth::user()->foto_profil) }}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
+                    <img src="{{ asset('storage/' . Auth::user()->foto_profil) }}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
                     @else
-                        <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300 font-bold text-7xl">
-                            {{ substr(Auth::user()->nama ?? 'U', 0, 1) }}
-                        </div>
+                    <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300 font-bold text-7xl">
+                        {{ substr(Auth::user()->nama ?? 'U', 0, 1) }}
+                    </div>
                     @endif
-                    
+
                     <div class="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition duration-300 flex items-center justify-center cursor-pointer" onclick="document.getElementById('fotoInput').click()">
                         <i class="fa-solid fa-camera text-white text-3xl drop-shadow-md"></i>
                     </div>
@@ -95,6 +106,118 @@
         </div>
 
         <div class="flex-1 space-y-6">
+
+            <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-6 text-white relative overflow-hidden">
+                    <i class="fa-solid fa-crown absolute -right-4 -bottom-4 text-9xl text-white opacity-10 rotate-12"></i>
+
+                    <div class="relative z-10 flex flex-col md:flex-row items-center md:items-start justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <div>
+                                <p class="text-blue-100 text-xs font-bold uppercase tracking-wider mb-1">Status Keanggotaan</p>
+                                <h2 class="text-2xl font-bold tracking-tight">Halo, {{ explode(' ', Auth::user()->nama)[0] }}!</h2>
+                                <div class="flex items-center gap-2 mt-2">
+                                    <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-white text-blue-600 shadow-sm flex items-center gap-1.5">
+                                        @if(Auth::user()->membership == 'Gold') <i class="fa-solid fa-crown text-yellow-500"></i>
+                                        @elseif(Auth::user()->membership == 'Silver') <i class="fa-solid fa-medal text-gray-400"></i>
+                                        @elseif(Auth::user()->membership == 'Bronze') <i class="fa-solid fa-medal text-orange-500"></i>
+                                        @else <i class="fa-solid fa-user text-gray-400"></i>
+                                        @endif
+                                        {{ Auth::user()->membership }} Member
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white/10 backdrop-blur-md rounded-xl p-3 px-5 text-center border border-white/20 min-w-[120px]">
+                            <p class="text-[10px] text-blue-100 uppercase tracking-wider mb-1">Total Belanja</p>
+                            @php
+                            $totalBelanja = Auth::user()->transaksi()->where('status', 'selesai')->sum('total_bayar');
+                            $totalFrekuensi = Auth::user()->transaksi()->where('status', 'selesai')->count();
+                            @endphp
+                            <p class="text-lg font-bold font-mono">Rp {{ number_format($totalBelanja/1000, 0, ',', '.') }}k</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="p-6">
+                    @php
+                    $nextLevel = 'Maksimal';
+                    $targetNominal = 0; $targetFrekuensi = 0;
+                    $currentLevel = Auth::user()->membership;
+
+                    if ($currentLevel == 'Classic') { $nextLevel = 'Bronze'; $targetNominal = 500000; $targetFrekuensi = 10; }
+                    elseif ($currentLevel == 'Bronze') { $nextLevel = 'Silver'; $targetNominal = 1000000; $targetFrekuensi = 20; }
+                    elseif ($currentLevel == 'Silver') { $nextLevel = 'Gold'; $targetNominal = 2000000; $targetFrekuensi = 30; }
+
+                    $persenNominal = $nextLevel == 'Maksimal' ? 100 : min(100, ($totalBelanja / $targetNominal) * 100);
+                    $persenFrekuensi = $nextLevel == 'Maksimal' ? 100 : min(100, ($totalFrekuensi / $targetFrekuensi) * 100);
+                    $totalProgress = ($persenNominal + $persenFrekuensi) / 2;
+                    @endphp
+
+                    @if($currentLevel != 'Gold')
+                    <div class="mb-6">
+                        <div class="flex justify-between items-end mb-2">
+                            <div>
+                                <p class="text-sm font-bold text-gray-700">Progress ke {{ $nextLevel }}</p>
+                                <p class="text-[10px] text-gray-500">Tingkatkan transaksi untuk naik level!</p>
+                            </div>
+                            <span class="text-xl font-bold text-blue-600">{{ number_format($totalProgress, 0) }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2.5 mb-4 overflow-hidden">
+                            <div class="bg-blue-600 h-2.5 rounded-full transition-all duration-1000" style="width: {{ $totalProgress }}%"></div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div class="bg-gray-50 rounded-lg p-2.5 border border-gray-100 flex items-center gap-2">
+                                <div class="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center text-green-600 shrink-0 text-xs"><i class="fa-solid fa-money-bill-wave"></i></div>
+                                <div class="flex-1 overflow-hidden">
+                                    <div class="flex justify-between text-[10px] mb-1"><span class="text-gray-500">Nominal</span> <span class="font-bold">{{ number_format($persenNominal,0) }}%</span></div>
+                                    <div class="w-full bg-gray-200 rounded-full h-1">
+                                        <div class="bg-green-500 h-1 rounded-full" style="width: {{ $persenNominal }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-2.5 border border-gray-100 flex items-center gap-2">
+                                <div class="h-8 w-8 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 shrink-0 text-xs"><i class="fa-solid fa-bag-shopping"></i></div>
+                                <div class="flex-1 overflow-hidden">
+                                    <div class="flex justify-between text-[10px] mb-1"><span class="text-gray-500">Frekuensi</span> <span class="font-bold">{{ number_format($persenFrekuensi,0) }}%</span></div>
+                                    <div class="w-full bg-gray-200 rounded-full h-1">
+                                        <div class="bg-purple-500 h-1 rounded-full" style="width: {{ $persenFrekuensi }}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @else
+                    <div class="mb-6 bg-yellow-50 border border-yellow-100 rounded-xl p-4 flex items-center gap-3">
+                        <i class="fa-solid fa-trophy text-yellow-500 text-2xl"></i>
+                        <div>
+                            <p class="text-xs font-bold text-gray-800 uppercase">Level Maksimal</p>
+                            <p class="text-[11px] text-gray-600">Nikmati seluruh keuntungan eksklusif Gold Member.</p>
+                        </div>
+                    </div>
+                    @endif
+
+                    <div class="border-t border-gray-100 pt-4">
+                        <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Benefit Anda Saat Ini</p>
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="border {{ $currentLevel == 'Bronze' ? 'border-orange-400 bg-orange-50' : 'border-gray-100 grayscale opacity-60' }} rounded-lg p-3">
+                                <p class="font-bold text-xs text-orange-700 mb-1"><i class="fa-solid fa-medal"></i> Bronze</p>
+                                <p class="text-[10px] text-gray-500">Diskon Ongkir 10%</p>
+                            </div>
+                            <div class="border {{ $currentLevel == 'Silver' ? 'border-gray-400 bg-gray-50' : 'border-gray-100 grayscale opacity-60' }} rounded-lg p-3">
+                                <p class="font-bold text-xs text-gray-600 mb-1"><i class="fa-solid fa-medal"></i> Silver</p>
+                                <p class="text-[10px] text-gray-500">Voucher 50rb</p>
+                            </div>
+                            <div class="border {{ $currentLevel == 'Gold' ? 'border-yellow-400 bg-yellow-50' : 'border-gray-100 grayscale opacity-60' }} rounded-lg p-3">
+                                <p class="font-bold text-xs text-yellow-700 mb-1"><i class="fa-solid fa-crown"></i> Gold</p>
+                                <p class="text-[10px] text-gray-500">Gratis Ongkir + VIP</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div class="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm relative overflow-hidden">
                 <div class="flex justify-between items-center mb-6">
@@ -167,7 +290,7 @@
                 <form id="form-kontak" action="{{ route('profile.update') }}" method="POST" class="hidden space-y-5">
                     @csrf
                     <input type="hidden" name="nama" value="{{ Auth::user()->nama }}">
-                    
+
                     <div class="flex flex-col sm:flex-row sm:items-center border-b border-gray-100 pb-2">
                         <div class="w-48 text-sm font-bold text-blue-600 pt-2 sm:pt-0">Email</div>
                         <div class="flex-1">
@@ -228,28 +351,28 @@
                 </div>
 
                 @if($alamat->isEmpty())
-                    <div class="text-center py-10 border border-dashed border-gray-200 rounded-xl">
-                        <p class="text-gray-400 text-sm">Belum ada alamat tersimpan.</p>
-                    </div>
+                <div class="text-center py-10 border border-dashed border-gray-200 rounded-xl">
+                    <p class="text-gray-400 text-sm">Belum ada alamat tersimpan.</p>
+                </div>
                 @else
-                    <div class="grid gap-4">
-                        @foreach($alamat as $a)
-                        <div class="border border-gray-100 rounded-xl p-5 hover:border-blue-400 transition bg-white relative group">
-                            <div class="flex items-center gap-3 mb-2">
-                                <span class="bg-blue-100 text-blue-600 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wide">{{ $a->label }}</span>
-                                <span class="text-sm font-bold text-gray-800">{{ $a->penerima }}</span>
-                            </div>
-                            <p class="text-sm text-gray-600 leading-relaxed max-w-[90%]">{{ $a->detail_alamat }}</p>
-                            <div class="mt-3 flex items-center text-xs font-bold text-gray-400">
-                                <i class="fa-solid fa-phone mr-2"></i> {{ $a->no_hp_penerima }}
-                            </div>
-                            
-                            <a href="{{ route('profile.address.delete', $a->id_alamat) }}" onclick="return confirm('Hapus alamat ini?')" class="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition">
-                                <i class="fa-solid fa-trash text-sm"></i>
-                            </a>
+                <div class="grid gap-4">
+                    @foreach($alamat as $a)
+                    <div class="border border-gray-100 rounded-xl p-5 hover:border-blue-400 transition bg-white relative group">
+                        <div class="flex items-center gap-3 mb-2">
+                            <span class="bg-blue-100 text-blue-600 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wide">{{ $a->label }}</span>
+                            <span class="text-sm font-bold text-gray-800">{{ $a->penerima }}</span>
                         </div>
-                        @endforeach
+                        <p class="text-sm text-gray-600 leading-relaxed max-w-[90%]">{{ $a->detail_alamat }}</p>
+                        <div class="mt-3 flex items-center text-xs font-bold text-gray-400">
+                            <i class="fa-solid fa-phone mr-2"></i> {{ $a->no_hp_penerima }}
+                        </div>
+
+                        <a href="{{ route('profile.address.delete', $a->id_alamat) }}" onclick="return confirm('Hapus alamat ini?')" class="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition">
+                            <i class="fa-solid fa-trash text-sm"></i>
+                        </a>
                     </div>
+                    @endforeach
+                </div>
                 @endif
             </div>
 
@@ -274,4 +397,5 @@
         }
     </script>
 </body>
+
 </html>

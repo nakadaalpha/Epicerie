@@ -151,7 +151,7 @@ class KioskController extends Controller
                     'kode_transaksi' => 'TRX-' . time(),
                     'total_bayar' => $totalBayar,
                     'metode_pembayaran' => 'Tunai',
-                    'status' => 'Dikemas', // Default Status
+                    'status' => 'diproses', // Default Status
                     'tanggal_transaksi' => now(),
                     'created_at' => now(), 'updated_at' => now()
                 ]);
@@ -313,7 +313,6 @@ class KioskController extends Controller
         return back();
     }
     
-    // Ini halaman profil yang kemarin lu kirim
     // --- 1. HALAMAN PROFILE ---
     public function profile()
     {
@@ -360,7 +359,7 @@ class KioskController extends Controller
                 \Illuminate\Support\Facades\Storage::disk('public')->delete($user->foto_profil);
             }
             // Simpan foto baru
-            $path = $request->file('foto_profil')->store('profiles', 'public');
+            $path = $request->file('gambar')->store('profiles', 'public');
             $user->foto_profil = $path;
             $user->save();
         }

@@ -44,9 +44,6 @@ class AuthController extends Controller
             if ($role == 'Pelanggan') {
                 return redirect()->route('kiosk.index');
             }
-            else {
-                return redirect()->route('admin.index');
-            }
 
             // B. Kalau Karyawan/Admin -> Ke Dashboard Admin
             // PERBAIKAN: Jangan ke '/', tapi ke route dashboard (/admin)
