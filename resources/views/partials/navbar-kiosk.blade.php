@@ -69,54 +69,64 @@
 
             <div class="pl-2 relative group">
                 @if(Auth::check())
-                <div class="flex items-center gap-2 cursor-pointer h-10 px-2 rounded-lg hover:bg-gray-50 transition">
+                <a href="{{ route('kiosk.profile') }}">
+                    <div class="flex items-center gap-2 cursor-pointer h-10 px-2 rounded-lg hover:bg-gray-50 transition">
 
-                    @if(Auth::user()->foto_profil)
-                    <img src="{{ asset('storage/' . Auth::user()->foto_profil) }}" class="w-8 h-8 rounded-full object-cover border border-gray-200 shadow-sm">
-                    @else
-                    <div class="w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center text-xs font-bold border border-gray-200 shadow-sm">
-                        {{ substr(Auth::user()->nama ?? 'U', 0, 1) }}
-                    </div>
-                    @endif
 
-                    <div class="hidden xl:block text-left leading-tight">
-                        <div class="flex items-center gap-1.5">
-                            <p class="text-xs font-bold text-gray-700 truncate max-w-[100px]">{{ Auth::user()->nama }}</p>
 
-                            @if(Auth::user()->membership != 'Classic')
-                            <span class="text-[9px] px-1.5 py-0.5 rounded border {{ Auth::user()->membership_color }} font-bold uppercase tracking-wider scale-90 origin-left">
-                                {{ Auth::user()->membership }}
-                            </span>
-                            @endif
+                        @if(Auth::user()->foto_profil)
+                        <img src="{{ asset('storage/' . Auth::user()->foto_profil) }}" class="w-8 h-8 rounded-full object-cover border border-gray-200 shadow-sm">
+                        @else
+                        <div class="w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center text-xs font-bold border border-gray-200 shadow-sm">
+                            {{ substr(Auth::user()->nama ?? 'U', 0, 1) }}
                         </div>
-                        <!-- <p class="text-[9px] text-gray-400 font-medium">
+                        @endif
+
+                        <div class="hidden xl:block text-left leading-tight">
+                            <div class="flex items-center gap-1.5">
+                                <p class="text-xs font-bold text-gray-700 truncate max-w-[100px]">{{ Auth::user()->nama }}</p>
+
+                                @if(Auth::user()->membership != 'Classic')
+                                <span class="text-[9px] px-1.5 py-0.5 rounded border {{ Auth::user()->membership_color }} font-bold uppercase tracking-wider scale-90 origin-left">
+                                    {{ Auth::user()->membership }}
+                                </span>
+                                @endif
+                            </div>
+                            <!-- <p class="text-[9px] text-gray-400 font-medium">
                             {{ Auth::user()->transaksi()->where('status', 'selesai')->count() }}x Belanja
                         </p> -->
+                        </div>
                     </div>
-                </div>
+                </a>
 
                 <div class="hidden group-hover:block absolute top-full right-0 pt-2 w-64 z-[60]">
 
                     <div class="bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 overflow-hidden">
 
                         <div class="px-4 py-3 bg-gray-50 border-b border-gray-100 relative overflow-hidden">
-                            <div class="absolute top-0 right-0 p-2 opacity-10 pointer-events-none">
-                                <i class="fa-solid fa-award text-4xl"></i>
+                            @if(Auth::user()->membership == 'Classic')
+                            <div class="absolute top-0 right-0 p-2">
+                                <i class="fa-solid fa-award text-blue-600 text-4xl"></i>
                             </div>
+                            @elseif(Auth::user()->membership == 'Gold')
+                            <div class="absolute top-0 right-0 p-2">
+                                <i class="fa-solid fa-crown text-yellow-600 text-4xl" title="Gold Member"></i>
+                            </div>
+                            @elseif(Auth::user()->membership == 'Silver')
+                            <div class="absolute top-0 right-0 p-2">
+                                <i class="fa-solid fa-crown text-gray-500 text-4xl" title="Silver Member"></i>
+                            </div>
+                            @elseif(Auth::user()->membership == 'Bronze')
+                            <div class="absolute top-0 right-0 p-2">
+                                <i class="fa-solid fa-award text-orange-600 text-4xl" title="Bronze Member"></i>
+                            </div>
+                            @endif
 
                             <div class="flex justify-between items-start relative z-10">
                                 <div>
                                     <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-0.5">Akun Saya</p>
                                     <p class="text-sm font-bold text-gray-800 truncate max-w-[150px]">{{ Auth::user()->username }}</p>
                                 </div>
-
-                                @if(Auth::user()->membership == 'Gold')
-                                <div class="bg-yellow-100 p-1.5 rounded-full"><i class="fa-solid fa-crown text-yellow-600 text-sm" title="Gold Member"></i></div>
-                                @elseif(Auth::user()->membership == 'Silver')
-                                <div class="bg-gray-200 p-1.5 rounded-full"><i class="fa-solid fa-medal text-gray-500 text-sm" title="Silver Member"></i></div>
-                                @elseif(Auth::user()->membership == 'Bronze')
-                                <div class="bg-orange-100 p-1.5 rounded-full"><i class="fa-solid fa-medal text-orange-600 text-sm" title="Bronze Member"></i></div>
-                                @endif
                             </div>
 
                             <div class="flex gap-1 mt-2 relative z-10">

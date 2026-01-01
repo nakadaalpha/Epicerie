@@ -135,7 +135,7 @@
                             $totalBelanja = Auth::user()->transaksi()->where('status', 'selesai')->sum('total_bayar');
                             $totalFrekuensi = Auth::user()->transaksi()->where('status', 'selesai')->count();
                             @endphp
-                            <p class="text-lg font-bold font-mono">Rp {{ number_format($totalBelanja/1000, 0, ',', '.') }}k</p>
+                            <p class="text-lg font-bold font-mono">Rp {{ number_format($totalBelanja, 0, ',', '.') }}</p>
                         </div>
                     </div>
                 </div>
