@@ -4,44 +4,39 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Transaksi;
-use Illuminate\Support\Facades\Auth; // Tambahkan ini biar aman
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB; 
+use App\Events\LokasiKurirUpdated; 
+use App\Events\StatusTransaksiUpdated; // <--- PANGGIL FILE BARU TADI
 
 class KurirController extends Controller
 {
-    // Halaman Dashboard Kurir (Daftar Tugas)
     public function index()
     {
-        // Ambil pesanan yang statusnya 'Dikemas' atau 'Dikirim'
-        $tugas = Transaksi::with(['user', 'detailTransaksi']) // Tambah array [] biar rapi
-                    ->whereIn('status', ['Dikemas', 'Dikirim'])
+        $tugas = Transaksi::with(['user', 'detailTransaksi'])
+                    ->whereIn('status', ['Dikemas', 'diproses', 'Dikirim']) 
                     ->orderBy('created_at', 'desc')
                     ->get();
 
         return view('kurir.dashboard', compact('tugas'));
     }
 
-    // Update Status jadi 'Dikirim' (Pas tombol Mulai ditekan)
     public function mulaiAntar($id)
     {
         $trx = Transaksi::findOrFail($id);
         
-        // === PERBAIKAN DISINI ===
-        // Selain ubah status, kita simpan juga ID Kurir yang lagi login
         $trx->update([
-            'status' => 'Dikirim',
-            'id_karyawan' => Auth::id() // <--- INI KUNCINYA!
+            'status' => 'Dikirim', 
+            'id_karyawan' => Auth::id()
         ]);
         
         return redirect()->back()->with('success', 'Status berubah jadi DIKIRIM. GPS Aktif!');
     }
 
-    // Update Status jadi 'Selesai' (Pas sampai)
     public function selesaiAntar($id)
     {
         $trx = Transaksi::findOrFail($id);
         
-        // Jaga-jaga kalau pas mulaiAntar tadi belum kesimpen (buat data lama)
-        // Kita simpan lagi ID-nya pas selesai
         $dataUpdate = ['status' => 'Selesai'];
         
         if (empty($trx->id_karyawan)) {
@@ -50,9 +45,31 @@ class KurirController extends Controller
 
         $trx->update($dataUpdate);
 
-        // KIRIM NOTIFIKASI REALTIME KE PELANGGAN (Opsional, kalau event belum ada bisa dikomen dulu)
-        // event(new \App\Events\StatusTransaksiUpdated($id, 'Selesai'));
+        // === INI YANG DITUNGGU-TUNGGU PELANGGAN ===
+        // Kirim sinyal 'status-update' ke tracking.blade.php
+        event(new \App\Events\StatusTransaksiUpdated($id, 'Selesai')); 
         
         return redirect()->back()->with('success', 'Pekerjaan selesai! Mantap.');
+    }
+
+    // API Update Lokasi (Kodingan GPS)
+    public function updateLokasi(Request $request)
+    {
+        $request->validate([
+            'id_transaksi' => 'required',
+            'lat' => 'required',
+            'long' => 'required',
+        ]);
+
+        DB::table('transaksi')
+            ->where('id_transaksi', $request->id_transaksi)
+            ->update([
+                'kurir_lat' => $request->lat,
+                'kurir_long' => $request->long,
+            ]);
+
+        event(new LokasiKurirUpdated($request->id_transaksi, $request->lat, $request->long));
+
+        return response()->json(['status' => 'Sukses!', 'message' => 'Lokasi tersimpan.']);
     }
 }

@@ -89,9 +89,6 @@
                             </span>
                             @endif
                         </div>
-                        <!-- <p class="text-[9px] text-gray-400 font-medium">
-                            {{ Auth::user()->transaksi()->where('status', 'selesai')->count() }}x Belanja
-                        </p> -->
                     </div>
                 </div>
 
@@ -238,7 +235,6 @@
         const addrDropdown = document.getElementById('address-dropdown');
         const addrChevron = document.getElementById('address-chevron');
 
-        // Toggle address dropdown
         if (addrDropdown.classList.contains('hidden')) {
             addrDropdown.classList.remove('hidden');
             addrChevron.style.transform = 'rotate(180deg)';
@@ -248,7 +244,7 @@
         }
     }
 
-    // Fungsi saat user memilih salah satu alamat
+    // Fungsi saat user memilih salah satu alamat dari Dropdown Navbar
     function selectAddress(label, penerima) {
         document.getElementById('current-address-label').innerText = label + ' (' + penerima + ')';
         toggleAddressDropdown(); // Tutup dropdown
@@ -256,17 +252,24 @@
         localStorage.setItem('selected_address_penerima', penerima);
     }
 
+    // Fungsi Global untuk dipanggil dari Halaman Profile
+    // Ini kuncinya, Bang! Biar dari halaman lain bisa manggil fungsi ini.
+    window.updateNavbarAddress = function(label, penerima) {
+        const labelElem = document.getElementById('current-address-label');
+        if (labelElem) {
+            labelElem.innerText = label + ' (' + penerima + ')';
+            // Simpan juga ke LocalStorage biar pas refresh tetep kesimpen
+            localStorage.setItem('selected_address_label', label);
+            localStorage.setItem('selected_address_penerima', penerima);
+        }
+    };
+
     /* -----------------------------------------------------
        2. INISIALISASI SAAT HALAMAN DIMUAT
        ----------------------------------------------------- */
     document.addEventListener('DOMContentLoaded', function() {
 
-        // --- Logic Mengingat Alamat Terpilih ---
-        const userHasAddress = {
-            {
-                isset($hasAddress) ? $hasAddress : 'false'
-            }
-        };
+        const userHasAddress = {{ isset($hasAddress) ? $hasAddress : 'false' }};
 
         if (userHasAddress) {
             const savedLabel = localStorage.getItem('selected_address_label');
@@ -281,13 +284,11 @@
             localStorage.removeItem('selected_address_penerima');
         }
 
-        // --- Logic Klik di Luar (Hanya untuk Dropdown Alamat) ---
         document.addEventListener('click', function(event) {
             const addrDropdown = document.getElementById('address-dropdown');
             const addrBtn = document.getElementById('address-btn');
 
             if (addrDropdown && !addrDropdown.classList.contains('hidden')) {
-                // Jika klik BUKAN di dropdown DAN BUKAN di tombolnya -> Tutup
                 if (!addrDropdown.contains(event.target) && (!addrBtn || !addrBtn.contains(event.target))) {
                     addrDropdown.classList.add('hidden');
                     const chevron = document.getElementById('address-chevron');

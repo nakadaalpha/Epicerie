@@ -4,31 +4,28 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Transaksi;
-use Carbon\Carbon;          // <--- PENTING BUAT TANGGAL
-use Illuminate\Support\Facades\DB; // <--- PENTING BUAT QUERY MANUAL
+use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class TransaksiController extends Controller
 {
-    // 1. HALAMAN DAFTAR PESANAN (OPERASIONAL)
     public function index()
     {
-        $transaksi = Transaksi::with(['user', 'detailTransaksi.produk'])
+        $transaksi = Transaksi::with(['user', 'kurir', 'detailTransaksi.produk']) // Tambah 'kurir'
             ->orderBy('created_at', 'desc')
             ->get();
 
         return view('transaksi.index', compact('transaksi'));
     }
 
-    // 2. LOGIKA UBAH STATUS
     public function updateStatus(Request $request, $id)
     {
         $trx = Transaksi::findOrFail($id);
         $statusBaru = $request->status;
 
-        if ($statusBaru == 'Dikirim' && $trx->status == 'Dikemas') {
+        // UPDATE: Izinkan jika status sekarang 'Dikemas' ATAU 'diproses'
+        if ($statusBaru == 'Dikirim' && in_array($trx->status, ['Dikemas', 'diproses'])) {
             $trx->status = 'Dikirim';
-            
-            // Simpan ID user login (Karyawan) ke kolom 'id_karyawan'
             $trx->id_karyawan = auth()->id(); 
         } 
         elseif ($statusBaru == 'Selesai' && $trx->status == 'Dikirim') {
@@ -39,23 +36,18 @@ class TransaksiController extends Controller
         return back()->with('success', 'Status pesanan diperbarui!');
     }
 
-    // 3. HALAMAN LAPORAN PENJUALAN (ANALYTICS)
     public function laporan()
     {
-        // Ambil data penjualan 7 hari terakhir yang statusnya 'Selesai'
-        // Kita kelompokkan per tanggal biar bisa jadi grafik
+        // Query Laporan tetap sama, tapi handle case-insensitive buat status 'Selesai'/'selesai'
         $laporan = Transaksi::selectRaw('DATE(created_at) as tanggal, SUM(total_bayar) as total')
-            ->where('status', 'Selesai') 
+            ->whereRaw('LOWER(status) = ?', ['selesai']) // Pakai LOWER biar aman
             ->where('created_at', '>=', Carbon::now()->subDays(7))
             ->groupBy('tanggal')
             ->orderBy('tanggal', 'asc')
             ->get();
 
-        // Total Omzet Keseluruhan (Semua Waktu)
-        $totalOmzet = Transaksi::where('status', 'Selesai')->sum('total_bayar');
-
-        // Total Transaksi Berhasil
-        $totalTransaksi = Transaksi::where('status', 'Selesai')->count();
+        $totalOmzet = Transaksi::whereRaw('LOWER(status) = ?', ['selesai'])->sum('total_bayar');
+        $totalTransaksi = Transaksi::whereRaw('LOWER(status) = ?', ['selesai'])->count();
 
         return view('laporan.index', compact('laporan', 'totalOmzet', 'totalTransaksi'));
     }
