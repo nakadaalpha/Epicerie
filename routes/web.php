@@ -72,6 +72,8 @@ Route::middleware(['auth'])->group(function () {
     
     // --- FITUR ALAMAT (BARU DITAMBAHKAN) ---
     Route::post('/profile/address', [KioskController::class, 'addAddress'])->name('profile.address.add');
+    // Rute untuk Update Alamat (PENTING: Tambahkan ini agar tombol Edit jalan)
+    Route::post('/profile/address/update/{id}', [App\Http\Controllers\KioskController::class, 'updateAddress'])->name('profile.address.update');
     Route::get('/profile/address/delete/{id}', [KioskController::class, 'deleteAddress'])->name('profile.address.delete');
 
     // --- Placeholder Routes (Bundling, Pending Order, dll) ---

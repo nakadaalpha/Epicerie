@@ -9,10 +9,7 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
-
-        body {
-            font-family: 'Nunito', sans-serif;
-        }
+        body { font-family: 'Nunito', sans-serif; }
     </style>
 </head>
 
@@ -98,34 +95,19 @@
                         <div class="mt-1"><i class="fa-solid fa-location-dot text-blue-600"></i></div>
                         <div>
                             <p class="text-sm font-bold text-gray-800">Alamat Penerima</p>
-
                             @php
-                            // --- LOGIKA ALAMAT DINAMIS (ANTI ERROR) ---
-
-                            // 1. Tentukan ID User (Prioritaskan id_user_pembeli sesuai struktur database Anda)
-                            // Kita gunakan Null Coalescing (??) untuk mengecek mana yang tersedia
                             $userId = $transaksi->id_user_pembeli ?? $transaksi->id_user ?? Auth::id();
-
-                            // 2. Ambil Data User (Nama & HP)
                             $pembeli = \Illuminate\Support\Facades\DB::table('user')->where('id_user', $userId)->first();
-
-                            // Gunakan tanda '??' agar jika kolom tidak ditemukan/kosong, tidak terjadi error (fallback ke default)
                             $namaPenerima = $pembeli->nama ?? 'Pelanggan';
                             $hpPenerima = $pembeli->no_hp ?? '-';
 
-                            // 3. Cari Alamat di Database
                             $alamatDb = \Illuminate\Support\Facades\DB::table('alamat_pengiriman')
-                            ->where('id_user', $userId)
-                            ->orderBy('created_at', 'desc')
-                            ->first();
+                                        ->where('id_user', $userId)
+                                        ->orderBy('created_at', 'desc')
+                                        ->first();
 
-                            if($alamatDb) {
-                            $alamatFix = $alamatDb->detail_alamat . ' (' . $alamatDb->label . ')';
-                            } else {
-                            $alamatFix = 'Alamat belum diatur oleh pengguna.';
-                            }
+                            $alamatFix = $alamatDb ? $alamatDb->detail_alamat . ' (' . $alamatDb->label . ')' : 'Alamat belum diatur oleh pengguna.';
                             @endphp
-
                             <p class="text-sm text-gray-600 mt-1 leading-relaxed">
                                 <span class="font-bold">{{ $namaPenerima }}</span> <br>
                                 {{ $hpPenerima }} <br>
@@ -148,14 +130,26 @@
                             <span>Metode Bayar</span>
                             <span class="font-bold text-gray-800">{{ $transaksi->metode_pembayaran }}</span>
                         </div>
+                        
+                        @php
+                            // Ambil ongkir dari database, kalau null/kosong anggap 0
+                            $ongkir = $transaksi->ongkos_kirim ?? 0;
+                            // Hitung total barang (Total Bayar - Ongkir)
+                            $totalBarang = $transaksi->total_bayar - $ongkir;
+                        @endphp
+
                         <div class="flex justify-between text-sm text-gray-600">
                             <span>Total Harga ({{ count($details) }} barang)</span>
-                            <span>Rp{{ number_format($transaksi->total_bayar, 0, ',', '.') }}</span>
+                            <span>Rp{{ number_format($totalBarang, 0, ',', '.') }}</span>
                         </div>
+                        
                         <div class="flex justify-between text-sm text-gray-600">
                             <span>Ongkos Kirim</span>
-                            <span class="text-green-600 font-bold">Gratis</span>
+                            <span class="font-bold {{ $ongkir > 0 ? 'text-gray-800' : 'text-green-600' }}">
+                                {{ $ongkir > 0 ? 'Rp' . number_format($ongkir, 0, ',', '.') : 'Gratis' }}
+                            </span>
                         </div>
+
                         <hr class="border-dashed border-gray-200 my-2">
                         <div class="flex justify-between items-center">
                             <span class="font-bold text-gray-800">Total Belanja</span>
@@ -188,5 +182,4 @@
     </div>
 
 </body>
-
 </html>

@@ -111,15 +111,25 @@
                         <div class="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center text-blue-600 shrink-0">
                             <i class="fa-solid fa-user"></i>
                         </div>
-                        <div>
+                        <div class="w-full">
                             <p class="font-bold text-gray-800 text-sm">{{ $t->user->nama ?? 'Pelanggan' }}</p>
                             
                             @php
                                 $alamatTampil = 'Pelanggan belum menambahkan alamat.';
-                                $textClass = 'text-red-500 font-bold'; // Default merah kalau kosong
+                                $textClass = 'text-red-500 font-bold';
+                                $googleMapsUrl = '#'; 
                                 
                                 if($t->user) {
                                     $userId = $t->user->id_user; 
+                                    
+                                    // Mengambil alamat. Idealnya ambil dari id_alamat di transaksi jika ada.
+                                    // Fallback ke alamat terakhir user.
+                                    $alamatDb = null;
+                                    
+                                    // Cek apakah model Transaksi punya relasi/kolom id_alamat (opsional, sesuaikan dengan DB kamu)
+                                    // if(isset($t->id_alamat)) { ... }
+                                    
+                                    // Default: ambil alamat terakhir user (sesuai kode lama)
                                     $alamatDb = \Illuminate\Support\Facades\DB::table('alamat_pengiriman')
                                                     ->where('id_user', $userId)
                                                     ->orderBy('created_at', 'desc')
@@ -127,7 +137,27 @@
                                     
                                     if ($alamatDb) {
                                         $alamatTampil = $alamatDb->detail_alamat . ' (' . $alamatDb->label . ')';
-                                        $textClass = 'text-gray-500'; // Jadi abu-abu kalau ada alamatnya
+                                        $textClass = 'text-gray-500';
+                                        
+                                        // === 1. TENTUKAN TITIK AWAL (TOKO) ===
+                                        $alamatToko = "CebonganLor, Tlogoadi, Mlati, Sleman"; 
+                                        $origin = urlencode($alamatToko);
+
+                                        // === 2. TENTUKAN TITIK TUJUAN ===
+                                        $dest = '';
+                                        
+                                        if (!empty($alamatDb->plus_code)) {
+                                            // FIX: Kode Plus pendek butuh konteks wilayah agar tidak nyasar ke negara lain.
+                                            // Tambahkan ", Sleman" atau ", Yogyakarta" di belakang kode plus.
+                                            $dest = urlencode($alamatDb->plus_code . ' Sleman, Yogyakarta');
+                                        } elseif (!empty($alamatDb->latitude) && !empty($alamatDb->longitude)) {
+                                            $dest = $alamatDb->latitude . ',' . $alamatDb->longitude;
+                                        } else {
+                                            $dest = urlencode($alamatDb->detail_alamat);
+                                        }
+                                        
+                                        // === 3. LINK GOOGLE MAPS ===
+                                        $googleMapsUrl = "https://www.google.com/maps/dir/?api=1&origin={$origin}&destination={$dest}&travelmode=driving";
                                     }
                                 }
                             @endphp
@@ -138,11 +168,17 @@
                                 @endif
                                 {{ $alamatTampil }}
                             </p>
+
+                            @if ($googleMapsUrl != '#')
+                            <a href="{{ $googleMapsUrl }}" target="_blank" class="mt-2 inline-flex items-center gap-1 text-[10px] font-bold text-blue-600 bg-blue-50 border border-blue-100 px-2 py-1 rounded hover:bg-blue-100 transition w-auto">
+                                <i class="fa-solid fa-map-location-dot"></i> Rute dari Toko
+                            </a>
+                            @endif
                         </div>
                     </div>
 
                     <div class="flex gap-2">
-                        @if($t->status == 'Dikemas')
+                        @if($t->status == 'Dikemas' || $t->status == 'diproses')
                             <form action="{{ route('kurir.mulai', $t->id_transaksi) }}" method="POST" class="w-full">
                                 @csrf
                                 <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg hover:bg-blue-700 transition flex items-center justify-center gap-2">
@@ -176,11 +212,9 @@
     </div>
 
     <script>
-        // --- 1. SCRIPT NAVBAR DROPDOWN ---
         function toggleDropdown() {
             const dropdown = document.getElementById('user-menu-dropdown');
             const isHidden = dropdown.classList.contains('hidden');
-
             if (isHidden) {
                 dropdown.classList.remove('hidden');
                 setTimeout(() => {
@@ -190,9 +224,7 @@
             } else {
                 dropdown.classList.remove('scale-100', 'opacity-100');
                 dropdown.classList.add('scale-95', 'opacity-0');
-                setTimeout(() => {
-                    dropdown.classList.add('hidden');
-                }, 200);
+                setTimeout(() => { dropdown.classList.add('hidden'); }, 200);
             }
         }
 
@@ -208,9 +240,7 @@
             }
         }
 
-        // --- 2. SCRIPT GPS TRACKING ---
         let watchId = null;
-
         function startTracking(trxId, btnElement) {
             if (!navigator.geolocation) {
                 alert("Browser HP kamu tidak support GPS!");
@@ -234,6 +264,7 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Accept': 'application/json',
                             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                         },
                         body: JSON.stringify({
@@ -243,7 +274,13 @@
                         })
                     })
                     .then(response => response.json())
-                    .then(data => console.log("Terkirim ke server:", data))
+                    .then(data => {
+                        if(data.status === 'Error') {
+                            console.error("SERVER ERROR:", data.message);
+                        } else {
+                            console.log("Terkirim ke server:", data);
+                        }
+                    })
                     .catch(error => console.error("Gagal kirim:", error));
                 },
                 (error) => { console.error("Gagal dapat lokasi: ", error.message); },

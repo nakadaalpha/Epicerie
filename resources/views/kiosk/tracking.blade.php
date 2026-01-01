@@ -14,7 +14,6 @@
         body { font-family: 'Nunito', sans-serif; }
         #map { height: 500px; width: 100%; z-index: 1; }
 
-        /* --- INI YANG BIKIN GERAKNYA HALUS (ANTI-LONCAT) --- */
         .leaflet-marker-icon {
             transition: transform 2s linear;
         }
@@ -75,7 +74,7 @@
 
     <script>
         // --- A. KONFIGURASI DATA AWAL ---
-        // Default koordinat (Ganti sesuai titik start Jogja tadi)
+        // Default koordinat
         let lat = {{ $trx->kurir_lat ?? -7.733260207743608 }}; 
         let long = {{ $trx->kurir_long ?? 110.33121377926132 }};
         const trxId = "{{ $trx->id_transaksi }}";
@@ -103,7 +102,9 @@
         Pusher.logToConsole = true; 
 
         var pusher = new Pusher('{{ env("PUSHER_APP_KEY") }}', {
-            cluster: '{{ env("PUSHER_APP_CLUSTER") }}'
+            cluster: '{{ env("PUSHER_APP_CLUSTER") }}',
+            forceTLS: true,               // Paksa pakai jalur aman (HTTPS/WSS)
+            enabledTransports: ['ws', 'wss'] // MATIKAN HTTP (SockJS) BIAR GAK KENA CORS
         });
 
         var channel = pusher.subscribe('tracking.' + trxId);

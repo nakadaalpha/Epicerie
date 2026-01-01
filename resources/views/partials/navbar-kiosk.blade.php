@@ -80,6 +80,7 @@
                         <div class="w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center text-xs font-bold border border-gray-200 shadow-sm">
                             {{ substr(Auth::user()->nama ?? 'U', 0, 1) }}
                         </div>
+<<<<<<< HEAD
                         @endif
 
                         <div class="hidden xl:block text-left leading-tight">
@@ -96,6 +97,8 @@
                             {{ Auth::user()->transaksi()->where('status', 'selesai')->count() }}x Belanja
                         </p> -->
                         </div>
+=======
+>>>>>>> de2c7f824fb26832b6b39d375202c0e790693c0c
                     </div>
                 </a>
 
@@ -248,7 +251,6 @@
         const addrDropdown = document.getElementById('address-dropdown');
         const addrChevron = document.getElementById('address-chevron');
 
-        // Toggle address dropdown
         if (addrDropdown.classList.contains('hidden')) {
             addrDropdown.classList.remove('hidden');
             addrChevron.style.transform = 'rotate(180deg)';
@@ -258,7 +260,7 @@
         }
     }
 
-    // Fungsi saat user memilih salah satu alamat
+    // Fungsi saat user memilih salah satu alamat dari Dropdown Navbar
     function selectAddress(label, penerima) {
         document.getElementById('current-address-label').innerText = label + ' (' + penerima + ')';
         toggleAddressDropdown(); // Tutup dropdown
@@ -266,17 +268,24 @@
         localStorage.setItem('selected_address_penerima', penerima);
     }
 
+    // Fungsi Global untuk dipanggil dari Halaman Profile
+    // Ini kuncinya, Bang! Biar dari halaman lain bisa manggil fungsi ini.
+    window.updateNavbarAddress = function(label, penerima) {
+        const labelElem = document.getElementById('current-address-label');
+        if (labelElem) {
+            labelElem.innerText = label + ' (' + penerima + ')';
+            // Simpan juga ke LocalStorage biar pas refresh tetep kesimpen
+            localStorage.setItem('selected_address_label', label);
+            localStorage.setItem('selected_address_penerima', penerima);
+        }
+    };
+
     /* -----------------------------------------------------
        2. INISIALISASI SAAT HALAMAN DIMUAT
        ----------------------------------------------------- */
     document.addEventListener('DOMContentLoaded', function() {
 
-        // --- Logic Mengingat Alamat Terpilih ---
-        const userHasAddress = {
-            {
-                isset($hasAddress) ? $hasAddress : 'false'
-            }
-        };
+        const userHasAddress = {{ isset($hasAddress) ? $hasAddress : 'false' }};
 
         if (userHasAddress) {
             const savedLabel = localStorage.getItem('selected_address_label');
@@ -291,13 +300,11 @@
             localStorage.removeItem('selected_address_penerima');
         }
 
-        // --- Logic Klik di Luar (Hanya untuk Dropdown Alamat) ---
         document.addEventListener('click', function(event) {
             const addrDropdown = document.getElementById('address-dropdown');
             const addrBtn = document.getElementById('address-btn');
 
             if (addrDropdown && !addrDropdown.classList.contains('hidden')) {
-                // Jika klik BUKAN di dropdown DAN BUKAN di tombolnya -> Tutup
                 if (!addrDropdown.contains(event.target) && (!addrBtn || !addrBtn.contains(event.target))) {
                     addrDropdown.classList.add('hidden');
                     const chevron = document.getElementById('address-chevron');

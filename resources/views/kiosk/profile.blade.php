@@ -26,13 +26,18 @@
             }
         }
 
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
         .toast-center {
             position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            z-index: 100;
+            z-index: 9999;
         }
     </style>
 </head>
@@ -40,6 +45,8 @@
 <body class="bg-gray-50 text-gray-700 pb-20 font-sans">
 
     @include('partials.navbar-kiosk')
+
+    <div id="toast-container"></div>
 
     @if(session('success'))
     <div id="toast" class="toast-center bg-gray-900/95 text-white px-8 py-6 rounded-2xl shadow-2xl flex flex-col items-center gap-3 backdrop-blur-sm min-w-[300px]">
@@ -317,7 +324,7 @@
                         <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-sm"><i class="fa-solid fa-map-location-dot"></i></span>
                         Daftar Alamat
                     </h2>
-                    <button onclick="document.getElementById('form-address-new').classList.toggle('hidden')" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-xs hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">
+                    <button onclick="openAddAddressModal()" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-xs hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">
                         <i class="fa-solid fa-plus mr-1"></i> Tambah
                     </button>
                 </div>
@@ -325,6 +332,12 @@
                 <div id="form-address-new" class="hidden bg-gray-50 rounded-xl p-6 mb-6 border border-gray-200">
                     <form action="{{ route('profile.address.add') }}" method="POST" class="space-y-4">
                         @csrf
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                            <label class="text-xs font-bold text-blue-800 block mb-2"><i class="fa-solid fa-crosshairs mr-1"></i> Cara Menemukan Kode Plus</label>
+                            <p class="text-[10px] text-blue-600 leading-relaxed">
+                                Buka Google Maps > Tekan lama lokasi rumahmu > Salin kode unik (contoh: 78F6+R2) > Tempel di bawah.
+                            </p>
+                        </div>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="text-xs font-bold text-gray-500 mb-1 block">Label (Rumah/Kost)</label>
@@ -340,12 +353,52 @@
                             <input type="text" name="penerima" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none">
                         </div>
                         <div>
-                            <label class="text-xs font-bold text-gray-500 mb-1 block">Alamat Lengkap</label>
-                            <textarea name="detail_alamat" rows="2" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">Kode Plus (Dari Google Maps)</label>
+                            <input type="text" name="plus_code" placeholder="Contoh: 78F6+R2 Margomulyo, Kabupaten Sleman, Daerah Istimewa Yogyakarta" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none uppercase">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">Detail alamat (Patokan)</label>
+                            <textarea name="detail_alamat" rows="2" placeholder="Pagar Hitam, Depan Masjid" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none"></textarea>
                         </div>
                         <div class="flex justify-end gap-2 pt-2">
-                            <button type="button" onclick="document.getElementById('form-address-new').classList.add('hidden')" class="text-gray-500 font-bold text-xs px-3 hover:text-gray-700">Batal</button>
+                            <button type="button" onclick="closeAddAddressModal()" class="text-gray-500 font-bold text-xs px-3 hover:text-gray-700">Batal</button>
                             <button type="submit" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-xs hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">Simpan Alamat</button>
+                        </div>
+                    </form>
+                </div>
+
+                <div id="form-address-edit" class="hidden bg-yellow-50 rounded-xl p-6 mb-6 border border-yellow-200">
+                    <form id="editAddressForm" method="POST" class="space-y-4">
+                        @csrf
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="text-sm font-bold text-yellow-800"><i class="fa-solid fa-pen-to-square mr-1"></i> Edit Alamat</h3>
+                            <button type="button" onclick="closeEditAddressModal()" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 mb-1 block">Label (Rumah/Kost)</label>
+                                <input type="text" id="edit_label" name="label" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-500 outline-none bg-white">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-500 mb-1 block">No HP Penerima</label>
+                                <input type="text" id="edit_hp" name="no_hp_penerima" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-500 outline-none bg-white">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">Nama Penerima</label>
+                            <input type="text" id="edit_penerima" name="penerima" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-500 outline-none bg-white">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">Kode Plus (Dari Google Maps)</label>
+                            <input type="text" id="edit_plus" name="plus_code" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-500 outline-none uppercase bg-white">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-500 mb-1 block">Detail alamat (Patokan)</label>
+                            <textarea id="edit_detail" name="detail_alamat" rows="2" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-yellow-500 outline-none bg-white"></textarea>
+                        </div>
+                        <div class="flex justify-end gap-2 pt-2">
+                            <button type="submit" class="bg-yellow-500 text-white font-bold py-2 px-4 rounded-lg text-xs hover:bg-yellow-600 transition shadow-lg shadow-yellow-500/20">Update Alamat</button>
                         </div>
                     </form>
                 </div>
@@ -363,13 +416,34 @@
                             <span class="text-sm font-bold text-gray-800">{{ $a->penerima }}</span>
                         </div>
                         <p class="text-sm text-gray-600 leading-relaxed max-w-[90%]">{{ $a->detail_alamat }}</p>
-                        <div class="mt-3 flex items-center text-xs font-bold text-gray-400">
-                            <i class="fa-solid fa-phone mr-2"></i> {{ $a->no_hp_penerima }}
+                        
+                        <div class="mt-3 flex flex-wrap items-center gap-4 text-xs font-bold text-gray-400">
+                            <span><i class="fa-solid fa-phone mr-1"></i> {{ $a->no_hp_penerima }}</span>
+                            @if($a->plus_code)
+                            <span class="text-purple-600 bg-purple-50 px-2 py-0.5 rounded flex items-center gap-1">
+                                <i class="fa-solid fa-crosshairs"></i> {{ $a->plus_code }}
+                            </span>
+                            @endif
                         </div>
 
-                        <a href="{{ route('profile.address.delete', $a->id_alamat) }}" onclick="return confirm('Hapus alamat ini?')" class="absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition">
-                            <i class="fa-solid fa-trash text-sm"></i>
-                        </a>
+                        <div class="absolute top-5 right-5 flex gap-2">
+                            <button type="button" 
+                                onclick="openEditAddressModal('{{ $a->id_alamat }}', '{{ $a->label }}', '{{ $a->penerima }}', '{{ $a->no_hp_penerima }}', '{{ $a->plus_code }}', '{{ $a->detail_alamat }}')" 
+                                class="w-8 h-8 flex items-center justify-center rounded-full text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition">
+                                <i class="fa-solid fa-pen-to-square text-sm"></i>
+                            </button>
+
+                            <a href="{{ route('profile.address.delete', $a->id_alamat) }}" onclick="return confirm('Hapus alamat ini?')" class="w-8 h-8 flex items-center justify-center rounded-full text-gray-300 hover:text-red-500 hover:bg-red-50 transition">
+                                <i class="fa-solid fa-trash text-sm"></i>
+                            </a>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-gray-50 flex justify-end">
+                            <button type="button" onclick="updateNavbarAddress('{{ $a->label }}', '{{ $a->penerima }}')" class="text-xs font-bold bg-gray-100 text-gray-600 px-4 py-2 rounded-lg hover:bg-blue-600 hover:text-white transition">
+                                Pilih Alamat
+                            </button>
+                        </div>
+
                     </div>
                     @endforeach
                 </div>
@@ -394,6 +468,45 @@
                 form.classList.add('hidden');
                 btn.classList.remove('hidden');
             }
+        }
+
+        // --- SCRIPT MODAL TAMBAH ALAMAT ---
+        function openAddAddressModal() {
+            document.getElementById('form-address-new').classList.remove('hidden');
+            document.getElementById('form-address-edit').classList.add('hidden'); // Tutup edit kalau ada
+        }
+        function closeAddAddressModal() {
+            document.getElementById('form-address-new').classList.add('hidden');
+        }
+
+        // --- SCRIPT MODAL EDIT ALAMAT (BARU) ---
+        function openEditAddressModal(id, label, penerima, hp, plus, detail) {
+            // Tutup form tambah kalau kebuka
+            closeAddAddressModal();
+            
+            // Isi data ke form edit
+            document.getElementById('edit_label').value = label;
+            document.getElementById('edit_penerima').value = penerima;
+            document.getElementById('edit_hp').value = hp;
+            document.getElementById('edit_plus').value = plus;
+            document.getElementById('edit_detail').value = detail;
+
+            // Set Action URL Form (update/{id})
+            // Pastikan route 'profile.address.update' ada di web.php
+            // Route::post('/profile/address/update/{id}', [KioskController::class, 'updateAddress'])->name('profile.address.update');
+            let url = "{{ route('profile.address.update', ':id') }}";
+            url = url.replace(':id', id);
+            document.getElementById('editAddressForm').action = url;
+
+            // Tampilkan Form
+            document.getElementById('form-address-edit').classList.remove('hidden');
+            
+            // Scroll ke form biar keliatan user
+            document.getElementById('form-address-edit').scrollIntoView({behavior: 'smooth', block: 'center'});
+        }
+
+        function closeEditAddressModal() {
+            document.getElementById('form-address-edit').classList.add('hidden');
         }
     </script>
 </body>
