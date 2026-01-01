@@ -190,7 +190,32 @@
         localStorage.setItem('selected_address_penerima', penerima);
     }
 
-    // 3. Logic Cerdas Pas Loading
+    /* =========================================
+       2. LOGIC DROPDOWN USER (Baru)
+       ========================================= */
+    function toggleUserDropdown() {
+        const dropdown = document.getElementById('user-dropdown-menu');
+        const chevron = document.getElementById('user-chevron');
+        const addressDropdown = document.getElementById('address-dropdown'); // Ambil dropdown alamat
+
+        // Tutup dropdown alamat jika sedang terbuka
+        if (addressDropdown && !addressDropdown.classList.contains('hidden')) {
+            addressDropdown.classList.add('hidden');
+            document.getElementById('chevron-icon').style.transform = 'rotate(0deg)';
+        }
+
+        if (dropdown.classList.contains('hidden')) {
+            dropdown.classList.remove('hidden');
+            chevron.style.transform = 'rotate(180deg)';
+        } else {
+            dropdown.classList.add('hidden');
+            chevron.style.transform = 'rotate(0deg)';
+        }
+    }
+
+    /* =========================================
+       3. GLOBAL EVENT LISTENER
+       ========================================= */
     document.addEventListener('DOMContentLoaded', function() {
         // Cek dulu dari PHP, apakah user ini PUNYA alamat di DB?
         // Kalau kosong (false), berarti ini user baru atau belum set alamat.
