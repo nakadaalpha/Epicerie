@@ -89,9 +89,18 @@
             @forelse($produk as $p)
             @php
             $qty = $keranjangItems[$p->id_produk] ?? 0;
+            // Gunakan logic diskon dari Model Produk (getPersenDiskonAttribute)
+            // Pastikan Anda sudah menambahkan logic Accessor di Model Produk.php
+            $hasDiskon = $p->persen_diskon > 0; 
             @endphp
 
             <div class="bg-white p-3 rounded-2xl shadow-sm border flex flex-col justify-between transition-all hover:shadow-md relative group">
+                
+                @if($hasDiskon)
+                <div class="absolute top-2 left-2 z-10 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm flex items-center gap-1">
+                    <i class="fa-solid fa-tags"></i> Hemat {{ $p->persen_diskon }}%
+                </div>
+                @endif
 
                 <a href="{{ route('produk.show', $p->id_produk) }}" class="block flex-1 cursor-pointer">
                     <div class="aspect-square rounded-xl mb-3 flex items-center justify-center overflow-hidden relative">
@@ -104,7 +113,21 @@
 
                     <h3 class="font-bold text-gray-800 text-sm leading-tight mb-1 truncate">{{ $p->nama_produk }}</h3>
                     <p class="text-xs text-gray-500 mb-2 truncate">{{ $p->deskripsi_produk }}</p>
-                    <span class="text-blue-600 font-bold text-sm mb-1 block">Rp{{ number_format($p->harga_produk, 0, ',', '.') }}</span>
+                    
+                    @if($hasDiskon)
+                        <div class="flex flex-col items-start mb-1">
+                            <span class="text-xs text-gray-400 line-through decoration-red-400">
+                                Rp{{ number_format($p->harga_produk, 0, ',', '.') }}
+                            </span>
+                            <span class="text-blue-600 font-bold text-sm block">
+                                Rp{{ number_format($p->harga_final, 0, ',', '.') }}
+                            </span>
+                        </div>
+                    @else
+                        <span class="text-blue-600 font-bold text-sm mb-1 block">
+                            Rp{{ number_format($p->harga_produk, 0, ',', '.') }}
+                        </span>
+                    @endif
                 </a>
 
                 <div class="flex justify-end mt-2 z-20 relative">

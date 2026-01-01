@@ -27,8 +27,13 @@
         }
 
         @keyframes fadeOut {
-            0% { opacity: 1; }
-            100% { opacity: 0; }
+            0% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+            }
         }
 
         .toast-center {
@@ -210,16 +215,16 @@
                         <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Benefit Anda Saat Ini</p>
                         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                             <div class="border {{ $currentLevel == 'Bronze' ? 'border-orange-400 bg-orange-50' : 'border-gray-100 grayscale opacity-60' }} rounded-lg p-3">
-                                <p class="font-bold text-xs text-orange-700 mb-1"><i class="fa-solid fa-medal"></i> Bronze</p>
-                                <p class="text-[10px] text-gray-500">Diskon Ongkir 10%</p>
+                                <p class="font-bold text-xs text-orange-700 mb-1"><i class="fa-solid fa-award"></i> Bronze</p>
+                                <p class="text-[10px] text-gray-500">Diskon Produk 5%</p>
                             </div>
                             <div class="border {{ $currentLevel == 'Silver' ? 'border-gray-400 bg-gray-50' : 'border-gray-100 grayscale opacity-60' }} rounded-lg p-3">
-                                <p class="font-bold text-xs text-gray-600 mb-1"><i class="fa-solid fa-medal"></i> Silver</p>
-                                <p class="text-[10px] text-gray-500">Voucher 50rb</p>
+                                <p class="font-bold text-xs text-gray-600 mb-1"><i class="fa-solid fa-award"></i> Silver</p>
+                                <p class="text-[10px] text-gray-500">Diskon Produk 10%</p>
                             </div>
                             <div class="border {{ $currentLevel == 'Gold' ? 'border-yellow-400 bg-yellow-50' : 'border-gray-100 grayscale opacity-60' }} rounded-lg p-3">
                                 <p class="font-bold text-xs text-yellow-700 mb-1"><i class="fa-solid fa-crown"></i> Gold</p>
-                                <p class="text-[10px] text-gray-500">Gratis Ongkir + VIP</p>
+                                <p class="text-[10px] text-gray-500 font-bold text-yellow-800">10% Diskon + VIP</p>
                             </div>
                         </div>
                     </div>
@@ -354,7 +359,7 @@
                         </div>
                         <div>
                             <label class="text-xs font-bold text-gray-500 mb-1 block">Kode Plus (Dari Google Maps)</label>
-                            <input type="text" name="plus_code" placeholder="Contoh: 78F6+R2 Margomulyo, Kabupaten Sleman, Daerah Istimewa Yogyakarta" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none uppercase">
+                            <input type="text" name="plus_code" placeholder="Contoh: 78F6+R2" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 outline-none uppercase">
                         </div>
                         <div>
                             <label class="text-xs font-bold text-gray-500 mb-1 block">Detail alamat (Patokan)</label>
@@ -374,7 +379,7 @@
                             <h3 class="text-sm font-bold text-yellow-800"><i class="fa-solid fa-pen-to-square mr-1"></i> Edit Alamat</h3>
                             <button type="button" onclick="closeEditAddressModal()" class="text-gray-400 hover:text-red-500"><i class="fa-solid fa-xmark"></i></button>
                         </div>
-                        
+
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <label class="text-xs font-bold text-gray-500 mb-1 block">Label (Rumah/Kost)</label>
@@ -416,10 +421,10 @@
                             <span class="text-sm font-bold text-gray-800">{{ $a->penerima }}</span>
                         </div>
                         <p class="text-sm text-gray-600 leading-relaxed max-w-[90%]">{{ $a->detail_alamat }}</p>
-                        
+
                         <div class="mt-3 flex flex-wrap items-center gap-4 text-xs font-bold text-gray-400">
                             <span><i class="fa-solid fa-phone mr-1"></i> {{ $a->no_hp_penerima }}</span>
-                            @if($a->plus_code)
+                            @if(!empty($a->plus_code))
                             <span class="text-purple-600 bg-purple-50 px-2 py-0.5 rounded flex items-center gap-1">
                                 <i class="fa-solid fa-crosshairs"></i> {{ $a->plus_code }}
                             </span>
@@ -427,8 +432,8 @@
                         </div>
 
                         <div class="absolute top-5 right-5 flex gap-2">
-                            <button type="button" 
-                                onclick="openEditAddressModal('{{ $a->id_alamat }}', '{{ $a->label }}', '{{ $a->penerima }}', '{{ $a->no_hp_penerima }}', '{{ $a->plus_code }}', '{{ $a->detail_alamat }}')" 
+                            <button type="button"
+                                onclick="openEditAddressModal('{{ $a->id_alamat }}', '{{ $a->label }}', '{{ $a->penerima }}', '{{ $a->no_hp_penerima }}', '{{ $a->plus_code ?? '' }}', '{{ $a->detail_alamat }}')"
                                 class="w-8 h-8 flex items-center justify-center rounded-full text-gray-300 hover:text-blue-600 hover:bg-blue-50 transition">
                                 <i class="fa-solid fa-pen-to-square text-sm"></i>
                             </button>
@@ -437,13 +442,6 @@
                                 <i class="fa-solid fa-trash text-sm"></i>
                             </a>
                         </div>
-
-                        <div class="mt-4 pt-3 border-t border-gray-50 flex justify-end">
-                            <button type="button" onclick="updateNavbarAddress('{{ $a->label }}', '{{ $a->penerima }}')" class="text-xs font-bold bg-gray-100 text-gray-600 px-4 py-2 rounded-lg hover:bg-blue-600 hover:text-white transition">
-                                Pilih Alamat
-                            </button>
-                        </div>
-
                     </div>
                     @endforeach
                 </div>
@@ -475,34 +473,29 @@
             document.getElementById('form-address-new').classList.remove('hidden');
             document.getElementById('form-address-edit').classList.add('hidden'); // Tutup edit kalau ada
         }
+
         function closeAddAddressModal() {
             document.getElementById('form-address-new').classList.add('hidden');
         }
 
-        // --- SCRIPT MODAL EDIT ALAMAT (BARU) ---
+        // --- SCRIPT MODAL EDIT ALAMAT ---
         function openEditAddressModal(id, label, penerima, hp, plus, detail) {
-            // Tutup form tambah kalau kebuka
             closeAddAddressModal();
-            
-            // Isi data ke form edit
             document.getElementById('edit_label').value = label;
             document.getElementById('edit_penerima').value = penerima;
             document.getElementById('edit_hp').value = hp;
             document.getElementById('edit_plus').value = plus;
             document.getElementById('edit_detail').value = detail;
 
-            // Set Action URL Form (update/{id})
-            // Pastikan route 'profile.address.update' ada di web.php
-            // Route::post('/profile/address/update/{id}', [KioskController::class, 'updateAddress'])->name('profile.address.update');
             let url = "{{ route('profile.address.update', ':id') }}";
             url = url.replace(':id', id);
             document.getElementById('editAddressForm').action = url;
 
-            // Tampilkan Form
             document.getElementById('form-address-edit').classList.remove('hidden');
-            
-            // Scroll ke form biar keliatan user
-            document.getElementById('form-address-edit').scrollIntoView({behavior: 'smooth', block: 'center'});
+            document.getElementById('form-address-edit').scrollIntoView({
+                behavior: 'smooth',
+                block: 'center'
+            });
         }
 
         function closeEditAddressModal() {

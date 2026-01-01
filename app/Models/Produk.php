@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 
 class Produk extends Model
 {
@@ -19,7 +20,7 @@ class Produk extends Model
         'stok',
         'gambar',
         'deskripsi_produk'
-        
+
     ];
 
     // === TAMBAHAN BARU ===
@@ -27,5 +28,40 @@ class Produk extends Model
     {
         // Produk 'milik' satu Kategori
         return $this->belongsTo(Kategori::class, 'id_kategori', 'id_kategori');
+    }
+
+    // 1. Helper untuk cek persentase diskon user saat ini
+    public function getPersenDiskonAttribute()
+    {
+        if (Auth::check()) {
+            $level = Auth::user()->membership;
+
+            // Gold & Silver dapat diskon 10%
+            if ($level == 'Gold' || $level == 'Silver') {
+                return 10;
+            }
+
+            // Bronze dapat diskon 5%
+            if ($level == 'Bronze') {
+                return 5;
+            }
+        }
+        return 0; // Tidak ada diskon
+    }
+
+    // 2. Menghitung Harga Akhir
+    public function getHargaFinalAttribute()
+    {
+        // PERBAIKAN: Gunakan 'harga_produk' sesuai nama kolom database Anda
+        $hargaAsli = $this->harga_produk;
+
+        $persen = $this->persen_diskon;
+
+        if ($persen > 0) {
+            // Rumus: Harga Asli - (Harga Asli * Persen / 100)
+            return $hargaAsli - ($hargaAsli * ($persen / 100));
+        }
+
+        return $hargaAsli;
     }
 }

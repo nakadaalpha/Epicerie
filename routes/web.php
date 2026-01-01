@@ -8,8 +8,8 @@ use App\Http\Controllers\KioskController;
 use App\Http\Controllers\KategoriController;
 use App\Http\Controllers\InventarisController;
 use App\Http\Controllers\KaryawanController;
-use App\Http\Controllers\KurirController; // <-- TAMBAHAN BARU
-use App\Http\Middleware\AdminOnly; 
+use App\Http\Controllers\KurirController;
+use App\Http\Middleware\AdminOnly;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,13 +17,17 @@ use App\Http\Middleware\AdminOnly;
 |--------------------------------------------------------------------------
 */
 
+Route::get('/tester_', function () {
+    return view('tester');
+});
+
 // ====================================================
 // 1. ROUTE GUEST (Hanya yang BELUM Login)
 // ====================================================
 Route::middleware(['guest'])->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'authenticate'])->name('login.authenticate');
-    
+
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [AuthController::class, 'register'])->name('register.proses');
 });
@@ -31,29 +35,27 @@ Route::middleware(['guest'])->group(function () {
 // Route Logout
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
-
 // ====================================================
 // 2. ROUTE PUBLIK (Bisa Diakses Siapa Saja)
 // ====================================================
 Route::get('/', [KioskController::class, 'index'])->name('kiosk.index');
 Route::get('/produk/{id}', [KioskController::class, 'show'])->name('produk.show');
 
-
 // ====================================================
 // 3. ROUTE PELANGGAN / BELANJA (WAJIB LOGIN)
 // ====================================================
 Route::middleware(['auth'])->group(function () {
-    
+
     // --- Keranjang & Checkout ---
     Route::get('/add-to-cart/{id}', [KioskController::class, 'addToCart'])->name('kiosk.add');
     Route::get('/checkout', [KioskController::class, 'checkout'])->name('kiosk.checkout');
-    
+
     // --- Manajemen Item Keranjang ---
     Route::get('/kiosk/remove/{id}', [KioskController::class, 'removeItem'])->name('kiosk.remove');
     Route::get('/kiosk/increase/{id}', [KioskController::class, 'increaseItem'])->name('kiosk.increase');
     Route::get('/kiosk/decrease/{id}', [KioskController::class, 'decreaseItem'])->name('kiosk.decrease');
     Route::get('/kiosk/empty-cart', [KioskController::class, 'emptyCart'])->name('kiosk.empty');
-    
+
     // --- Pembayaran ---
     Route::post('/pay', [KioskController::class, 'processPayment'])->name('kiosk.pay');
     Route::post('/midtrans-success', [KioskController::class, 'midtransSuccess'])->name('kiosk.midtrans.success');
@@ -62,19 +64,20 @@ Route::middleware(['auth'])->group(function () {
     // --- User Dashboard & Profile ---
     Route::get('/profile', [KioskController::class, 'profile'])->name('kiosk.profile');
     Route::get('/riwayat', [KioskController::class, 'riwayatTransaksi'])->name('kiosk.riwayat');
-    
+
     // HALAMAN TRACKING REALTIME
     Route::get('/tracking/{id}', [KioskController::class, 'trackingPage'])->name('kiosk.tracking');
 
     // --- FITUR UPDATE PROFIL (BARU DITAMBAHKAN) ---
     Route::post('/profile/update', [KioskController::class, 'updateProfile'])->name('profile.update');
     Route::post('/profile/photo', [KioskController::class, 'updatePhoto'])->name('profile.photo');
-    
+
     // --- FITUR ALAMAT (BARU DITAMBAHKAN) ---
     Route::post('/profile/address', [KioskController::class, 'addAddress'])->name('profile.address.add');
     // Rute untuk Update Alamat (PENTING: Tambahkan ini agar tombol Edit jalan)
     Route::post('/profile/address/update/{id}', [App\Http\Controllers\KioskController::class, 'updateAddress'])->name('profile.address.update');
     Route::get('/profile/address/delete/{id}', [KioskController::class, 'deleteAddress'])->name('profile.address.delete');
+    Route::post('/profile/address/set-primary/{id}', [KioskController::class, 'setPrimaryAddress'])->name('address.setPrimary');
 
     // --- Placeholder Routes (Bundling, Pending Order, dll) ---
     Route::post('/kiosk/set-qty/{id}', [KioskController::class, 'setCartQuantity'])->name('kiosk.set.qty');
@@ -94,7 +97,7 @@ Route::middleware(['auth'])->group(function () {
 // 4. ROUTE ADMIN / KARYAWAN (DASHBOARD)
 // ====================================================
 Route::middleware(['auth', AdminOnly::class])->prefix('admin')->group(function () {
-    
+
     Route::get('/', [Dashboard::class, 'index'])->name('dashboard'); // Akses: /admin
 
     Route::prefix('inventaris')->group(function () {

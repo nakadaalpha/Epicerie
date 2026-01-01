@@ -42,25 +42,20 @@
         </div>
 
         <div class="flex items-center gap-2 shrink-0">
-
             <div class="flex items-center gap-1 text-gray-500 pr-3 border-r border-gray-200">
                 @if(Auth::check() && in_array(Auth::user()->role, ['Karyawan', 'Pemilik', 'Admin']))
                 <a href="{{ route('dashboard') }}" class="relative h-10 w-10 flex items-center justify-center rounded-lg hover:bg-gray-50 hover:text-blue-600">
                     <i class="fa-solid fa-shop text-xl"></i>
                 </a>
                 @endif
-
                 <a href="{{ route('kiosk.checkout') }}" class="relative h-10 w-10 flex items-center justify-center rounded-lg hover:bg-gray-50 hover:text-blue-600 transition group" title="Keranjang">
                     <i class="fa-solid fa-cart-shopping text-xl transition"></i>
                     @if(isset($totalItemKeranjang) && $totalItemKeranjang > 0)
-                    <span id="cart-badge" class="absolute top-1 right-1 bg-red-600 text-white text-[10px] font-bold px-1 min-w-[16px] h-[16px] flex items-center justify-center rounded-full border border-white shadow-sm">
-                        {{ $totalItemKeranjang }}
-                    </span>
+                    <span id="cart-badge" class="absolute top-1 right-1 bg-red-600 text-white text-[10px] font-bold px-1 min-w-[16px] h-[16px] flex items-center justify-center rounded-full border border-white shadow-sm">{{ $totalItemKeranjang }}</span>
                     @else
                     <span id="cart-badge" class="absolute top-1 right-1 bg-red-600 text-white text-[10px] font-bold px-1 min-w-[16px] h-[16px] flex items-center justify-center rounded-full border border-white shadow-sm" style="display: none;">0</span>
                     @endif
                 </a>
-
                 <button class="relative h-10 w-10 hidden sm:flex items-center justify-center rounded-lg hover:bg-gray-50 hover:text-blue-600 transition group">
                     <i class="fa-regular fa-bell text-xl transition"></i>
                     <span class="absolute top-2 right-2.5 h-2 w-2 bg-red-600 rounded-full border border-white"></span>
@@ -71,112 +66,68 @@
                 @if(Auth::check())
                 <a href="{{ route('kiosk.profile') }}">
                     <div class="flex items-center gap-2 cursor-pointer h-10 px-2 rounded-lg hover:bg-gray-50 transition">
-
-
-
                         @if(Auth::user()->foto_profil)
                         <img src="{{ asset('storage/' . Auth::user()->foto_profil) }}" class="w-8 h-8 rounded-full object-cover border border-gray-200 shadow-sm">
                         @else
                         <div class="w-8 h-8 rounded-full bg-gray-800 text-white flex items-center justify-center text-xs font-bold border border-gray-200 shadow-sm">
                             {{ substr(Auth::user()->nama ?? 'U', 0, 1) }}
                         </div>
-<<<<<<< HEAD
                         @endif
-
                         <div class="hidden xl:block text-left leading-tight">
                             <div class="flex items-center gap-1.5">
                                 <p class="text-xs font-bold text-gray-700 truncate max-w-[100px]">{{ Auth::user()->nama }}</p>
-
                                 @if(Auth::user()->membership != 'Classic')
                                 <span class="text-[9px] px-1.5 py-0.5 rounded border {{ Auth::user()->membership_color }} font-bold uppercase tracking-wider scale-90 origin-left">
                                     {{ Auth::user()->membership }}
                                 </span>
                                 @endif
                             </div>
-                            <!-- <p class="text-[9px] text-gray-400 font-medium">
-                            {{ Auth::user()->transaksi()->where('status', 'selesai')->count() }}x Belanja
-                        </p> -->
                         </div>
-=======
->>>>>>> de2c7f824fb26832b6b39d375202c0e790693c0c
                     </div>
                 </a>
 
                 <div class="hidden group-hover:block absolute top-full right-0 pt-2 w-64 z-[60]">
-
                     <div class="bg-white rounded-xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] border border-gray-100 overflow-hidden">
-
                         <div class="px-4 py-3 bg-gray-50 border-b border-gray-100 relative overflow-hidden">
                             @if(Auth::user()->membership == 'Classic')
-                            <div class="absolute top-0 right-0 p-2">
-                                <i class="fa-solid fa-award text-blue-600 text-4xl"></i>
-                            </div>
+                            <div class="absolute top-0 right-0 p-2"><i class="fa-solid fa-award text-blue-600 text-4xl"></i></div>
                             @elseif(Auth::user()->membership == 'Gold')
-                            <div class="absolute top-0 right-0 p-2">
-                                <i class="fa-solid fa-crown text-yellow-600 text-4xl" title="Gold Member"></i>
-                            </div>
+                            <div class="absolute top-0 right-0 p-2"><i class="fa-solid fa-crown text-yellow-600 text-4xl"></i></div>
                             @elseif(Auth::user()->membership == 'Silver')
-                            <div class="absolute top-0 right-0 p-2">
-                                <i class="fa-solid fa-crown text-gray-500 text-4xl" title="Silver Member"></i>
-                            </div>
+                            <div class="absolute top-0 right-0 p-2"><i class="fa-solid fa-award text-gray-500 text-4xl"></i></div>
                             @elseif(Auth::user()->membership == 'Bronze')
-                            <div class="absolute top-0 right-0 p-2">
-                                <i class="fa-solid fa-award text-orange-600 text-4xl" title="Bronze Member"></i>
-                            </div>
+                            <div class="absolute top-0 right-0 p-2"><i class="fa-solid fa-award text-orange-600 text-4xl"></i></div>
                             @endif
-
                             <div class="flex justify-between items-start relative z-10">
                                 <div>
                                     <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-0.5">Akun Saya</p>
                                     <p class="text-sm font-bold text-gray-800 truncate max-w-[150px]">{{ Auth::user()->username }}</p>
                                 </div>
                             </div>
-
                             <div class="flex gap-1 mt-2 relative z-10">
-                                <span class="inline-block text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold">
-                                    {{ Auth::user()->role }}
-                                </span>
-                                <span class="inline-block text-[10px] px-2 py-0.5 rounded-full border {{ Auth::user()->membership_color }} font-bold">
-                                    {{ Auth::user()->membership }} Member
-                                </span>
+                                <span class="inline-block text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-700 font-bold">{{ Auth::user()->role }}</span>
+                                <span class="inline-block text-[10px] px-2 py-0.5 rounded-full border {{ Auth::user()->membership_color }} font-bold">{{ Auth::user()->membership }} Member</span>
                             </div>
                         </div>
-
                         <div class="p-1.5">
-                            <a href="{{ route('kiosk.profile') }}" class="flex items-center w-full text-left px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition group/item">
-                                <i class="fa-regular fa-user w-5 text-center mr-2 text-gray-400 group-hover/item:text-blue-600"></i>
-                                Biodata Diri
-                            </a>
-
-                            <a href="{{ route('kiosk.riwayat') }}" class="flex items-center w-full text-left px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition group/item">
-                                <i class="fa-solid fa-clock-rotate-left w-5 text-center mr-2 text-gray-400 group-hover/item:text-blue-600"></i>
-                                Riwayat Transaksi
-                            </a>
-
+                            <a href="{{ route('kiosk.profile') }}" class="flex items-center w-full text-left px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition group/item"><i class="fa-regular fa-user w-5 text-center mr-2 text-gray-400 group-hover/item:text-blue-600"></i> Biodata Diri</a>
+                            <a href="{{ route('kiosk.riwayat') }}" class="flex items-center w-full text-left px-3 py-2.5 text-sm font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition group/item"><i class="fa-solid fa-clock-rotate-left w-5 text-center mr-2 text-gray-400 group-hover/item:text-blue-600"></i> Riwayat Transaksi</a>
                             <form method="POST" action="{{ route('logout') }}">
                                 @csrf
-                                <button type="submit" class="flex items-center w-full text-left px-3 py-2.5 text-sm font-bold text-red-600 rounded-lg hover:bg-red-50 transition group/item">
-                                    <i class="fa-solid fa-arrow-right-from-bracket w-5 text-center mr-2 text-red-400 group-hover/item:text-red-600"></i>
-                                    Keluar
-                                </button>
+                                <button type="submit" class="flex items-center w-full text-left px-3 py-2.5 text-sm font-bold text-red-600 rounded-lg hover:bg-red-50 transition group/item"><i class="fa-solid fa-arrow-right-from-bracket w-5 text-center mr-2 text-red-400 group-hover/item:text-red-600"></i> Keluar</button>
                             </form>
                         </div>
                     </div>
                 </div>
-
                 @else
-                <a href="{{ route('login') }}" class="flex items-center gap-2 cursor-pointer h-10 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition shadow-sm font-bold text-sm ml-2">
-                    Masuk
-                </a>
+                <a href="{{ route('login') }}" class="flex items-center gap-2 cursor-pointer h-10 px-4 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition shadow-sm font-bold text-sm ml-2">Masuk</a>
                 @endif
             </div>
-
         </div>
     </div>
 
     <div class="w-full bg-white pb-2 border-b border-gray-50/50">
         <div class="max-w-[1280px] mx-auto px-4 flex justify-end relative">
-
             @if(Auth::check())
             @php
             $alamatUser = \Illuminate\Support\Facades\DB::table('alamat_pengiriman')
@@ -184,10 +135,11 @@
             ->orderBy('created_at', 'desc')
             ->get();
             $alamatUtama = $alamatUser->first();
-            $hasAddress = $alamatUser->isEmpty() ? 'false' : 'true';
             @endphp
 
-            <button onclick="toggleAddressDropdown()" class="flex items-center gap-1 text-xs cursor-pointer hover:bg-gray-50 px-3 py-1.5 rounded-md transition group focus:outline-none" id="address-btn">
+            <button type="button"
+                onclick="window.openAddressModal()"
+                class="flex items-center gap-1 text-xs cursor-pointer hover:bg-gray-50 px-3 py-1.5 rounded-md transition group focus:outline-none">
                 <i class="fa-solid fa-location-dot text-blue-600 mr-1.5"></i>
                 <span class="text-gray-500">Dikirim ke</span>
 
@@ -195,38 +147,8 @@
                     {{ $alamatUtama ? $alamatUtama->label . ' (' . $alamatUtama->penerima . ')' : 'Tambah Alamat' }}
                 </span>
 
-                <i class="fa-solid fa-chevron-down text-gray-400 ml-1.5 text-[10px] transition-transform duration-200" id="address-chevron"></i>
+                <i class="fa-solid fa-chevron-down text-gray-400 ml-1.5 text-[10px] transition-transform duration-200 group-hover:rotate-180"></i>
             </button>
-
-            <div id="address-dropdown" class="absolute top-full right-4 mt-1 w-72 bg-white rounded-xl shadow-2xl border border-gray-100 hidden z-50 overflow-hidden">
-                <div class="bg-blue-50 px-4 py-3 border-b border-blue-100">
-                    <p class="text-xs font-bold text-blue-800 uppercase tracking-wide">Pilih Lokasi Pengiriman</p>
-                </div>
-
-                <div class="max-h-[300px] overflow-y-auto custom-scrollbar p-2 space-y-1">
-                    @if($alamatUser->isEmpty())
-                    <div class="text-center py-4 px-2">
-                        <p class="text-xs text-gray-500 mb-2">Belum ada alamat tersimpan.</p>
-                        <a href="{{ route('kiosk.profile') }}" class="block w-full bg-blue-600 text-white text-xs font-bold py-2 rounded-lg hover:bg-blue-700">
-                            <i class="fa-solid fa-plus mr-1"></i> Tambah Alamat
-                        </a>
-                    </div>
-                    @else
-                    @foreach($alamatUser as $a)
-                    <button onclick="selectAddress('{{ $a->label }}', '{{ $a->penerima }}')" class="w-full text-left px-3 py-2.5 hover:bg-gray-50 rounded-lg group transition flex items-start gap-3">
-                        <div class="mt-0.5 text-gray-400 group-hover:text-blue-500"><i class="fa-solid fa-map-pin"></i></div>
-                        <div>
-                            <p class="text-xs font-bold text-gray-800 group-hover:text-blue-600">{{ $a->label }} <span class="font-normal text-gray-500">- {{ $a->penerima }}</span></p>
-                            <p class="text-[10px] text-gray-500 line-clamp-1 mt-0.5">{{ $a->detail_alamat }}</p>
-                        </div>
-                    </button>
-                    @endforeach
-                    <div class="border-t border-gray-100 mt-2 pt-2 px-1">
-                        <a href="{{ route('kiosk.profile') }}" class="flex items-center justify-center gap-2 w-full text-xs font-bold text-blue-600 py-2 hover:bg-blue-50 rounded-lg transition"><i class="fa-solid fa-gear"></i> Kelola Alamat</a>
-                    </div>
-                    @endif
-                </div>
-            </div>
 
             @else
             <a href="{{ route('login') }}" class="flex items-center gap-1 text-xs cursor-pointer hover:bg-gray-50 px-3 py-1.5 rounded-md transition group">
@@ -235,7 +157,6 @@
                 <span class="font-bold text-gray-800 group-hover:text-blue-600 transition">Login untuk pilih</span>
             </a>
             @endif
-
         </div>
     </div>
 
@@ -243,74 +164,143 @@
 
 <div class="h-[105px] w-full bg-gray-50"></div>
 
-<script>
-    /* -----------------------------------------------------
-       1. FUNGSI TOGGLE DROPDOWN ALAMAT
-       ----------------------------------------------------- */
-    function toggleAddressDropdown() {
-        const addrDropdown = document.getElementById('address-dropdown');
-        const addrChevron = document.getElementById('address-chevron');
+@if(Auth::check())
+<div id="modal-address-popup" class="fixed inset-0 z-[9999] hidden opacity-0 flex items-center justify-center p-4 font-sans transition-opacity duration-300 ease-in-out">
 
-        if (addrDropdown.classList.contains('hidden')) {
-            addrDropdown.classList.remove('hidden');
-            addrChevron.style.transform = 'rotate(180deg)';
-        } else {
-            addrDropdown.classList.add('hidden');
-            addrChevron.style.transform = 'rotate(0deg)';
+    <div class="absolute inset-0 bg-black/60 backdrop-blur-sm cursor-pointer"
+        onclick="window.closeAddressModal()">
+    </div>
+
+    <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl relative z-10 overflow-hidden flex flex-col max-h-[90vh] transform transition-all scale-100">
+
+        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-white sticky top-0 z-20">
+            <h3 class="font-bold text-lg text-gray-800">Mau kirim belanjaan kemana?</h3>
+            <button type="button"
+                onclick="window.closeAddressModal()"
+                class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-400 transition">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto p-6 space-y-4 custom-scrollbar bg-gray-50/30">
+            <p class="text-sm text-gray-500 mb-2">Biar pengalaman belanjamu lebih baik, pilih alamat dulu.</p>
+
+            @if($alamatUser->isEmpty())
+            <div class="text-center py-8 border-2 border-dashed border-gray-200 rounded-xl">
+                <i class="fa-solid fa-map-location-dot text-4xl text-gray-300 mb-3"></i>
+                <p class="text-gray-500 font-bold">Kamu belum punya alamat</p>
+                <a href="{{ route('kiosk.profile') }}" class="mt-3 inline-block bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 transition">
+                    Tambah Alamat Baru
+                </a>
+            </div>
+            @else
+            @foreach($alamatUser as $key => $a)
+            <div onclick="pilihAlamatIni('{{ $a->label }}', '{{ $a->penerima }}')"
+                class="border-2 border-gray-200 hover:border-blue-500 bg-white p-4 rounded-xl cursor-pointer transition group relative">
+
+                <div class="flex justify-between items-start">
+                    <div class="flex-1 pr-4">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="font-bold text-gray-800">{{ $a->label }}</span>
+                            @if($key == 0) <span class="bg-gray-200 text-gray-600 text-[10px] font-bold px-1.5 py-0.5 rounded">Utama</span> @endif
+                        </div>
+                        <p class="font-bold text-sm text-gray-700 mb-1">{{ $a->penerima }}</p>
+                        <p class="text-sm text-gray-500 leading-relaxed">{{ $a->no_hp_penerima }} <br> {{ $a->detail_alamat }}</p>
+                    </div>
+
+                    <div class="shrink-0 flex items-center h-full pt-2">
+                        <div class="indicator-selected hidden text-blue-600 text-2xl"><i class="fa-solid fa-circle-check"></i></div>
+                        <button class="btn-select bg-blue-600 text-white font-bold px-4 py-1.5 rounded-lg text-xs opacity-0 group-hover:opacity-100 transition transform scale-90 group-hover:scale-100 hover:bg-blue-700">
+                            Pilih
+                        </button>
+                    </div>
+                </div>
+            </div>
+            @endforeach
+            @endif
+
+            <a href="{{ route('kiosk.profile') }}" class="block text-center border border-gray-300 py-3 rounded-xl font-bold text-gray-600 hover:border-blue-600 hover:text-blue-600 hover:bg-blue-50 transition mt-4">
+                Kelola Alamat / Tambah Baru
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 1. OPEN MODAL (FADE IN) ---
+    window.openAddressModal = function() {
+        const modal = document.getElementById('modal-address-popup');
+        if (modal) {
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+            }, 10);
+            document.body.style.overflow = 'hidden';
+            window.highlightCurrentAddress(); // Update visual aktif
         }
     }
 
-    // Fungsi saat user memilih salah satu alamat dari Dropdown Navbar
-    function selectAddress(label, penerima) {
-        document.getElementById('current-address-label').innerText = label + ' (' + penerima + ')';
-        toggleAddressDropdown(); // Tutup dropdown
+    // --- 2. CLOSE MODAL (FADE OUT) ---
+    window.closeAddressModal = function() {
+        const modal = document.getElementById('modal-address-popup');
+        if (modal) {
+            modal.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }, 300);
+        }
+    }
+
+    // --- 3. SELECT ADDRESS ---
+    window.pilihAlamatIni = function(label, penerima) {
+        const el = document.getElementById('current-address-label');
+        if (el) el.innerText = label + ' (' + penerima + ')';
+
         localStorage.setItem('selected_address_label', label);
         localStorage.setItem('selected_address_penerima', penerima);
+
+        window.highlightCurrentAddress(); // Update visual langsung
+        setTimeout(() => window.closeAddressModal(), 300); // Delay dikit biar smooth
     }
 
-    // Fungsi Global untuk dipanggil dari Halaman Profile
-    // Ini kuncinya, Bang! Biar dari halaman lain bisa manggil fungsi ini.
-    window.updateNavbarAddress = function(label, penerima) {
-        const labelElem = document.getElementById('current-address-label');
-        if (labelElem) {
-            labelElem.innerText = label + ' (' + penerima + ')';
-            // Simpan juga ke LocalStorage biar pas refresh tetep kesimpen
-            localStorage.setItem('selected_address_label', label);
-            localStorage.setItem('selected_address_penerima', penerima);
-        }
-    };
+    // --- 4. HIGHLIGHT VISUAL (TEMA BIRU) ---
+    window.highlightCurrentAddress = function() {
+        const savedLabel = localStorage.getItem('selected_address_label');
+        const allCards = document.querySelectorAll('#modal-address-popup .border-2'); // Ambil semua card di modal
 
-    /* -----------------------------------------------------
-       2. INISIALISASI SAAT HALAMAN DIMUAT
-       ----------------------------------------------------- */
-    document.addEventListener('DOMContentLoaded', function() {
+        if (allCards.length === 0) return;
 
-        const userHasAddress = {{ isset($hasAddress) ? $hasAddress : 'false' }};
+        allCards.forEach(card => {
+            const labelEl = card.querySelector('span.font-bold.text-gray-800');
+            const checkmark = card.querySelector('.indicator-selected');
+            const btn = card.querySelector('.btn-select');
 
-        if (userHasAddress) {
-            const savedLabel = localStorage.getItem('selected_address_label');
-            const savedPenerima = localStorage.getItem('selected_address_penerima');
+            // Reset Style
+            card.classList.remove('bg-blue-50', 'border-blue-500');
+            card.classList.add('bg-white', 'border-gray-200');
+            if (checkmark) checkmark.classList.add('hidden');
+            if (btn) btn.classList.remove('hidden');
 
-            if (savedLabel && savedPenerima) {
-                const labelElem = document.getElementById('current-address-label');
-                if (labelElem) labelElem.innerText = savedLabel + ' (' + savedPenerima + ')';
-            }
-        } else {
-            localStorage.removeItem('selected_address_label');
-            localStorage.removeItem('selected_address_penerima');
-        }
-
-        document.addEventListener('click', function(event) {
-            const addrDropdown = document.getElementById('address-dropdown');
-            const addrBtn = document.getElementById('address-btn');
-
-            if (addrDropdown && !addrDropdown.classList.contains('hidden')) {
-                if (!addrDropdown.contains(event.target) && (!addrBtn || !addrBtn.contains(event.target))) {
-                    addrDropdown.classList.add('hidden');
-                    const chevron = document.getElementById('address-chevron');
-                    if (chevron) chevron.style.transform = 'rotate(0deg)';
-                }
+            // Cek jika ini alamat aktif
+            if (labelEl && labelEl.innerText.trim() === savedLabel) {
+                card.classList.remove('bg-white', 'border-gray-200');
+                card.classList.add('bg-blue-50', 'border-blue-500'); // Style Aktif Biru
+                if (checkmark) checkmark.classList.remove('hidden');
+                if (btn) btn.classList.add('hidden');
             }
         });
+    }
+
+    // Load saat refresh
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedLabel = localStorage.getItem('selected_address_label');
+        const savedPenerima = localStorage.getItem('selected_address_penerima');
+
+        if (savedLabel && savedPenerima) {
+            const el = document.getElementById('current-address-label');
+            if (el) el.innerText = savedLabel + ' (' + savedPenerima + ')';
+        }
     });
 </script>
+@endif
