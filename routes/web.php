@@ -40,6 +40,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 // ====================================================
 Route::get('/', [KioskController::class, 'index'])->name('kiosk.index');
 Route::get('/produk/{id}', [KioskController::class, 'show'])->name('produk.show');
+Route::get('/kiosk/search', [KioskController::class, 'search'])->name('kiosk.search');
 
 // ====================================================
 // 3. ROUTE PELANGGAN / BELANJA (WAJIB LOGIN)
@@ -82,7 +83,7 @@ Route::middleware(['auth'])->group(function () {
     // --- Placeholder Routes (Bundling, Pending Order, dll) ---
     Route::post('/kiosk/set-qty/{id}', [KioskController::class, 'setCartQuantity'])->name('kiosk.set.qty');
     Route::get('/kiosk/add-packet/{key}', [KioskController::class, 'addPacketToCart'])->name('kiosk.add.packet');
-    Route::post('/kiosk/hold', [KioskController::class, 'holdOrder'])->name('kiosk.hold');
+    // Route::post('/kiosk/hold', [KioskController::class, 'holdOrder'])->name('kiosk.hold');
     Route::get('/kiosk/pending', [KioskController::class, 'listPending'])->name('kiosk.pending');
     Route::get('/kiosk/recall/{id}', [KioskController::class, 'recallOrder'])->name('kiosk.recall');
 

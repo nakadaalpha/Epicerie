@@ -31,7 +31,7 @@
         </div>
 
         <div class="flex-1 px-1 lg:px-5 hidden md:block">
-            <form action="{{ route('kiosk.index') }}" method="GET" class="w-full">
+            <form action="{{ route('kiosk.search') }}" method="GET" class="w-full">
                 <div class="relative group w-full">
                     <span class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <i class="fa-solid fa-magnifying-glass text-gray-400 group-focus-within:text-blue-600 transition text-lg"></i>

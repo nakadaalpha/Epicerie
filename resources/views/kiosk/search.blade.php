@@ -24,20 +24,20 @@
     </style>
 </head>
 
-<body class="text-gray-700 font-sans">
+<body class=" text-gray-700 font-sans">
 
     @include('partials.navbar-kiosk')
 
     <div class="max-w-[1280px] mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
 
         <aside class="w-full lg:w-[280px] shrink-0">
-            <form action="{{ route('kiosk.index') }}" method="GET">
+            <form action="{{ route('kiosk.search') }}" method="GET">
                 <input type="hidden" name="search" value="{{ $keyword }}">
 
                 <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm sticky top-24">
                     <div class="flex justify-between items-center mb-4">
                         <h2 class="font-extrabold text-lg text-gray-800">Filter</h2>
-                        <a href="{{ route('kiosk.index') }}" class="text-xs text-blue-600 font-bold hover:underline">Reset</a>
+                        <a href="{{ route('kiosk.search') }}" class="text-xs text-blue-600 font-bold hover:underline">Reset</a>
                     </div>
 
                     <div class="border-b border-gray-100 py-4">
@@ -46,7 +46,7 @@
                                 <span>Kategori</span>
                                 <i class="fa-solid fa-chevron-down text-xs text-gray-400 transition-transform group-open:rotate-180"></i>
                             </summary>
-                            <div class="mt-3 space-y-2 max-h-60 overflow-y-auto">
+                            <div class="mt-3 space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
                                 @foreach($allCategories as $cat)
                                 <label class="flex items-center gap-3 cursor-pointer hover:bg-gray-50 p-1 rounded transition">
                                     <input type="checkbox" name="kategori[]" value="{{ $cat->id_kategori }}"
@@ -74,7 +74,7 @@
                                     <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-xs bg-gray-50 px-1 rounded">Rp</span>
                                     <input type="number" name="max_price" value="{{ $maxPrice }}" placeholder="Maksimum" class="w-full border border-gray-300 rounded-lg pl-10 pr-3 py-2 text-sm focus:border-blue-600 focus:ring-1 focus:ring-blue-600 outline-none">
                                 </div>
-                                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg text-sm hover:bg-blue-700 transition mt-2 shadow-md">Terapkan</button>
+                                <button type="submit" class="w-full bg-blue-600 text-white font-bold py-2 rounded-lg text-sm hover:bg-blue-700 transition mt-2 shadow-md">Terapkan Filter</button>
                             </div>
                         </details>
                     </div>
@@ -86,41 +86,33 @@
 
             <div class="mb-6">
                 @php
-                // 1. Ambil Nama Kategori yang Dipilih dari $allCategories
-                $namaKategori = $allCategories->whereIn('id_kategori', $selectedKategori)
-                ->pluck('nama_kategori')
-                ->toArray();
+                $namaKategori = $allCategories->whereIn('id_kategori', $selectedKategori)->pluck('nama_kategori')->toArray();
                 $stringKategori = implode(', ', $namaKategori);
 
-                // 2. Tentukan Teks Judul
                 if ($keyword && !empty($namaKategori)) {
-                // Kasus: Ada Keyword DAN Ada Kategori
                 $judul = 'Hasil pencarian "' . $keyword . '"';
                 $subJudul = 'di kategori ' . $stringKategori;
                 } elseif ($keyword) {
-                // Kasus: Cuma Keyword
                 $judul = 'Hasil pencarian "' . $keyword . '"';
                 $subJudul = '';
                 } elseif (!empty($namaKategori)) {
-                // Kasus: Cuma Filter Kategori (Ini solusi masalah Anda)
-                $judul = $stringKategori;
+                $judul = 'Kategori: ' . $stringKategori;
                 $subJudul = '';
                 } else {
-                // Kasus: Tidak ada filter sama sekali
                 $judul = 'Semua Produk';
                 $subJudul = '';
                 }
                 @endphp
 
-                <h1 class="text-xl font-bold text-gray-800">
-                    <span class="text-blue-600">{{ $judul }}</span>
+                <h1 class="text-2xl font-extrabold text-gray-800">
+                    {{ $judul }}
                 </h1>
 
                 @if($subJudul)
                 <p class="text-gray-500 font-medium text-sm mt-1">{{ $subJudul }}</p>
                 @endif
 
-                <p class="text-sm text-gray-400 mt-1">Menampilkan {{ count($produk) }} produk</p>
+                <p class="text-sm text-gray-400 mt-2">Menampilkan <strong>{{ count($produk) }}</strong> produk</p>
             </div>
 
             @if(session('success'))
@@ -130,26 +122,55 @@
             @endif
 
             @if($produk->isEmpty())
-            <div class="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-200 border-dashed">
-                <i class="fa-solid fa-box-open text-6xl text-gray-200 mb-4"></i>
-                <h3 class="text-lg font-bold text-gray-500">Produk tidak ditemukan</h3>
-                <p class="text-gray-400 text-sm">Coba kata kunci lain atau reset filter.</p>
+            <div class="flex flex-col items-center justify-center py-20 bg-white rounded-xl border border-gray-200 border-dashed text-center px-4">
+                <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4 text-3xl text-gray-400">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                </div>
+                <h3 class="text-lg font-bold text-gray-600">Produk tidak ditemukan</h3>
+                <p class="text-gray-400 text-sm mt-1">Coba kurangi filter atau gunakan kata kunci lain.</p>
+                <a href="{{ route('kiosk.search') }}" class="mt-4 text-blue-600 font-bold hover:underline text-sm">Lihat Semua Produk</a>
             </div>
             @else
             <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
                 @foreach($produk as $p)
-                <div class="bg-white p-3 rounded-2xl shadow-sm border flex flex-col justify-between transition-all hover:shadow-md relative group">
+                @php
+                // Helper untuk diskon (pastikan model Produk punya aksesors ini)
+                $hasDiskon = $p->persen_diskon > 0;
+                @endphp
+
+                <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex fl=ex-col justify-between transition-all hover:shadow-md hover:border-blue-200 relative group">
+
+                    @if($hasDiskon)
+                    <div class="absolute top-2 left-2 z-10 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm flex items-center gap-1">
+                        <i class="fa-solid fa-tags"></i> Hemat {{ $p->persen_diskon }}%
+                    </div>
+                    @endif
 
                     <a href="{{ route('produk.show', $p->id_produk) }}" class="block flex-1 cursor-pointer">
-                        <div class="aspect-square rounded-xl mb-2 flex items-center justify-center overflow-hidden relative">
+                        <div class="aspect-square rounded-xl mb-3 flex items-center justify-center overflow-hidden relative">
                             @if($p->gambar)
                             <img src="{{ asset('storage/' . $p->gambar) }}" class="w-full h-full object-contain p-4 group-hover:scale-110 transition duration-300">
                             @else
                             <span class="text-4xl">📦</span>
                             @endif
                         </div>
-                        <h3 class="text-sm leading-tight mb-1 truncate">{{ $p->nama_produk }}</h3>
-                        <span class="font-bold text-sm mb-1 block">Rp{{ number_format($p->harga_produk, 0, ',', '.') }}</span>
+
+                        <h3 class="font-bold text-gray-800 text-sm leading-tight mb-1 truncate">{{ $p->nama_produk }}</h3>
+
+                        @if($hasDiskon)
+                        <div class="flex flex-col items-start mb-1">
+                            <span class="text-xs text-gray-400 line-through decoration-red-400">
+                                Rp{{ number_format($p->harga_produk, 0, ',', '.') }}
+                            </span>
+                            <span class="text-blue-600 font-bold text-sm block">
+                                Rp{{ number_format($p->harga_final, 0, ',', '.') }}
+                            </span>
+                        </div>
+                        @else
+                        <span class="text-blue-600 font-bold text-sm mb-1 block">
+                            Rp{{ number_format($p->harga_produk, 0, ',', '.') }}
+                        </span>
+                        @endif
                     </a>
 
                     <div class="flex justify-end mt-2 z-20 relative">
@@ -159,7 +180,7 @@
                             <i class="fa-solid fa-plus"></i>
                         </a>
                         @else
-                        <span class="text-xs text-red-500 font-bold mb-1 py-1">Habis</span>
+                        <span class="text-xs text-red-500 font-bold mb-1 py-1 bg-red-50 px-2 rounded">Habis</span>
                         @endif
                     </div>
                 </div>
