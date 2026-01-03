@@ -5,30 +5,33 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Midtrans\Config;
+use Midtrans\Snap;
 use App\Models\Produk;
 use App\Models\Kategori;
 use App\Models\Keranjang;
 use App\Models\Transaksi;
 use App\Models\DetailTransaksi;
 use App\Models\User;
-use Midtrans\Config;
-use Midtrans\Snap;
-use Illuminate\Support\Facades\Storage;
 
 class KioskController extends Controller
 {
+    // === KONFIGURASI CONSTANT ===
     const SHOP_LAT = -7.73326;
     const SHOP_LNG = 110.33121;
     const MAX_DISTANCE_KM = 3.0;
     const ONGKIR_FLAT = 5000;
     const MIN_BELANJA = 30000;
 
-    // === 1. HALAMAN DEPAN (HOME) ===
+    // === 1. HALAMAN DEPAN (INDEX) ===
     public function index()
     {
-        // Hanya ambil data untuk tampilan Home
+        // A. Produk Terbaru
         $produkTerbaru = Produk::orderBy('created_at', 'desc')->limit(5)->get();
 
+        // B. Produk Terlaris (Strict Mode Safe)
         $produkTerlaris = Produk::select('produk.*', DB::raw('COALESCE(SUM(detail_transaksi.jumlah), 0) as total_terjual'))
             ->leftJoin('detail_transaksi', 'produk.id_produk', '=', 'detail_transaksi.id_produk')
             ->groupBy('produk.id_produk')
@@ -36,13 +39,14 @@ class KioskController extends Controller
             ->limit(5)
             ->get();
 
-        // Ambil 12 produk acak untuk grid utama "Semua Produk" di home
+        // C. Grid Produk Utama (Random 12 items)
         $produk = Produk::inRandomOrder()->limit(12)->get();
+        
         $kategoriList = Kategori::all();
         $cartData = $this->getCartSummary();
 
         return view('kiosk.index', array_merge(
-            compact('produk', 'produkTerbaru', 'produkTerlaris', 'kategoriList'),
+            compact('produk', 'produkTerbaru', 'produkTerlaris', 'kategoriList'), 
             $cartData
         ));
     }
@@ -52,34 +56,28 @@ class KioskController extends Controller
     {
         $query = Produk::query();
 
-        // 1. Filter Keyword
+        // Filter Keyword
         $keyword = $request->input('search');
         if ($keyword) {
             $query->where('nama_produk', 'LIKE', '%' . $keyword . '%');
         }
 
-        // 2. Filter Kategori (Array)
+        // Filter Kategori
         $selectedKategori = $request->input('kategori', []);
-        // Pastikan formatnya array (jika cuma 1 string, ubah jadi array)
         if (!is_array($selectedKategori) && $selectedKategori != '') {
             $selectedKategori = [$selectedKategori];
         }
-
         if (!empty($selectedKategori)) {
             $query->whereIn('id_kategori', $selectedKategori);
         }
 
-        // 3. Filter Harga
+        // Filter Harga
         $minPrice = $request->input('min_price');
         $maxPrice = $request->input('max_price');
-
         if ($minPrice) $query->where('harga_produk', '>=', $minPrice);
         if ($maxPrice) $query->where('harga_produk', '<=', $maxPrice);
 
-        // Eksekusi Query
         $produk = $query->orderBy('nama_produk', 'asc')->get();
-
-        // Data Pendukung View
         $allCategories = Kategori::all();
         $cartData = $this->getCartSummary();
 
@@ -104,7 +102,7 @@ class KioskController extends Controller
         return view('kiosk.show', array_merge(compact('produk', 'produkLain'), $cartData));
     }
 
-    // === HELPER CART ===
+    // === HELPER: Data Keranjang ===
     private function getCartSummary()
     {
         if (!Auth::check()) {
@@ -114,19 +112,11 @@ class KioskController extends Controller
         return ['totalItemKeranjang' => array_sum($keranjangItems), 'keranjangItems' => $keranjangItems];
     }
 
-    // ... (SISA FUNGSI LAIN: addToCart, checkout, processPayment, dll TETAP SAMA SEPERTI SEBELUMNYA) ...
-    // Pastikan Anda menyalin fungsi-fungsi transaksi, midtrans, profile, alamat dari kode sebelumnya ke sini.
-
-    // === HELPER: AMBIL DATA KERANJANG ===
-    // (Sudah ada di atas)
-
-    // === 3. TAMBAH KERANJANG ===
+    // === 4. ADD TO CART ===
     public function addToCart(Request $request, $id)
     {
         if (!Auth::check()) {
-            if ($request->ajax()) {
-                return response()->json(['status' => 'error', 'message' => 'Silakan login terlebih dahulu!', 'redirect' => route('login')]);
-            }
+            if ($request->ajax()) return response()->json(['status' => 'error', 'message' => 'Login dulu!', 'redirect' => route('login')]);
             return redirect()->route('login');
         }
 
@@ -149,7 +139,7 @@ class KioskController extends Controller
         return back()->with('success', 'Masuk keranjang!');
     }
 
-    // === 4. HALAMAN CHECKOUT ===
+    // === 5. CHECKOUT ===
     public function checkout()
     {
         if (!Auth::check()) return redirect()->route('login');
@@ -171,7 +161,7 @@ class KioskController extends Controller
         return view('kiosk.checkout', compact('keranjang', 'subtotal', 'ongkir', 'totalBayar', 'daftarAlamat'));
     }
 
-    // === 5. PROSES BAYAR ===
+    // === 6. PROSES BAYAR ===
     public function processPayment(Request $request)
     {
         if (!Auth::check()) return response()->json(['error' => 'Unauthorized'], 401);
@@ -186,8 +176,10 @@ class KioskController extends Controller
         $ongkir = self::ONGKIR_FLAT;
         $grandTotal = $subtotal + $ongkir;
 
+        // Ambil ID Alamat (Prioritas dari Request, Fallback ke Utama)
         $idAlamat = $request->id_alamat ?? DB::table('alamat_pengiriman')->where('id_user', $userId)->orderBy('is_primary', 'desc')->value('id_alamat');
 
+        // Bayar Tunai
         if ($request->metode_pembayaran == 'Tunai') {
             try {
                 $idTrx = $this->createTransaction($userId, $idAlamat, $grandTotal, $ongkir, 'Tunai', 'diproses', $keranjang);
@@ -197,15 +189,15 @@ class KioskController extends Controller
             }
         }
 
-        // Midtrans Logic
+        // Bayar Midtrans
         try {
             Config::$serverKey = config('midtrans.server_key');
             Config::$isProduction = config('midtrans.is_production');
             Config::$isSanitized = true;
             Config::$is3ds = true;
-
+            
             $params = [
-                'transaction_details' => ['order_id' => 'MID-' . time() . rand(100, 999), 'gross_amount' => $grandTotal],
+                'transaction_details' => ['order_id' => 'MID-' . time() . rand(100,999), 'gross_amount' => $grandTotal],
                 'customer_details' => ['first_name' => Auth::user()->nama, 'email' => Auth::user()->email, 'phone' => Auth::user()->no_hp]
             ];
             return response()->json(['snap_token' => Snap::getSnapToken($params)]);
@@ -270,7 +262,7 @@ class KioskController extends Controller
         }
     }
 
-    // --- RIWAYAT, SUCCESS PAGE, DLL ---
+    // === 7. RIWAYAT & TRACKING ===
     public function riwayatTransaksi(Request $request)
     {
         if (!Auth::check()) return redirect()->route('login');
@@ -280,70 +272,171 @@ class KioskController extends Controller
         return view('kiosk.riwayat', compact('riwayat'));
     }
 
+    public function trackingPage($id)
+    {
+        $trx = Transaksi::with('detailTransaksi.produk')->findOrFail($id);
+        return view('kiosk.tracking', compact('trx'));
+    }
+
     public function successPage($id)
     {
         $transaksi = DB::table('transaksi')->where('id_transaksi', $id)->first();
         if (!$transaksi || (Auth::check() && $transaksi->id_user_pembeli != Auth::id())) return redirect()->route('kiosk.index');
-
+        
         $details = DB::table('detail_transaksi')
             ->join('produk', 'detail_transaksi.id_produk', '=', 'produk.id_produk')
             ->where('id_transaksi', $id)->get();
         return view('kiosk.success', compact('transaksi', 'details'));
     }
 
-    // --- PROFILE & ADDRESS ---
+    // === 8. PROFILE MANAGEMENT (YANG DIPERBAIKI) ===
     public function profile()
     {
         $user = Auth::user();
-        $alamat = DB::table('alamat_pengiriman')->where('id_user', $user->id_user)->orderBy('is_primary', 'desc')->get();
+        $alamat = DB::table('alamat_pengiriman')
+            ->where('id_user', $user->id_user)
+            ->orderBy('is_primary', 'desc')
+            ->orderBy('created_at', 'desc')
+            ->get();
         return view('kiosk.profile', compact('user', 'alamat'));
     }
 
+    // Update Biodata (Nama, Email, HP)
     public function updateProfile(Request $request)
     {
-        User::find(Auth::id())->update($request->only(['nama', 'email', 'no_hp']));
-        return back()->with('success', 'Updated!');
+        $user = User::find(Auth::id());
+
+        $request->validate([
+            'nama' => 'required|string|max:255',
+            'email' => 'nullable|email|max:100|unique:user,email,' . $user->id_user . ',id_user',
+            'no_hp' => 'nullable|numeric|digits_between:10,15',
+        ]);
+
+        $user->nama = $request->nama;
+        if($request->has('email')) $user->email = $request->email;
+        if($request->has('no_hp')) $user->no_hp = $request->no_hp;
+        
+        $user->save();
+
+        return back()->with('success', 'Data profil berhasil diperbarui!');
     }
 
+    // Update Foto Profil
     public function updatePhoto(Request $request)
     {
-        $request->validate(['foto_profil' => 'image|max:2048']);
+        $request->validate([
+            'foto_profil' => 'required|image|mimes:jpeg,png,jpg|max:2048',
+        ]);
+
+        $user = User::find(Auth::id());
+
         if ($request->hasFile('foto_profil')) {
-            $user = User::find(Auth::id());
-            if ($user->foto_profil) Storage::disk('public')->delete($user->foto_profil);
-            $user->update(['foto_profil' => $request->file('foto_profil')->store('profiles', 'public')]);
+            // Hapus foto lama
+            if ($user->foto_profil && Storage::disk('public')->exists($user->foto_profil)) {
+                Storage::disk('public')->delete($user->foto_profil);
+            }
+            // Simpan baru
+            $user->foto_profil = $request->file('foto_profil')->store('profiles', 'public');
+            $user->save();
         }
-        return back()->with('success', 'Foto updated!');
+
+        return back()->with('success', 'Foto profil diperbarui!');
     }
 
-    // --- ALAMAT ---
+    // === 9. ALAMAT MANAGEMENT ===
+    private function validateDistance($plusCodeInput)
+    {
+        $cleanCode = strtoupper(trim($plusCodeInput));
+        preg_match('/[A-Z0-9]{4,8}\+[A-Z0-9]{2,}/', $cleanCode, $matches);
+        $cleanCode = !empty($matches) ? $matches[0] : $cleanCode;
+
+        try {
+            $response = Http::withoutVerifying()->timeout(5)
+                ->withHeaders(['User-Agent' => 'EpicerieApp/1.0'])
+                ->get('https://nominatim.openstreetmap.org/search', [
+                    'q' => $cleanCode . ' Sleman, Yogyakarta',
+                    'format' => 'json',
+                    'limit' => 1
+                ]);
+
+            if ($response->failed() || empty($response->json())) {
+                return ['valid' => true, 'bypass' => true, 'clean_code' => $cleanCode];
+            }
+
+            $data = $response->json();
+            if (!empty($data) && isset($data[0]['lat'], $data[0]['lon'])) {
+                $latUser = $data[0]['lat'];
+                $lngUser = $data[0]['lon'];
+
+                $theta = self::SHOP_LNG - $lngUser;
+                $dist = sin(deg2rad(self::SHOP_LAT)) * sin(deg2rad($latUser)) + cos(deg2rad(self::SHOP_LAT)) * cos(deg2rad($latUser)) * cos(deg2rad($theta));
+                $dist = acos($dist);
+                $dist = rad2deg($dist);
+                $miles = $dist * 60 * 1.1515;
+                $km = $miles * 1.609344;
+
+                return [
+                    'valid' => $km <= self::MAX_DISTANCE_KM,
+                    'distance' => round($km, 2),
+                    'lat' => $latUser,
+                    'lng' => $lngUser,
+                    'clean_code' => $cleanCode
+                ];
+            }
+        } catch (\Exception $e) {
+            return ['valid' => true, 'bypass' => true, 'clean_code' => $cleanCode];
+        }
+        return ['valid' => false, 'error' => 'Format kode salah.'];
+    }
+
     public function addAddress(Request $request)
     {
-        // Validasi simpel tanpa cek jarak API (Biar gak error di localhost)
+        $request->validate([
+            'label' => 'required', 'penerima' => 'required', 'no_hp_penerima' => 'required',
+            'detail_alamat' => 'required', 'plus_code' => 'required'
+        ]);
+
+        $check = $this->validateDistance($request->plus_code);
+        if (isset($check['error'])) return back()->with('error', $check['error'])->withInput();
+        if (!$check['valid']) return back()->with('error', "Jarak terlalu jauh ({$check['distance']} KM).")->withInput();
+
         DB::table('alamat_pengiriman')->insert([
             'id_user' => Auth::id(),
             'label' => $request->label,
             'penerima' => $request->penerima,
             'no_hp_penerima' => $request->no_hp_penerima,
             'detail_alamat' => $request->detail_alamat,
-            'plus_code' => $request->plus_code,
+            'latitude' => $check['lat'] ?? null,
+            'longitude' => $check['lng'] ?? null,
+            'plus_code' => $check['clean_code'],
             'created_at' => now(),
-            'updated_at' => now()
+            'updated_at' => now(),
         ]);
         return back()->with('success', 'Alamat disimpan!');
     }
 
     public function updateAddress(Request $request, $id)
     {
+        $request->validate([
+            'label' => 'required', 'penerima' => 'required', 'no_hp_penerima' => 'required',
+            'detail_alamat' => 'required', 'plus_code' => 'required'
+        ]);
+
+        $check = $this->validateDistance($request->plus_code);
+        if (isset($check['error'])) return back()->with('error', $check['error'])->withInput();
+        if (!$check['valid']) return back()->with('error', "Update gagal! Jarak {$check['distance']} KM.")->withInput();
+
         DB::table('alamat_pengiriman')->where('id_alamat', $id)->where('id_user', Auth::id())->update([
             'label' => $request->label,
             'penerima' => $request->penerima,
             'no_hp_penerima' => $request->no_hp_penerima,
             'detail_alamat' => $request->detail_alamat,
-            'plus_code' => $request->plus_code,
+            'latitude' => $check['lat'] ?? null,
+            'longitude' => $check['lng'] ?? null,
+            'plus_code' => $check['clean_code'],
             'updated_at' => now()
         ]);
-        return back()->with('success', 'Alamat updated!');
+        return back()->with('success', 'Alamat diperbarui!');
     }
 
     public function setPrimaryAddress($id)
@@ -359,33 +452,17 @@ class KioskController extends Controller
         return back()->with('success', 'Alamat dihapus.');
     }
 
-    // --- CART ACTIONS ---
-    public function emptyCart()
-    {
-        Keranjang::where('id_user', Auth::id())->delete();
-        return back();
-    }
-    public function increaseItem($id)
-    {
+    // === 10. KERANJANG UTILS ===
+    public function emptyCart() { Keranjang::where('id_user', Auth::id())->delete(); return back(); }
+    public function increaseItem($id) { 
         $item = Keranjang::where('id_user', Auth::id())->where('id_produk', $id)->first();
-        if ($item && $item->produk->stok > $item->jumlah) $item->increment('jumlah');
-        return back();
+        if($item && $item->produk->stok > $item->jumlah) $item->increment('jumlah');
+        return back(); 
     }
-    public function decreaseItem($id)
-    {
+    public function decreaseItem($id) {
         $item = Keranjang::where('id_user', Auth::id())->where('id_produk', $id)->first();
-        if ($item) $item->jumlah > 1 ? $item->decrement('jumlah') : $item->delete();
+        if($item) $item->jumlah > 1 ? $item->decrement('jumlah') : $item->delete();
         return back();
     }
-    public function removeItem($id)
-    {
-        Keranjang::where('id_user', Auth::id())->where('id_produk', $id)->delete();
-        return back();
-    }
-
-    public function trackingPage($id)
-    {
-        $trx = Transaksi::with('detailTransaksi.produk')->findOrFail($id);
-        return view('kiosk.tracking', compact('trx'));
-    }
+    public function removeItem($id) { Keranjang::where('id_user', Auth::id())->where('id_produk', $id)->delete(); return back(); }
 }

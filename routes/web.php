@@ -70,8 +70,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/tracking/{id}', [KioskController::class, 'trackingPage'])->name('kiosk.tracking');
 
     // --- FITUR UPDATE PROFIL (BARU DITAMBAHKAN) ---
-    Route::post('/profile/update', [KioskController::class, 'updateProfile'])->name('profile.update');
+    // Route Update Foto
     Route::post('/profile/photo', [KioskController::class, 'updatePhoto'])->name('profile.photo');
+
+    // Route Update Data (Biodata & Kontak pakai satu route ini saja agar hemat)
+    Route::post('/profile/update', [KioskController::class, 'updateProfile'])->name('profile.update');
 
     // --- FITUR ALAMAT (BARU DITAMBAHKAN) ---
     Route::post('/profile/address', [KioskController::class, 'addAddress'])->name('profile.address.add');
