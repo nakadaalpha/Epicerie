@@ -28,11 +28,40 @@ class KioskController extends Controller
     // === 1. HALAMAN DEPAN (HOME) ===
     public function index()
     {
+        // 0. SLIDER (DENGAN FAIL-SAFE & DUMMY)
+        try {
+            // Coba ambil dari database
+            $sliders = Slider::where('is_active', 1)->orderBy('urutan', 'asc')->get();
+        } catch (\Exception $e) {
+            // Jika tabel belum ada (biar gak error 500)
+            $sliders = collect([]);
+        }
+
+        // JIKA KOSONG, ISI DENGAN DUMMY (Supaya tampilan tidak rusak)
+        if ($sliders->isEmpty()) {
+            $sliders = collect([
+                (object)[
+                    'gambar' => 'https://placehold.co/1200x400/3b82f6/ffffff?text=Promo+Spesial+Hari+Ini',
+                    'judul' => 'Promo Dummy 1',
+                    'is_dummy' => true // Penanda biar view tahu ini gambar online
+                ],
+                (object)[
+                    'gambar' => 'https://placehold.co/1200x400/f97316/ffffff?text=Gratis+Ongkir+Se-Indonesia',
+                    'judul' => 'Promo Dummy 2',
+                    'is_dummy' => true
+                ],
+                (object)[
+                    'gambar' => 'https://placehold.co/1200x400/10b981/ffffff?text=Diskon+50%25+Produk+Baru',
+                    'judul' => 'Promo Dummy 3',
+                    'is_dummy' => true
+                ]
+            ]);
+        }
+
         // A. Produk Terbaru
         $produkTerbaru = Produk::orderBy('created_at', 'desc')->limit(5)->get();
 
-        // B. Produk Terlaris (Menggunakan Left Join untuk menghitung total terjual)
-        // Pastikan 'strict' => false di config/database.php agar tidak error GROUP BY
+        // B. Produk Terlaris
         $produkTerlaris = Produk::select('produk.*', DB::raw('COALESCE(SUM(detail_transaksi.jumlah), 0) as total_terjual'))
             ->leftJoin('detail_transaksi', 'produk.id_produk', '=', 'detail_transaksi.id_produk')
             ->groupBy('produk.id_produk')
@@ -40,14 +69,14 @@ class KioskController extends Controller
             ->limit(5)
             ->get();
 
-        // C. Grid Produk Utama (Random 12 items untuk variasi)
+        // C. Grid Produk Utama
         $produk = Produk::inRandomOrder()->limit(12)->get();
 
         $kategoriList = Kategori::all();
         $cartData = $this->getCartSummary();
 
         return view('kiosk.index', array_merge(
-            compact('produk', 'produkTerbaru', 'produkTerlaris', 'kategoriList'),
+            compact('produk', 'produkTerbaru', 'produkTerlaris', 'kategoriList', 'sliders'),
             $cartData
         ));
     }

@@ -6,6 +6,7 @@ use App\Http\Controllers\Dashboard;
 use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\KioskController;
 use App\Http\Controllers\KategoriController;
+use App\Http\Controllers\SliderController;
 use App\Http\Controllers\InventarisController;
 use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\KurirController;
@@ -103,6 +104,15 @@ Route::middleware(['auth', AdminOnly::class])->prefix('admin')->group(function (
         Route::get('/edit/{id}', [KategoriController::class, 'edit'])->name('edit');
         Route::put('/update/{id}', [KategoriController::class, 'update'])->name('update');
         Route::get('/delete/{id}', [KategoriController::class, 'destroy'])->name('destroy');
+    });
+
+    Route::prefix('slider')->name('slider.')->group(function () {
+        Route::get('/', [SliderController::class, 'index'])->name('index');
+        Route::get('/create', [SliderController::class, 'create'])->name('create');
+        Route::post('/store', [SliderController::class, 'store'])->name('store');
+        Route::get('/edit/{id}', [SliderController::class, 'edit'])->name('edit');
+        Route::put('/update/{id}', [SliderController::class, 'update'])->name('update');
+        Route::delete('/delete/{id}', [SliderController::class, 'destroy'])->name('destroy');
     });
 
     Route::prefix('karyawan')->name('karyawan.')->group(function () {

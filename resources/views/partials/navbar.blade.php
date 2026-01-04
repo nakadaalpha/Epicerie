@@ -1,6 +1,6 @@
 <nav class="bg-blue-600 text-white p-4 shadow-md sticky top-0 z-50">
     <div class="container mx-auto flex justify-between items-center">
-        <a href="{{ route('dashboard') }}" class="text-xl font-bold tracking-widest hover:text-blue-200 transition transform hover:scale-105 duration-200">
+        <a href="{{ route('kiosk.index') }}" class="text-xl font-bold tracking-widest hover:text-blue-200 transition transform hover:scale-105 duration-200">
             ÈPICERIE
         </a>
 
@@ -9,6 +9,11 @@
             <a href="{{ route('dashboard') }}"
                 class="{{ request()->routeIs('dashboard') ? 'border-b-2 border-white pb-1 font-bold' : 'opacity-80 hover:opacity-100 transition' }}">
                 Dashboard
+            </a>
+
+            <a href="{{ route('slider.index') }}"
+                class="{{ request()->routeIs('slider*') ? 'border-b-2 border-white pb-1 font-bold' : 'opacity-80 hover:opacity-100 transition' }}">
+                Slider
             </a>
 
             <a href="{{ route('kategori.index') }}"
@@ -91,9 +96,9 @@
                     </a>
 
                     <a href="{{ route('kiosk.index') }}" class="flex items-center px-4 py-3 text-sm font-bold text-gray-700 hover:bg-gray-100 hover:text-blue-600 rounded-xl transition group">
-                            <div class="w-6 flex justify-center mr-2"><i class="fa-solid fa-store text-gray-400 group-hover:text-blue-600 transition text-base"></i></div>
-                            Lihat Toko
-                        </a>
+                        <div class="w-6 flex justify-center mr-2"><i class="fa-solid fa-store text-gray-400 group-hover:text-blue-600 transition text-base"></i></div>
+                        Lihat Toko
+                    </a>
                 </div>
 
                 <div class="p-2 pt-0">
@@ -118,28 +123,24 @@
         const isHidden = dropdown.classList.contains('hidden');
 
         if (isHidden) {
-            // Buka Dropdown (Hapus hidden, tambah animasi masuk)
             dropdown.classList.remove('hidden');
             setTimeout(() => {
                 dropdown.classList.remove('scale-95', 'opacity-0');
                 dropdown.classList.add('scale-100', 'opacity-100');
-            }, 10); // Delay dikit biar transisi jalan
+            }, 10);
         } else {
-            // Tutup Dropdown
             dropdown.classList.remove('scale-100', 'opacity-100');
             dropdown.classList.add('scale-95', 'opacity-0');
             setTimeout(() => {
                 dropdown.classList.add('hidden');
-            }, 200); // Tunggu animasi selesai baru hide
+            }, 200);
         }
     }
 
-    // Tutup dropdown kalau klik di luar area
     window.onclick = function(event) {
         const button = document.getElementById('user-menu-button');
         const dropdown = document.getElementById('user-menu-dropdown');
 
-        // Cek apakah yang diklik BUKAN tombol dan BUKAN dropdown itu sendiri
         if (!button.contains(event.target) && !dropdown.contains(event.target)) {
             if (!dropdown.classList.contains('hidden')) {
                 dropdown.classList.remove('scale-100', 'opacity-100');
