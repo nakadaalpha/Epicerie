@@ -8,10 +8,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        /* Animasi halus untuk input */
-        .form-input:focus-within {
-            transform: scale(1.02);
-        }
+        .form-input:focus-within { transform: scale(1.02); }
     </style>
 </head>
 
@@ -40,6 +37,16 @@
                 </div>
             </div>
             @endif
+            
+            @if (session('success'))
+            <div class="bg-green-50 border-l-4 border-green-500 text-green-600 p-4 rounded-xl mb-6 text-sm flex items-start shadow-sm">
+                <i class="fa-solid fa-circle-check mt-0.5 mr-2"></i>
+                <div>
+                    <span class="font-bold block">Sukses!</span>
+                    {{ session('success') }}
+                </div>
+            </div>
+            @endif
 
             <form action="{{ route('login.authenticate') }}" method="POST" class="space-y-5">
                 @csrf
@@ -50,12 +57,7 @@
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                             <i class="fa-solid fa-user text-gray-400"></i>
                         </div>
-                        <input type="text"
-                            name="username"
-                            value="{{ old('username') }}"
-                            class="w-full bg-gray-50 text-gray-800 border-none rounded-2xl py-3.5 pl-11 pr-4 focus:ring-2 focus:ring-[#3b4bbd] focus:bg-white transition duration-200 shadow-inner"
-                            placeholder="Masukkan username"
-                            required>
+                        <input type="text" name="username" value="{{ old('username') }}" class="w-full bg-gray-50 text-gray-800 border-none rounded-2xl py-3.5 pl-11 pr-4 focus:ring-2 focus:ring-[#3b4bbd] focus:bg-white transition duration-200 shadow-inner" placeholder="Masukkan username" required>
                     </div>
                 </div>
 
@@ -65,11 +67,7 @@
                         <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                             <i class="fa-solid fa-lock text-gray-400"></i>
                         </div>
-                        <input type="password"
-                            name="password"
-                            class="w-full bg-gray-50 text-gray-800 border-none rounded-2xl py-3.5 pl-11 pr-4 focus:ring-2 focus:ring-[#3b4bbd] focus:bg-white transition duration-200 shadow-inner"
-                            placeholder="Masukkan password"
-                            required>
+                        <input type="password" name="password" class="w-full bg-gray-50 text-gray-800 border-none rounded-2xl py-3.5 pl-11 pr-4 focus:ring-2 focus:ring-[#3b4bbd] focus:bg-white transition duration-200 shadow-inner" placeholder="Masukkan password" required>
                     </div>
                 </div>
 
@@ -83,9 +81,8 @@
                         <input type="checkbox" class="form-checkbox h-4 w-4 text-[#3b4bbd] rounded border-gray-300 focus:ring-[#3b4bbd]">
                         <span class="ml-2">Ingat Saya</span>
                     </label>
-                    <a href="#" class="hover:text-[#3b4bbd] transition">Lupa Password?</a>
+                    <a href="{{ route('password.forgot') }}" class="hover:text-[#3b4bbd] transition font-bold">Lupa Password?</a>
                 </div>
-
 
                 <div class="mt-6 text-center border-t border-gray-100 pt-4">
                     <p class="text-gray-500 text-sm">Belum terdaftar?</p>
@@ -95,12 +92,9 @@
                 </div>
             </form>
         </div>
-
         <div class="text-center mt-8 text-gray-400 text-xs">
             &copy; {{ date('Y') }} ÈPICERIE POS System
         </div>
     </div>
-
 </body>
-
 </html>

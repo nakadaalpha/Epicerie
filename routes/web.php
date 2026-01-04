@@ -21,6 +21,11 @@ Route::middleware(['guest'])->group(function () {
 
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [AuthController::class, 'register'])->name('register.proses');
+
+    // --- FITUR LUPA PASSWORD ---
+    Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('password.forgot');
+    Route::post('/forgot-password', [AuthController::class, 'verifyUser'])->name('password.verify');
+    Route::post('/reset-password', [AuthController::class, 'processResetPassword'])->name('password.reset.process');
 });
 
 // Route Logout
