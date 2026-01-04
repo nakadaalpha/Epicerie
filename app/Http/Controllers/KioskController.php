@@ -25,13 +25,14 @@ class KioskController extends Controller
     const ONGKIR_FLAT = 5000;
     const MIN_BELANJA = 30000;
 
-    // === 1. HALAMAN DEPAN (INDEX) ===
+    // === 1. HALAMAN DEPAN (HOME) ===
     public function index()
     {
         // A. Produk Terbaru
         $produkTerbaru = Produk::orderBy('created_at', 'desc')->limit(5)->get();
 
-        // B. Produk Terlaris (Strict Mode Safe)
+        // B. Produk Terlaris (Menggunakan Left Join untuk menghitung total terjual)
+        // Pastikan 'strict' => false di config/database.php agar tidak error GROUP BY
         $produkTerlaris = Produk::select('produk.*', DB::raw('COALESCE(SUM(detail_transaksi.jumlah), 0) as total_terjual'))
             ->leftJoin('detail_transaksi', 'produk.id_produk', '=', 'detail_transaksi.id_produk')
             ->groupBy('produk.id_produk')
@@ -39,14 +40,14 @@ class KioskController extends Controller
             ->limit(5)
             ->get();
 
-        // C. Grid Produk Utama (Random 12 items)
+        // C. Grid Produk Utama (Random 12 items untuk variasi)
         $produk = Produk::inRandomOrder()->limit(12)->get();
-        
+
         $kategoriList = Kategori::all();
         $cartData = $this->getCartSummary();
 
         return view('kiosk.index', array_merge(
-            compact('produk', 'produkTerbaru', 'produkTerlaris', 'kategoriList'), 
+            compact('produk', 'produkTerbaru', 'produkTerlaris', 'kategoriList'),
             $cartData
         ));
     }
@@ -195,9 +196,9 @@ class KioskController extends Controller
             Config::$isProduction = config('midtrans.is_production');
             Config::$isSanitized = true;
             Config::$is3ds = true;
-            
+
             $params = [
-                'transaction_details' => ['order_id' => 'MID-' . time() . rand(100,999), 'gross_amount' => $grandTotal],
+                'transaction_details' => ['order_id' => 'MID-' . time() . rand(100, 999), 'gross_amount' => $grandTotal],
                 'customer_details' => ['first_name' => Auth::user()->nama, 'email' => Auth::user()->email, 'phone' => Auth::user()->no_hp]
             ];
             return response()->json(['snap_token' => Snap::getSnapToken($params)]);
@@ -282,7 +283,7 @@ class KioskController extends Controller
     {
         $transaksi = DB::table('transaksi')->where('id_transaksi', $id)->first();
         if (!$transaksi || (Auth::check() && $transaksi->id_user_pembeli != Auth::id())) return redirect()->route('kiosk.index');
-        
+
         $details = DB::table('detail_transaksi')
             ->join('produk', 'detail_transaksi.id_produk', '=', 'produk.id_produk')
             ->where('id_transaksi', $id)->get();
@@ -313,9 +314,9 @@ class KioskController extends Controller
         ]);
 
         $user->nama = $request->nama;
-        if($request->has('email')) $user->email = $request->email;
-        if($request->has('no_hp')) $user->no_hp = $request->no_hp;
-        
+        if ($request->has('email')) $user->email = $request->email;
+        if ($request->has('no_hp')) $user->no_hp = $request->no_hp;
+
         $user->save();
 
         return back()->with('success', 'Data profil berhasil diperbarui!');
@@ -392,8 +393,11 @@ class KioskController extends Controller
     public function addAddress(Request $request)
     {
         $request->validate([
-            'label' => 'required', 'penerima' => 'required', 'no_hp_penerima' => 'required',
-            'detail_alamat' => 'required', 'plus_code' => 'required'
+            'label' => 'required',
+            'penerima' => 'required',
+            'no_hp_penerima' => 'required',
+            'detail_alamat' => 'required',
+            'plus_code' => 'required'
         ]);
 
         $check = $this->validateDistance($request->plus_code);
@@ -418,8 +422,11 @@ class KioskController extends Controller
     public function updateAddress(Request $request, $id)
     {
         $request->validate([
-            'label' => 'required', 'penerima' => 'required', 'no_hp_penerima' => 'required',
-            'detail_alamat' => 'required', 'plus_code' => 'required'
+            'label' => 'required',
+            'penerima' => 'required',
+            'no_hp_penerima' => 'required',
+            'detail_alamat' => 'required',
+            'plus_code' => 'required'
         ]);
 
         $check = $this->validateDistance($request->plus_code);
@@ -453,16 +460,44 @@ class KioskController extends Controller
     }
 
     // === 10. KERANJANG UTILS ===
-    public function emptyCart() { Keranjang::where('id_user', Auth::id())->delete(); return back(); }
-    public function increaseItem($id) { 
-        $item = Keranjang::where('id_user', Auth::id())->where('id_produk', $id)->first();
-        if($item && $item->produk->stok > $item->jumlah) $item->increment('jumlah');
-        return back(); 
-    }
-    public function decreaseItem($id) {
-        $item = Keranjang::where('id_user', Auth::id())->where('id_produk', $id)->first();
-        if($item) $item->jumlah > 1 ? $item->decrement('jumlah') : $item->delete();
+    public function emptyCart()
+    {
+        Keranjang::where('id_user', Auth::id())->delete();
         return back();
     }
-    public function removeItem($id) { Keranjang::where('id_user', Auth::id())->where('id_produk', $id)->delete(); return back(); }
+    public function increaseItem($id)
+    {
+        $item = Keranjang::where('id_user', Auth::id())->where('id_produk', $id)->first();
+        if ($item && $item->produk->stok > $item->jumlah) $item->increment('jumlah');
+        return back();
+    }
+    public function decreaseItem($id)
+    {
+        $item = Keranjang::where('id_user', Auth::id())->where('id_produk', $id)->first();
+        if ($item) $item->jumlah > 1 ? $item->decrement('jumlah') : $item->delete();
+        return back();
+    }
+    public function removeItem($id)
+    {
+        Keranjang::where('id_user', Auth::id())->where('id_produk', $id)->delete();
+        return back();
+    }
+
+    // Placeholder (Jika diperlukan untuk error handling)
+    public function setCartQuantity()
+    {
+        return back();
+    }
+    public function addPacketToCart()
+    {
+        return back();
+    }
+    public function recallOrder()
+    {
+        return back();
+    }
+    public function listPending()
+    {
+        return back();
+    }
 }

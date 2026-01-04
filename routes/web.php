@@ -11,16 +11,6 @@ use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\KurirController;
 use App\Http\Middleware\AdminOnly;
 
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-*/
-
-Route::get('/tester_', function () {
-    return view('tester');
-});
-
 // ====================================================
 // 1. ROUTE GUEST (Hanya yang BELUM Login)
 // ====================================================
@@ -40,7 +30,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 // ====================================================
 Route::get('/', [KioskController::class, 'index'])->name('kiosk.index');
 Route::get('/produk/{id}', [KioskController::class, 'show'])->name('produk.show');
-Route::get('/kiosk/search', [KioskController::class, 'search'])->name('kiosk.search');
+Route::get('/kiosk/search', [KioskController::class, 'search'])->name('kiosk.search'); // Route Search Baru
 
 // ====================================================
 // 3. ROUTE PELANGGAN / BELANJA (WAJIB LOGIN)
@@ -65,32 +55,25 @@ Route::middleware(['auth'])->group(function () {
     // --- User Dashboard & Profile ---
     Route::get('/profile', [KioskController::class, 'profile'])->name('kiosk.profile');
     Route::get('/riwayat', [KioskController::class, 'riwayatTransaksi'])->name('kiosk.riwayat');
-
-    // HALAMAN TRACKING REALTIME
     Route::get('/tracking/{id}', [KioskController::class, 'trackingPage'])->name('kiosk.tracking');
 
-    // --- FITUR UPDATE PROFIL (BARU DITAMBAHKAN) ---
-    // Route Update Foto
+    // --- FITUR UPDATE PROFIL ---
     Route::post('/profile/photo', [KioskController::class, 'updatePhoto'])->name('profile.photo');
-
-    // Route Update Data (Biodata & Kontak pakai satu route ini saja agar hemat)
     Route::post('/profile/update', [KioskController::class, 'updateProfile'])->name('profile.update');
 
-    // --- FITUR ALAMAT (BARU DITAMBAHKAN) ---
+    // --- FITUR ALAMAT ---
     Route::post('/profile/address', [KioskController::class, 'addAddress'])->name('profile.address.add');
-    // Rute untuk Update Alamat (PENTING: Tambahkan ini agar tombol Edit jalan)
-    Route::post('/profile/address/update/{id}', [App\Http\Controllers\KioskController::class, 'updateAddress'])->name('profile.address.update');
+    Route::post('/profile/address/update/{id}', [KioskController::class, 'updateAddress'])->name('profile.address.update');
     Route::get('/profile/address/delete/{id}', [KioskController::class, 'deleteAddress'])->name('profile.address.delete');
     Route::post('/profile/address/set-primary/{id}', [KioskController::class, 'setPrimaryAddress'])->name('address.setPrimary');
 
-    // --- Placeholder Routes (Bundling, Pending Order, dll) ---
+    // --- Placeholder Routes (Untuk mencegah error route not found di JS lama) ---
     Route::post('/kiosk/set-qty/{id}', [KioskController::class, 'setCartQuantity'])->name('kiosk.set.qty');
     Route::get('/kiosk/add-packet/{key}', [KioskController::class, 'addPacketToCart'])->name('kiosk.add.packet');
-    // Route::post('/kiosk/hold', [KioskController::class, 'holdOrder'])->name('kiosk.hold');
     Route::get('/kiosk/pending', [KioskController::class, 'listPending'])->name('kiosk.pending');
     Route::get('/kiosk/recall/{id}', [KioskController::class, 'recallOrder'])->name('kiosk.recall');
 
-    // --- ROUTE KHUSUS KURIR (APLIKASI KURIR) ---
+    // --- ROUTE KHUSUS KURIR ---
     Route::get('/kurir/dashboard', [KurirController::class, 'index'])->name('kurir.index');
     Route::post('/kurir/mulai/{id}', [KurirController::class, 'mulaiAntar'])->name('kurir.mulai');
     Route::post('/kurir/selesai/{id}', [KurirController::class, 'selesaiAntar'])->name('kurir.selesai');
@@ -102,7 +85,7 @@ Route::middleware(['auth'])->group(function () {
 // ====================================================
 Route::middleware(['auth', AdminOnly::class])->prefix('admin')->group(function () {
 
-    Route::get('/', [Dashboard::class, 'index'])->name('dashboard'); // Akses: /admin
+    Route::get('/', [Dashboard::class, 'index'])->name('dashboard');
 
     Route::prefix('inventaris')->group(function () {
         Route::get('/', [InventarisController::class, 'index'])->name('inventaris.index');
@@ -131,10 +114,7 @@ Route::middleware(['auth', AdminOnly::class])->prefix('admin')->group(function (
         Route::get('/hapus/{id}', [KaryawanController::class, 'destroy'])->name('hapus');
     });
 
-    // --- MANAJEMEN TRANSAKSI (OPERASIONAL) ---
     Route::get('/transaksi', [TransaksiController::class, 'index'])->name('transaksi.index');
     Route::post('/transaksi/update-status/{id}', [TransaksiController::class, 'updateStatus'])->name('transaksi.update');
-
-    // --- LAPORAN PENJUALAN (ANALYTICS) ---
     Route::get('/laporan', [TransaksiController::class, 'laporan'])->name('laporan.index');
 });

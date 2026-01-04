@@ -329,7 +329,7 @@
                         <span class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center text-sm"><i class="fa-solid fa-map-location-dot"></i></span>
                         Daftar Alamat
                     </h2>
-                    <button onclick="openAddAddressModal()" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-xs hover:bg-blue-700 transition shadow-lg shadow-blue-600/20">
+                    <button onclick="openAddAddressModal()" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-lg text-xs hover:bg-blue-700 transition">
                         <i class="fa-solid fa-plus mr-1"></i> Tambah
                     </button>
                 </div>
