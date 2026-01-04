@@ -8,47 +8,24 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .hide-scroll::-webkit-scrollbar {
-            display: none;
-        }
-
-        .hide-scroll {
-            -ms-overflow-style: none;
-            scrollbar-width: none;
-        }
-
-        .sticky-card {
-            position: sticky;
-            top: 100px;
-        }
-
-        /* Animasi Toast */
-        @keyframes slideInDown {
-            from {
-                transform: translate(-50%, -100%);
-                opacity: 0;
-            }
-
-            to {
-                transform: translate(-50%, 0);
-                opacity: 1;
-            }
-        }
-
-        .toast-enter {
-            animation: slideInDown 0.4s ease-out forwards;
-        }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        .sticky-card { position: sticky; top: 100px; }
     </style>
 </head>
 
 <body class="bg-white font-sans text-gray-800 min-h-screen flex flex-col">
 
-    <div id="toast-notification" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[999] hidden flex items-center w-full max-w-xs p-4 space-x-4 text-gray-500 bg-white rounded-xl shadow-2xl border-l-4 transition-all duration-300" role="alert">
+<div id="toast-notification" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[999] hidden flex items-center w-full max-w-xs p-4 space-x-4 text-gray-500 bg-white rounded-xl shadow-2xl border-l-4 transition-all duration-300" role="alert">
         <div id="toast-icon-container" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg">
             <i id="toast-icon" class="fa-solid text-lg"></i>
         </div>
         <div class="ml-3 text-sm font-bold text-gray-800" id="toast-message">Pesan Notifikasi</div>
     </div>
+    <style>
+        @keyframes slideInDown { from { transform: translate(-50%, -100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
+        .toast-enter { animation: slideInDown 0.4s ease-out forwards; }
+    </style>
 
     @include('partials.navbar-kiosk')
 
@@ -68,7 +45,7 @@
             </span>
         </nav>
 
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 relative mt-6">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-10 relative">
 
             <div class="lg:col-span-4">
                 <div class="sticky top-24">
@@ -113,7 +90,7 @@
                     </h2>
                     @endif
                 </div>
-
+                
                 <hr class="border-gray-100 my-2">
 
                 <div class="space-y-2">
@@ -125,8 +102,8 @@
             </div>
 
             <div class="lg:col-span-3">
-                <div class="sticky-card bg-white border border-gray-200 rounded-xl p-5">
-                    <h3 class="font-bold text-gray-900 mb-4">Atur jumlah</h3>
+                <div class="sticky-card bg-white border border-gray-200 rounded-xl p-5 shadow-lg">
+                    <h3 class="font-bold text-gray-900 mb-4">Atur jumlah dan catatan</h3>
 
                     <div class="flex items-center gap-4 mb-6">
                         <div class="flex items-center border border-gray-300 rounded-lg p-1">
@@ -143,7 +120,18 @@
 
                     <div class="flex justify-between items-center mb-5">
                         <span class="text-gray-500 text-sm">Subtotal</span>
-                        <span class="font-bold text-lg text-gray-900" id="subtotalDisplay">Rp{{ number_format($produk->harga_produk, 0, ',', '.') }}</span>
+                        
+                        <div class="flex flex-col items-end">
+                            @if($produk->harga_produk > $produk->harga_final)
+                                <span class="text-xs text-gray-400 line-through decoration-gray-400" id="subtotalCoret">
+                                    Rp{{ number_format($produk->harga_produk, 0, ',', '.') }}
+                                </span>
+                            @endif
+                            
+                            <span class="font-extrabold text-xl text-gray-900" id="subtotalDisplay">
+                                Rp{{ number_format($produk->harga_final, 0, ',', '.') }}
+                            </span>
+                        </div>
                     </div>
 
                     @if($produk->stok > 0)
@@ -215,126 +203,138 @@
     @include('partials.footer-kiosk')
 
     <script>
-        // === VARIABEL PENTING (DIAMBIL DARI PHP) ===
-        // Kita gunakan harga_final (setelah diskon) untuk kalkulasi JS
-        const hargaSatuan = {
-            {
-                $produk->harga_final
-            }
-        };
-        const maxStok = {
-            {
-                $produk->stok
-            }
-        };
+    // === 1. INISIALISASI VARIABEL ===
+    // Menggunakan harga_final (jika ada diskon) atau harga_produk biasa
+    // Tanda ?? 0 berguna agar javascript tidak error jika data kosong
+    const hargaSatuan = {{ $produk->harga_final ?? $produk->harga_produk ?? 0 }};
+    const maxStok = {{ $produk->stok ?? 0 }};
+    const qtyInput = document.getElementById('qtyInput');
+    const hargaAsliSatuan = {{ $produk->harga_produk }};
+    const hargaFinalSatuan = {{ $produk->harga_final }};
+    const subtotalCoret = document.getElementById('subtotalCoret');
+    const subtotalDisplay = document.getElementById('subtotalDisplay');
+    const cartBadge = document.getElementById('cart-badge');
 
-        const qtyInput = document.getElementById('qtyInput');
-        const subtotalDisplay = document.getElementById('subtotalDisplay');
-        const cartBadge = document.getElementById('cart-badge');
+    // === 2. FORMAT RUPIAH ===
+    function formatRupiah(angka) {
+        return 'Rp' + new Intl.NumberFormat('id-ID').format(angka);
+    }
 
-        // Format Rupiah
-        function formatRupiah(angka) {
-            return 'Rp' + new Intl.NumberFormat('id-ID').format(angka);
+    // === 3. UPDATE JUMLAH (Logika Script Lama) ===
+    function updateQty(change) {
+        let currentQty = parseInt(qtyInput.value) || 1;
+        let newQty = currentQty + change;
+
+        if (newQty >= 1 && newQty <= maxStok) {
+            qtyInput.value = newQty;
+            
+            // 1. Hitung Subtotal Final (Yang Besar & Tebal)
+            let totalFinal = newQty * hargaFinalSatuan;
+            if(subtotalDisplay) {
+                subtotalDisplay.innerText = formatRupiah(totalFinal);
+            }
+
+            // 2. Hitung Subtotal Coret (Jika ada elemennya)
+            if(subtotalCoret) {
+                let totalAsli = newQty * hargaAsliSatuan;
+                subtotalCoret.innerText = formatRupiah(totalAsli);
+            }
+        } else if (newQty > maxStok) {
+            showToast("Stok mentok! Maksimal hanya " + maxStok, "error");
+        }
+    }
+
+    // === 4. FUNGSI TOAST (Visual) ===
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast-notification');
+        const msg = document.getElementById('toast-message');
+        const iconContainer = document.getElementById('toast-icon-container');
+
+        if(!toast || !msg) return;
+
+        msg.innerText = message;
+        toast.classList.remove('hidden', 'border-green-500', 'border-red-500');
+        iconContainer.classList.remove('bg-green-100', 'text-green-500', 'bg-red-100', 'text-red-500');
+
+        if (type === 'success') {
+            toast.classList.add('border-green-500');
+            iconContainer.classList.add('bg-green-100', 'text-green-500');
+        } else {
+            toast.classList.add('border-red-500');
+            iconContainer.classList.add('bg-red-100', 'text-red-500');
         }
 
-        // Update Jumlah & Subtotal
-        function updateQty(change) {
-            let currentQty = parseInt(qtyInput.value) || 1;
-            let newQty = currentQty + change;
+        toast.classList.add('toast-enter');
+        setTimeout(() => { toast.classList.add('hidden'); }, 3000);
+    }
 
-            if (newQty >= 1 && newQty <= maxStok) {
-                qtyInput.value = newQty;
-                // Kalkulasi Real-time
-                subtotalDisplay.innerText = formatRupiah(newQty * hargaSatuan);
-            }
+    // Cek Session Flash
+    @if(session('success')) showToast("{{ session('success') }}", "success"); @endif
+    @if(session('error')) showToast("{{ session('error') }}", "error"); @endif
+
+    // === 5. SUBMIT CART (Logika Script Lama + Perbaikan Loading) ===
+    async function submitCart(type) {
+        let qty = qtyInput.value;
+        if(qty < 1) { showToast("Jumlah minimal 1", "error"); return; }
+
+        let url = "{{ route('kiosk.add', $produk->id_produk) }}?qty=" + qty + "&type=" + type;
+
+        // Jika Beli Langsung -> Redirect
+        if (type === 'now') { 
+            window.location.href = url; 
+            return; 
         }
 
-        // Fungsi Toast
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast-notification');
-            const msg = document.getElementById('toast-message');
-            const iconContainer = document.getElementById('toast-icon-container');
-            const icon = document.getElementById('toast-icon');
-
-            msg.innerText = message;
-            toast.classList.remove('hidden', 'border-green-500', 'border-red-500');
-            iconContainer.classList.remove('bg-green-100', 'text-green-500', 'bg-red-100', 'text-red-500');
-            icon.classList.remove('fa-circle-check', 'fa-circle-xmark');
-
-            if (type === 'success') {
-                toast.classList.add('border-green-500');
-                iconContainer.classList.add('bg-green-100', 'text-green-500');
-                icon.classList.add('fa-circle-check');
-            } else {
-                toast.classList.add('border-red-500');
-                iconContainer.classList.add('bg-red-100', 'text-red-500');
-                icon.classList.add('fa-circle-xmark');
-            }
-
-            toast.classList.add('toast-enter');
-            setTimeout(() => {
-                toast.classList.add('hidden');
-            }, 3000);
-        }
-
-        // Cek Flash Message PHP
-        @if(session('success')) showToast("{{ session('success') }}", "success");
-        @endif
-        @if(session('error')) showToast("{{ session('error') }}", "error");
-        @endif
-
-        // Submit Keranjang
-        async function submitCart(type) {
-            let qty = qtyInput.value;
-            if (qty < 1) {
-                showToast("Jumlah minimal 1", "error");
-                return;
-            }
-
-            // URL Endpoint
-            let url = "{{ route('kiosk.add', $produk->id_produk) }}?qty=" + qty + "&type=" + type;
-
-            if (type === 'now') {
-                window.location.href = url;
-                return;
-            }
-
-            // AJAX Request
-            try {
-                let btn = document.querySelector("button[onclick=\"submitCart('cart')\"]");
-                let originalText = btn.innerHTML;
-                btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> Menambahkan...";
+        // Jika Keranjang -> AJAX
+        try {
+            // Ambil tombol yang diklik
+            let btn = document.querySelector("button[onclick=\"submitCart('cart')\"]");
+            let originalText = "";
+            
+            // Ubah jadi loading
+            if(btn) {
+                originalText = btn.innerHTML;
+                btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i>"; 
                 btn.disabled = true;
+            }
 
-                let response = await fetch(url, {
-                    headers: {
-                        "X-Requested-With": "XMLHttpRequest"
-                    }
-                });
-                let data = await response.json();
+            let response = await fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } });
+            let data = await response.json();
 
-                if (data.status === 'success') {
-                    showToast(data.message, "success");
-                    if (cartBadge) {
-                        cartBadge.innerText = data.total_cart;
-                        cartBadge.style.display = 'flex';
-                        cartBadge.classList.add('scale-125');
-                        setTimeout(() => cartBadge.classList.remove('scale-125'), 200);
-                    }
-                } else if (data.redirect) {
-                    window.location.href = data.redirect; // Redirect login jika belum login
-                } else {
-                    showToast(data.message || "Gagal", "error");
+            if(data.status === 'success') {
+                showToast(data.message, "success");
+                // Update Badge
+                if(cartBadge) {
+                    cartBadge.innerText = data.total_cart;
+                    cartBadge.style.display = 'flex';
+                    cartBadge.classList.add('scale-125'); 
+                    setTimeout(() => cartBadge.classList.remove('scale-125'), 200);
                 }
+            } else if (data.redirect) {
+                window.location.href = data.redirect;
+            } else {
+                showToast(data.message || "Gagal", "error");
+            }
 
-                btn.innerHTML = originalText;
+            // Kembalikan tombol
+            if(btn) {
+                btn.innerHTML = originalText; 
                 btn.disabled = false;
-            } catch (error) {
-                console.error(error);
-                showToast("Terjadi kesalahan sistem", "error");
+            }
+
+        } catch (error) {
+            console.error(error); 
+            showToast("Koneksi Error", "error");
+            
+            // Kembalikan tombol jika error
+            let btn = document.querySelector("button[onclick=\"submitCart('cart')\"]");
+            if(btn) {
+                btn.innerHTML = "<i class='fa-solid fa-plus mr-2'></i> Keranjang";
+                btn.disabled = false;
             }
         }
-    </script>
-</body>
+    }
+</script>
 
+</body>
 </html>

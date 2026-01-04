@@ -45,7 +45,7 @@ Route::middleware(['auth'])->group(function () {
 
     // --- Keranjang & Checkout ---
     Route::get('/add-to-cart/{id}', [KioskController::class, 'addToCart'])->name('kiosk.add');
-    Route::get('/checkout', [KioskController::class, 'checkout'])->name('kiosk.checkout');
+    Route::get('/keranjang', [KioskController::class, 'cart'])->name('kiosk.cart');
 
     // --- Manajemen Item Keranjang ---
     Route::get('/kiosk/remove/{id}', [KioskController::class, 'removeItem'])->name('kiosk.remove');

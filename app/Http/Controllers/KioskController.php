@@ -164,14 +164,14 @@ class KioskController extends Controller
         $cart->jumlah += $qty;
         $cart->save();
 
-        if ($request->type == 'now') return redirect()->route('kiosk.checkout');
+        if ($request->type == 'now') return redirect()->route('kiosk.cart');
         if ($request->ajax()) return response()->json(['status' => 'success', 'total_cart' => Keranjang::where('id_user', $userId)->sum('jumlah')]);
 
         return back()->with('success', 'Masuk keranjang!');
     }
 
-    // === 5. CHECKOUT ===
-    public function checkout()
+    // === 5. CART ===
+    public function cart()
     {
         if (!Auth::check()) return redirect()->route('login');
         $userId = Auth::id();
@@ -183,13 +183,16 @@ class KioskController extends Controller
         $ongkir = self::ONGKIR_FLAT;
         $totalBayar = $subtotal + $ongkir;
 
+        // --- PERBAIKAN: Kirim $minBelanja ke view ---
+        $minBelanja = self::MIN_BELANJA;
+
         $daftarAlamat = DB::table('alamat_pengiriman')
             ->where('id_user', $userId)
             ->orderBy('is_primary', 'desc')
             ->orderBy('created_at', 'desc')
             ->get();
 
-        return view('kiosk.checkout', compact('keranjang', 'subtotal', 'ongkir', 'totalBayar', 'daftarAlamat'));
+        return view('kiosk.cart', compact('keranjang', 'subtotal', 'ongkir', 'totalBayar', 'daftarAlamat', 'minBelanja'));
     }
 
     // === 6. PROSES BAYAR ===

@@ -48,7 +48,7 @@
                     <i class="fa-solid fa-shop text-xl"></i>
                 </a>
                 @endif
-                <a href="{{ route('kiosk.checkout') }}" class="relative h-10 w-10 flex items-center justify-center rounded-lg hover:bg-gray-50 hover:text-blue-600 transition group" title="Keranjang">
+                <a href="{{ route('kiosk.cart') }}" class="relative h-10 w-10 flex items-center justify-center rounded-lg hover:bg-gray-50 hover:text-blue-600 transition group" title="Keranjang">
                     <i class="fa-solid fa-cart-shopping text-xl transition"></i>
                     @if(isset($totalItemKeranjang) && $totalItemKeranjang > 0)
                     <span id="cart-badge" class="absolute top-1 right-1 bg-red-600 text-white text-[10px] font-bold px-1 min-w-[16px] h-[16px] flex items-center justify-center rounded-full border border-white shadow-sm">{{ $totalItemKeranjang }}</span>
