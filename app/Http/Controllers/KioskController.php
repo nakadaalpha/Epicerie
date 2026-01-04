@@ -15,6 +15,7 @@ use App\Models\Keranjang;
 use App\Models\Transaksi;
 use App\Models\DetailTransaksi;
 use App\Models\User;
+use App\Models\Slider;
 
 class KioskController extends Controller
 {

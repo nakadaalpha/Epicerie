@@ -27,12 +27,12 @@
         /* Saat Hover di Container Slider, tombol muncul dan bergeser ke posisi ideal */
         #slider-container:hover .slider-btn-prev {
             opacity: 1;
-            transform: translateX(10px) scale(1);
+            transform: scale(1);
         }
 
         #slider-container:hover .slider-btn-next {
             opacity: 1;
-            transform: translateX(-10px) scale(1);
+            transform:scale(1);
         }
     </style>
 </head>
@@ -83,11 +83,11 @@
         </div>
     </div>
     @endif
-    <div class="max-w-7xl mx-auto px-4 mt-8 space-y-8">
+    <div class="max-w-7xl mx-auto px-4 mt-6 space-y-8">
         <div>
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-2">
-                    <div class="bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center shadow-blue-200 shadow-md">
+                    <div class="bg-blue-600 text-white w-8 h-8 rounded-lg flex items-center justify-center">
                         <i class="fa-solid fa-clock"></i>
                     </div>
                     <div>
@@ -96,14 +96,14 @@
                 </div>
             </div>
 
-            <div class="flex gap-4 overflow-x-auto hide-scroll pb-4 snap-x">
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
                 @foreach($produkTerbaru as $p)
                 @php
                 $qty = $keranjangItems[$p->id_produk] ?? 0;
                 $hasDiskon = $p->persen_diskon > 0;
                 @endphp
 
-                <div class="min-w-[170px] w-[170px] bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between transition-all hover:shadow-md relative group snap-center ">
+                <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between transition-all hover:shadow-md hover:border-blue-200 relative group overflow-hidden">
 
                     <div class="absolute top-2 left-2 z-10 bg-blue-600 text-white text-[9px] font-bold px-2 py-1 rounded-md shadow-sm flex items-center gap-1">
                         <i class="fa-solid fa-bolt"></i> NEW
@@ -118,13 +118,13 @@
                     <a href="{{ route('produk.show', $p->id_produk) }}" class="block flex-1 cursor-pointer">
                         <div class="aspect-square rounded-xl mb-3 flex items-center justify-center overflow-hidden relative">
                             @if($p->gambar)
-                            <img src="{{ asset('storage/' . $p->gambar) }}" class="w-full h-full object-contain p-3 group-hover:scale-110 transition duration-300">
+                            <img src="{{ asset('storage/' . $p->gambar) }}" class="w-full h-full object-contain p-4 group-hover:scale-110 transition duration-300">
                             @else
                             <span class="text-4xl">📦</span>
                             @endif
                         </div>
 
-                        <h3 class="font-bold text-gray-800 text-xs leading-tight mb-1 line-clamp-2 h-8">{{ $p->nama_produk }}</h3>
+                        <h3 class="font-bold text-gray-800 text-sm leading-tight mb-1 truncate">{{ $p->nama_produk }}</h3>
 
                         @if($hasDiskon)
                         <div class="flex flex-col items-start mb-1">
@@ -144,21 +144,20 @@
 
                     <div class="flex justify-end mt-2 z-20 relative">
                         @if($p->stok > 0)
-                        <a href="{{ route('kiosk.add', $p->id_produk) }}" class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full shadow-md active:scale-90 transition hover:bg-blue-700">
+                        <a href="{{ route('kiosk.add', $p->id_produk) }}" class="bg-blue-600 hover:bg-blue-700 text-white w-8 h-8 flex items-center justify-center rounded-full shadow-md active:scale-90 transition">
                             <i class="fa-solid fa-plus"></i>
                         </a>
                         @else
-                        <span class="text-xs text-red-500 font-bold mb-1 py-1 bg-red-50 px-2 rounded-lg">Habis</span>
+                        <span class="text-xs text-red-500 font-bold py-1 bg-red-50 px-2 rounded-lg">Habis</span>
                         @endif
                     </div>
                 </div>
                 @endforeach
             </div>
         </div>
-
         <div>
             <div class="flex items-center gap-2 mb-4">
-                <div class="bg-orange-500 text-white w-8 h-8 rounded-lg flex items-center justify-center shadow-orange-200 shadow-md">
+                <div class="bg-orange-500 text-white w-8 h-8 rounded-lg flex items-center justify-center">
                     <i class="fa-solid fa-fire"></i>
                 </div>
                 <div>
@@ -166,14 +165,14 @@
                 </div>
             </div>
 
-            <div class="flex gap-4 overflow-x-auto hide-scroll pb-4 snap-x">
+            <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
                 @foreach($produkTerlaris as $index => $p)
                 @php
                 $qty = $keranjangItems[$p->id_produk] ?? 0;
                 $hasDiskon = $p->persen_diskon > 0;
                 @endphp
 
-                <div class="min-w-[170px] w-[170px] bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between transition-all hover:shadow-md hover:border-orange-200 relative group snap-center overflow-hidden">
+                <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between transition-all hover:shadow-md hover:border-orange-200 relative group overflow-hidden">
                     <span class="absolute -left-2 -bottom-4 text-7xl font-black text-gray-100 italic select-none pointer-events-none z-0">#{{ $index + 1 }}</span>
 
                     @if($hasDiskon)
@@ -182,10 +181,10 @@
                     </div>
                     @endif
 
-                    <a href="{{ route('produk.show', $p->id_produk) }}" class="block flex-1 cursor-pointer relative z-10">
+                    <a href="{{ route('produk.show', $p->id_produk) }}" class="block flex-1 cursor-pointer">
                         <div class="aspect-square rounded-xl mb-3 flex items-center justify-center overflow-hidden relative">
                             @if($p->gambar)
-                            <img src="{{ asset('storage/' . $p->gambar) }}" class="w-full h-full object-contain p-3 group-hover:scale-110 transition duration-300">
+                            <img src="{{ asset('storage/' . $p->gambar) }}" class="w-full h-full object-contain p-4 group-hover:scale-110 transition duration-300">
                             @else
                             <span class="text-4xl">📦</span>
                             @endif
@@ -225,7 +224,7 @@
     </div>
 
     <div class="max-w-7xl mx-auto px-4 pb-24 mt-8">
-        <div class="flex justify-between items-center mb-4 sticky top-[70px] bg-gray-50/95 backdrop-blur-sm py-3 z-30">
+        <div class="flex justify-between items-center mb-4 sticky top-[70px] backdrop-blur-sm py-3 z-30">
             <div class="flex items-center gap-2">
                 <div class="w-1 h-6 bg-blue-600 rounded-full"></div>
                 <h2 class="font-extrabold text-gray-700 text-lg">Semua Produk</h2>
@@ -236,6 +235,7 @@
             @forelse($produk as $p)
             @php
             $qty = $keranjangItems[$p->id_produk] ?? 0;
+            // Akses accessor model Produk
             $hasDiskon = $p->persen_diskon > 0;
             @endphp
 
