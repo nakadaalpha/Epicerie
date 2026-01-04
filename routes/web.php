@@ -87,6 +87,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/kurir/dashboard', [KurirController::class, 'index'])->name('kurir.index');
     Route::post('/kurir/mulai/{id}', [KurirController::class, 'mulaiAntar'])->name('kurir.mulai');
     Route::post('/kurir/selesai/{id}', [KurirController::class, 'selesaiAntar'])->name('kurir.selesai');
+    Route::get('/kurir/transaksi/detail/{id}', [App\Http\Controllers\KurirController::class, 'getDetailTransaksi']);
 });
 
 
