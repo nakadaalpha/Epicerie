@@ -46,6 +46,8 @@ Route::middleware(['auth'])->group(function () {
     // --- Keranjang & Checkout ---
     Route::get('/add-to-cart/{id}', [KioskController::class, 'addToCart'])->name('kiosk.add');
     Route::get('/keranjang', [KioskController::class, 'cart'])->name('kiosk.cart');
+    // Route Checkout (Halaman Baru) <-- TAMBAHKAN INI
+    Route::get('/checkout', [KioskController::class, 'checkoutPage'])->name('kiosk.checkout');
 
     // --- Manajemen Item Keranjang ---
     Route::get('/kiosk/remove/{id}', [KioskController::class, 'removeItem'])->name('kiosk.remove');
@@ -57,6 +59,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/pay', [KioskController::class, 'processPayment'])->name('kiosk.pay');
     Route::post('/midtrans-success', [KioskController::class, 'midtransSuccess'])->name('kiosk.midtrans.success');
     Route::get('/kiosk/success/{id}', [KioskController::class, 'successPage'])->name('kiosk.success');
+    // Tambahkan di dalam group middleware auth
+    Route::post('/transaksi/{id}/selesai', [App\Http\Controllers\KioskController::class, 'completeTransaction'])->name('kiosk.complete');
 
     // --- User Dashboard & Profile ---
     Route::get('/profile', [KioskController::class, 'profile'])->name('kiosk.profile');

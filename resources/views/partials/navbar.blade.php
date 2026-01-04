@@ -38,7 +38,7 @@
 
             <a href="{{ route('kurir.index') }}"
                 class="{{ request()->routeIs('kurir*') ? 'border-b-2 border-white pb-1 font-bold' : 'opacity-80 hover:opacity-100 transition' }}">
-                Kirim
+                Transaksi
             </a>
 
         </div>
