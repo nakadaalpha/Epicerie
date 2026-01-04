@@ -11,10 +11,19 @@ use App\Events\StatusTransaksiUpdated; // <--- PANGGIL FILE BARU TADI
 
 class KurirController extends Controller
 {
+    // public function index()
+    // {
+    //     $tugas = Transaksi::with(['user', 'detailTransaksi'])
+    //         ->whereIn('status', ['Dikemas', 'diproses', 'Dikirim'])
+    //         ->orderBy('created_at', 'desc')
+    //         ->get();
+
+    //     return view('kurir.dashboard', compact('tugas'));
+    // }
     public function index()
     {
-        $tugas = Transaksi::with(['user', 'detailTransaksi'])
-            ->whereIn('status', ['Dikemas', 'diproses', 'Dikirim'])
+        // Mengambil SEMUA transaksi, diurutkan dari yang terbaru
+        $tugas = \App\Models\Transaksi::with('user')
             ->orderBy('created_at', 'desc')
             ->get();
 
