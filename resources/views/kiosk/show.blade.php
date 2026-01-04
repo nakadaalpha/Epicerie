@@ -212,23 +212,19 @@
 
     </main>
 
-    <footer class="mt-20 border-t border-gray-100 py-8 bg-white">
-        <div class="max-w-[1200px] mx-auto px-4 text-center text-gray-400 text-xs">
-            &copy; 2025 Épicerie Kiosk System. <br> Harga sudah termasuk pajak & layanan.
-        </div>
-    </footer>
+    @include('partials.footer-kiosk')
 
     <script>
         // === VARIABEL PENTING (DIAMBIL DARI PHP) ===
         // Kita gunakan harga_final (setelah diskon) untuk kalkulasi JS
         const hargaSatuan = {
             {
-                $produk - > harga_final
+                $produk->harga_final
             }
         };
         const maxStok = {
             {
-                $produk - > stok
+                $produk->stok
             }
         };
 
@@ -339,7 +335,6 @@
             }
         }
     </script>
-
 </body>
 
 </html>

@@ -32,7 +32,7 @@
 
         #slider-container:hover .slider-btn-next {
             opacity: 1;
-            transform:scale(1);
+            transform: scale(1);
         }
     </style>
 </head>
@@ -58,26 +58,29 @@
 
     @if(isset($sliders) && count($sliders) > 0)
     <div class="max-w-7xl mx-auto px-4 mt-6">
-        <div id="slider-container" class="relative w-full rounded-2xl overflow-hidden shadow-md group aspect-[3/1] md:aspect-[3.5/1]">
+        <div id="slider-container" class="relative w-full rounded-2xl overflow-hidden shadow-sm group aspect-[3/1] md:aspect-[3.5/1]">
 
             <div id="slider-track" class="flex h-full w-full">
                 @foreach($sliders as $s)
                 <div class="slider-item min-w-full h-full relative">
-                    <img src="{{ asset('storage/' . $s->gambar) }}" class="w-full h-full object-cover" alt="{{ $s->judul }}">
+                    <img src="{{ isset($s->is_dummy) ? $s->gambar : asset('storage/' . $s->gambar) }}"
+                        class="w-full h-full object-cover"
+                        alt="{{ $s->judul }}">
                 </div>
                 @endforeach
             </div>
 
-            <button id="prevBtn" class="slider-btn slider-btn-prev absolute left-0 top-1/2 -translate-y-1/2 bg-white/90 text-gray-700 hover:text-blue-600 w-10 h-10 rounded-full shadow-lg flex items-center justify-center z-10 -ml-4 group-hover:ml-0 cursor-pointer">
-                <i class="fa-solid fa-chevron-left"></i>
-            </button>
-            <button id="nextBtn" class="slider-btn slider-btn-next absolute right-0 top-1/2 -translate-y-1/2 bg-white/90 text-gray-700 hover:text-blue-600 w-10 h-10 rounded-full shadow-lg flex items-center justify-center z-10 -mr-4 group-hover:mr-0 cursor-pointer">
-                <i class="fa-solid fa-chevron-right"></i>
+            <button id="prevBtn" class="absolute top-1/2 -translate-y-1/2 z-20 bg-white text-slate-500 hover:text-slate-800 w-11 h-11 rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.15)] flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100 translate-x-4 group-hover:translate-x-0 left-4 cursor-pointer transform hover:scale-110">
+                <i class="fa-solid fa-chevron-left text-sm"></i>
             </button>
 
-            <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-10">
+            <button id="nextBtn" class="absolute top-1/2 -translate-y-1/2 z-20 bg-white text-slate-500 hover:text-slate-800 w-11 h-11 rounded-full shadow-[0_4px_12px_rgba(0,0,0,0.15)] flex items-center justify-center transition-all duration-300 opacity-0 group-hover:opacity-100 -translate-x-4 group-hover:translate-x-0 right-4 cursor-pointer transform hover:scale-110">
+                <i class="fa-solid fa-chevron-right text-sm"></i>
+            </button>
+
+            <div class="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
                 @foreach($sliders as $key => $s)
-                <div class="slider-dot w-2 h-2 rounded-full bg-white/50 transition-all duration-300 {{ $key == 0 ? 'w-6 bg-white' : '' }}"></div>
+                <div class="slider-dot w-2 h-2 rounded-full bg-white/40 backdrop-blur-sm transition-all duration-300 {{ $key == 0 ? '!bg-white w-6 shadow-sm' : '' }}"></div>
                 @endforeach
             </div>
         </div>
