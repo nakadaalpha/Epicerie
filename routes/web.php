@@ -88,6 +88,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/kurir/mulai/{id}', [KurirController::class, 'mulaiAntar'])->name('kurir.mulai');
     Route::post('/kurir/selesai/{id}', [KurirController::class, 'selesaiAntar'])->name('kurir.selesai');
     Route::get('/kurir/transaksi/detail/{id}', [App\Http\Controllers\KurirController::class, 'getDetailTransaksi']);
+    Route::post('/kurir/update-lokasi', [App\Http\Controllers\KurirController::class, 'updateLokasi'])->name('kurir.update_lokasi');
 });
 
 

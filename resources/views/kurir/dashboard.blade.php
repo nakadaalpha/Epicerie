@@ -203,17 +203,64 @@
     </div>
 
     <script>
+        // Simpan ID agar bisa di-clear kalau stop (opsional)
+        let watchId = null;
+
         function startTracking(trxId, btnElement) {
             if (!navigator.geolocation) {
-                alert("Browser tidak support GPS!");
+                alert("Browser HP Anda tidak support GPS!");
                 return;
             }
-            btnElement.innerHTML = '<i class="fa-solid fa-check"></i> On';
-            btnElement.classList.add('bg-green-200');
+
+            // Ubah Tampilan Tombol
+            btnElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Aktif...';
+            btnElement.classList.remove('bg-white', 'text-green-600', 'border-green-500');
+            btnElement.classList.add('bg-green-600', 'text-white', 'border-transparent');
+
+            // Tampilkan Indikator di Bawah Card
             document.getElementById('status-gps-' + trxId).classList.remove('hidden');
-            navigator.geolocation.watchPosition((pos) => {
-                console.log("Lok:", pos.coords.latitude);
-            }, (err) => {});
+
+            alert("GPS Diaktifkan! Lokasi Anda akan dikirim ke pelanggan secara real-time.");
+
+            // MULAI TRACKING
+            watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const long = position.coords.longitude;
+
+                    console.log("📍 Mengirim Lokasi:", lat, long);
+
+                    // --- INI BAGIAN PENTING YANG SEBELUMNYA HILANG ---
+                    fetch('/kurir/update-lokasi', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                            },
+                            body: JSON.stringify({
+                                id_transaksi: trxId,
+                                lat: lat,
+                                long: long
+                            })
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            console.log("✅ Server response:", data);
+                        })
+                        .catch(error => {
+                            console.error("❌ Gagal kirim lokasi:", error);
+                        });
+                    // ------------------------------------------------
+                },
+                (error) => {
+                    console.error("Error GPS:", error);
+                    alert("Gagal mengambil lokasi. Pastikan GPS HP aktif.");
+                }, {
+                    enableHighAccuracy: true, // Paksa pakai GPS akurat
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
         }
 
         function openModal(id) {
@@ -222,11 +269,15 @@
             modal.classList.remove('opacity-0', 'pointer-events-none');
             document.body.classList.add('modal-active');
             modal.querySelector('.modal-container').classList.add('slide-up-enter');
-            fetch(`/kurir/transaksi/detail/${id}`).then(res => res.text()).then(html => {
-                content.innerHTML = html;
-            }).catch(err => {
-                content.innerHTML = `<p class="text-center text-red-400 text-xs">Gagal memuat.</p>`;
-            });
+
+            fetch(`/kurir/transaksi/detail/${id}`)
+                .then(res => res.text())
+                .then(html => {
+                    content.innerHTML = html;
+                })
+                .catch(err => {
+                    content.innerHTML = `<p class="text-center text-red-400 text-xs">Gagal memuat.</p>`;
+                });
         }
 
         function closeModal() {

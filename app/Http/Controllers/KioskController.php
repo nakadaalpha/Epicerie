@@ -138,11 +138,14 @@ class KioskController extends Controller
 
         $keranjang = Keranjang::with('produk')->where('id_user', Auth::id())->get();
 
-        // GUNAKAN HELPER HITUNG MANUAL (Fix Error Undefined Method & Stuck)
         $subtotal = $this->hitungSubtotal($keranjang);
         $minBelanja = self::MIN_BELANJA;
 
-        return view('kiosk.cart', compact('keranjang', 'subtotal', 'minBelanja'));
+        // TAMBAHAN: Ambil 4 produk acak sebagai rekomendasi
+        $rekomendasi = Produk::inRandomOrder()->limit(6)->get();
+
+        // Jangan lupa passing 'rekomendasi' ke view
+        return view('kiosk.cart', compact('keranjang', 'subtotal', 'minBelanja', 'rekomendasi'));
     }
 
     // Halaman Checkout

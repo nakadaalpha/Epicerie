@@ -131,14 +131,17 @@
                 <a href="{{ route('kiosk.search') }}" class="mt-4 text-blue-600 font-bold hover:underline text-sm">Lihat Semua Produk</a>
             </div>
             @else
-            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                 @foreach($produk as $p)
                 @php
-                // Helper untuk diskon (pastikan model Produk punya aksesors ini)
                 $hasDiskon = $p->persen_diskon > 0;
+                // Hitung manual harga final jika di model belum ada accessor 'harga_final'
+                $hargaFinal = $hasDiskon
+                ? $p->harga_produk - ($p->harga_produk * ($p->persen_diskon / 100))
+                : $p->harga_produk;
                 @endphp
 
-                <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex fl=ex-col justify-between transition-all hover:shadow-md hover:border-blue-200 relative group">
+                <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between h-full transition-all hover:shadow-md hover:border-blue-200 relative group overflow-hidden">
 
                     @if($hasDiskon)
                     <div class="absolute top-2 left-2 z-10 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm flex items-center gap-1">
@@ -146,41 +149,47 @@
                     </div>
                     @endif
 
-                    <a href="{{ route('produk.show', $p->id_produk) }}" class="block flex-1 cursor-pointer">
+                    <a href="{{ route('produk.show', $p->id_produk) }}" class="flex-1 flex flex-col">
                         <div class="aspect-square rounded-xl mb-3 flex items-center justify-center overflow-hidden relative">
                             @if($p->gambar)
                             <img src="{{ asset('storage/' . $p->gambar) }}" class="w-full h-full object-contain p-4 group-hover:scale-110 transition duration-300">
                             @else
-                            <span class="text-4xl">📦</span>
+                            <i class="fa-solid fa-box text-gray-300 text-3xl"></i>
                             @endif
                         </div>
 
-                        <h3 class="font-bold text-gray-800 text-sm leading-tight mb-1 truncate">{{ $p->nama_produk }}</h3>
+                        <h3 class="font-bold text-gray-800 text-sm leading-tight mb-1 line-clamp-2 min-h-[2.5em]">
+                            {{ $p->nama_produk }}
+                        </h3>
 
-                        @if($hasDiskon)
-                        <div class="flex flex-col items-start mb-1">
-                            <span class="text-xs text-gray-400 line-through decoration-red-400">
+                        <div class="mt-auto">
+                            @if($hasDiskon)
+                            <div class="flex flex-col items-start">
+                                <span class="text-[10px] text-gray-400 line-through decoration-red-400">
+                                    Rp{{ number_format($p->harga_produk, 0, ',', '.') }}
+                                </span>
+                                <span class="text-blue-600 font-extrabold text-sm block">
+                                    Rp{{ number_format($hargaFinal, 0, ',', '.') }}
+                                </span>
+                            </div>
+                            @else
+                            <span class="text-blue-600 font-extrabold text-sm block">
                                 Rp{{ number_format($p->harga_produk, 0, ',', '.') }}
                             </span>
-                            <span class="text-blue-600 font-bold text-sm block">
-                                Rp{{ number_format($p->harga_final, 0, ',', '.') }}
-                            </span>
+                            @endif
                         </div>
-                        @else
-                        <span class="text-blue-600 font-bold text-sm mb-1 block">
-                            Rp{{ number_format($p->harga_produk, 0, ',', '.') }}
-                        </span>
-                        @endif
                     </a>
 
-                    <div class="flex justify-end mt-2 z-20 relative">
+                    <div class="flex justify-end mt-3 pt-3 border-t border-gray-50">
                         @if($p->stok > 0)
-                        <a href="{{ route('kiosk.add', $p->id_produk) }}"
-                            class="bg-blue-600 text-white w-8 h-8 flex items-center justify-center rounded-full shadow-md active:scale-90 transition hover:bg-blue-700">
-                            <i class="fa-solid fa-plus"></i>
-                        </a>
+                        <form action="{{ route('kiosk.add', $p->id_produk) }}" method="POST">
+                            @csrf
+                            <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white w-8 h-8 flex items-center justify-center rounded-full shadow-md active:scale-90 transition">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </form>
                         @else
-                        <span class="text-xs text-red-500 font-bold mb-1 py-1 bg-red-50 px-2 rounded">Habis</span>
+                        <span class="text-[10px] text-red-500 font-bold py-1 bg-red-50 px-2 rounded-lg border border-red-100">Stok Habis</span>
                         @endif
                     </div>
                 </div>
