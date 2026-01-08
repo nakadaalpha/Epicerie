@@ -14,7 +14,7 @@
             font-family: 'Nunito', sans-serif;
         }
 
-        /* Custom Scrollbar untuk Modal */
+        /* Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
         }
@@ -34,37 +34,37 @@
     </style>
 </head>
 
-<body class="bg-gray-50 font-sans text-gray-700">
+<body class="bg-gradient-to-br from-blue-500 to-teal-400 min-h-screen font-sans text-gray-700">
 
     @include('partials.navbar')
 
     <div class="max-w-[95%] mx-auto px-4 py-8">
 
-        <div class="flex flex-col md:flex-row justify-between items-end mb-6 gap-4">
+        <div class="flex flex-col md:flex-row justify-between items-end mb-8 gap-4">
             <div>
-                <h1 class="text-3xl font-extrabold text-gray-800 tracking-tight">Daftar Pesanan</h1>
-                <p class="text-gray-500 mt-1 text-sm font-medium">Pantau dan kelola status pesanan pelanggan secara realtime.</p>
+                <h1 class="text-3xl font-extrabold text-white tracking-tight drop-shadow-md">Daftar Pesanan</h1>
+                <p class="text-blue-50 mt-1 text-sm font-medium opacity-90">Pantau dan kelola status pesanan pelanggan secara realtime.</p>
             </div>
 
             <div class="flex gap-2">
-                <span class="bg-white border border-gray-200 px-3 py-1.5 rounded-lg text-xs font-bold text-gray-500 shadow-sm flex items-center gap-2">
+                <span class="bg-white/20 border border-white/30 backdrop-blur-sm px-4 py-2 rounded-xl text-xs font-bold text-white shadow-sm flex items-center gap-2">
                     <i class="fa-solid fa-filter"></i> Total: {{ $transaksi->count() }} Pesanan
                 </span>
             </div>
         </div>
 
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+        <div class="bg-white rounded-3xl shadow-2xl border border-white/20 overflow-hidden min-h-[500px]">
             <div class="overflow-x-auto">
                 <table class="w-full text-left border-collapse whitespace-nowrap">
-                    <thead class="bg-gray-50 border-b border-gray-200 text-gray-500 uppercase text-xs font-extrabold tracking-wider">
+                    <thead class="bg-gray-50 border-b border-gray-100 text-gray-500 uppercase text-xs font-extrabold tracking-wider">
                         <tr>
-                            <th class="px-6 py-4">Info Transaksi</th>
-                            <th class="px-6 py-4">Pelanggan</th>
-                            <th class="px-6 py-4 bg-blue-50/50 text-blue-600 border-b border-blue-100">Dikirim Oleh</th>
-                            <th class="px-6 py-4">Ringkasan Item</th>
-                            <th class="px-6 py-4">Total Bayar</th>
-                            <th class="px-6 py-4 text-center">Status</th>
-                            <th class="px-6 py-4 text-center">Aksi</th>
+                            <th class="px-6 py-5">Info Transaksi</th>
+                            <th class="px-6 py-5">Pelanggan</th>
+                            <th class="px-6 py-5 bg-blue-50/50 text-blue-600 border-b border-blue-100">Dikirim Oleh</th>
+                            <th class="px-6 py-5">Ringkasan Item</th>
+                            <th class="px-6 py-5">Total Bayar</th>
+                            <th class="px-6 py-5 text-center">Status</th>
+                            <th class="px-6 py-5 text-center">Aksi</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100 text-sm">
@@ -72,7 +72,7 @@
                         <tr class="hover:bg-blue-50/30 transition group">
                             <td class="px-6 py-4 cursor-pointer" onclick="openDetailModal('{{ $trx->id_transaksi }}')">
                                 <div class="flex items-center gap-3">
-                                    <div class="bg-blue-100 text-blue-600 w-10 h-10 rounded-lg flex items-center justify-center font-bold text-lg">
+                                    <div class="bg-blue-100 text-blue-600 w-10 h-10 rounded-xl flex items-center justify-center font-bold text-lg shadow-sm">
                                         <i class="fa-solid fa-receipt"></i>
                                     </div>
                                     <div>
@@ -113,12 +113,12 @@
                                 <div class="flex flex-col gap-1 max-w-[200px]">
                                     @foreach($trx->detailTransaksi->take(2) as $detail)
                                     <div class="text-xs text-gray-600 truncate">
-                                        <span class="font-bold text-gray-800 bg-gray-100 px-1 rounded mr-1">{{ $detail->jumlah }}x</span>
+                                        <span class="font-bold text-gray-800 bg-gray-100 px-1.5 py-0.5 rounded mr-1 border border-gray-200">{{ $detail->jumlah }}x</span>
                                         {{ $detail->produk->nama_produk ?? 'Produk Dihapus' }}
                                     </div>
                                     @endforeach
                                     @if($trx->detailTransaksi->count() > 2)
-                                    <span class="text-[10px] text-blue-500 font-bold hover:underline">+ {{ $trx->detailTransaksi->count() - 2 }} barang lainnya</span>
+                                    <span class="text-[10px] text-blue-500 font-bold hover:underline ml-1">+ {{ $trx->detailTransaksi->count() - 2 }} lainnya</span>
                                     @endif
                                 </div>
                             </td>
@@ -147,7 +147,7 @@
                                 <form action="{{ route('transaksi.update', $trx->id_transaksi) }}" method="POST">
                                     @csrf
                                     <input type="hidden" name="status" value="Dikirim">
-                                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm shadow-blue-200 transition flex items-center gap-2 mx-auto transform active:scale-95">
+                                    <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md shadow-blue-200 transition flex items-center gap-2 mx-auto transform active:scale-95">
                                         <i class="fa-solid fa-truck-fast"></i> Kirim
                                     </button>
                                 </form>
@@ -156,7 +156,7 @@
                                 <form action="{{ route('transaksi.update', $trx->id_transaksi) }}" method="POST">
                                     @csrf
                                     <input type="hidden" name="status" value="Selesai">
-                                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-sm shadow-green-200 transition flex items-center gap-2 mx-auto transform active:scale-95">
+                                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md shadow-green-200 transition flex items-center gap-2 mx-auto transform active:scale-95">
                                         <i class="fa-solid fa-check-double"></i> Selesai
                                     </button>
                                 </form>
@@ -178,7 +178,6 @@
                             <div class="json-alamat">{{ $trx->alamat->detail_alamat ?? 'Alamat tidak ditemukan' }}</div>
                             <div class="json-total">Rp{{ number_format($trx->total_bayar, 0, ',', '.') }}</div>
                             <div class="json-ongkir">Rp{{ number_format($trx->ongkos_kirim ?? 0, 0, ',', '.') }}</div>
-
                             <div class="json-produk">
                                 @foreach($trx->detailTransaksi as $dt)
                                 <div class="item-produk"
@@ -194,13 +193,13 @@
 
                         @empty
                         <tr>
-                            <td colspan="7" class="px-6 py-16 text-center text-gray-400 bg-gray-50/50">
+                            <td colspan="7" class="px-6 py-20 text-center text-gray-400">
                                 <div class="flex flex-col items-center">
-                                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                                        <i class="fa-solid fa-box-open text-3xl text-gray-300"></i>
+                                    <div class="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                                        <i class="fa-solid fa-box-open text-4xl text-gray-300"></i>
                                     </div>
-                                    <p class="font-bold text-gray-500">Belum ada pesanan masuk.</p>
-                                    <p class="text-xs mt-1">Pesanan baru akan muncul di sini secara otomatis.</p>
+                                    <p class="font-bold text-gray-500 text-lg">Belum ada pesanan.</p>
+                                    <p class="text-xs mt-1 opacity-70">Pesanan baru akan muncul di sini.</p>
                                 </div>
                             </td>
                         </tr>
@@ -219,23 +218,20 @@
 
     <div id="modalDetail" class="fixed inset-0 z-[100] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
         <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity opacity-0" id="modalBackdrop"></div>
-
         <div class="fixed inset-0 z-10 overflow-y-auto">
             <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
-
                 <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" id="modalPanel">
 
-                    <div class="bg-blue-600 px-6 py-4 flex justify-between items-center">
+                    <div class="bg-gradient-to-r from-blue-600 to-teal-500 px-6 py-4 flex justify-between items-center">
                         <h3 class="text-lg font-bold leading-6 text-white flex items-center gap-2">
                             <i class="fa-solid fa-receipt"></i> Detail Pesanan
                         </h3>
-                        <button type="button" onclick="closeDetailModal()" class="text-blue-200 hover:text-white transition focus:outline-none">
+                        <button type="button" onclick="closeDetailModal()" class="text-white/70 hover:text-white transition focus:outline-none">
                             <i class="fa-solid fa-xmark text-xl"></i>
                         </button>
                     </div>
 
                     <div class="px-6 py-5 max-h-[70vh] overflow-y-auto custom-scrollbar">
-
                         <div class="flex justify-between items-start mb-6 pb-4 border-b border-gray-100">
                             <div>
                                 <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-1">Kode Transaksi</p>
@@ -245,9 +241,7 @@
                                 </p>
                             </div>
                             <div class="text-right">
-                                <span id="m-status" class="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">
-                                    STATUS
-                                </span>
+                                <span id="m-status" class="px-3 py-1 rounded-full text-xs font-bold bg-blue-100 text-blue-700 border border-blue-200">STATUS</span>
                             </div>
                         </div>
 
@@ -272,11 +266,9 @@
                         </div>
 
                         <h4 class="text-sm font-bold text-gray-700 mb-3 flex items-center gap-2">
-                            <i class="fa-solid fa-box text-blue-500"></i> Rincian Barang
+                            <i class="fa-solid fa-box text-teal-500"></i> Rincian Barang
                         </h4>
-                        <div class="space-y-3 mb-6" id="m-produk-list">
-                        </div>
-
+                        <div class="space-y-3 mb-6" id="m-produk-list"></div>
                     </div>
 
                     <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-t border-gray-200">
@@ -295,12 +287,9 @@
 
     <script>
         function openDetailModal(id) {
-            // 1. Ambil Data dari Hidden Element
             const container = document.getElementById('data-trx-' + id);
-
             if (!container) return;
 
-            // 2. Isi Modal dengan Data
             document.getElementById('m-kode').innerText = container.querySelector('.json-kode').innerText;
             document.getElementById('m-tgl').innerText = container.querySelector('.json-tgl').innerText;
             document.getElementById('m-status').innerText = container.querySelector('.json-status').innerText;
@@ -310,7 +299,6 @@
             document.getElementById('m-total').innerText = container.querySelector('.json-total').innerText;
             document.getElementById('m-ongkir').innerText = container.querySelector('.json-ongkir').innerText;
 
-            // Update Warna Status Badge
             const status = container.querySelector('.json-status').innerText;
             const statusEl = document.getElementById('m-status');
             statusEl.className = 'px-3 py-1 rounded-full text-xs font-bold border ';
@@ -318,9 +306,8 @@
             else if (status === 'Dikirim') statusEl.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-200');
             else statusEl.classList.add('bg-green-100', 'text-green-700', 'border-green-200');
 
-            // 3. Render List Produk
             const listContainer = document.getElementById('m-produk-list');
-            listContainer.innerHTML = ''; // Reset dulu
+            listContainer.innerHTML = '';
 
             const items = container.querySelectorAll('.item-produk');
             items.forEach(item => {
@@ -330,7 +317,6 @@
                 const harga = item.dataset.harga;
                 const subtotal = item.dataset.subtotal;
 
-                // Template Item Produk
                 const html = `
                     <div class="flex items-start gap-3 p-2 hover:bg-gray-50 rounded-lg transition border border-transparent hover:border-gray-100">
                         <div class="w-12 h-12 bg-white rounded-lg border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">
@@ -346,14 +332,11 @@
                 listContainer.insertAdjacentHTML('beforeend', html);
             });
 
-            // 4. Tampilkan Modal dengan Animasi
             const modal = document.getElementById('modalDetail');
             const backdrop = document.getElementById('modalBackdrop');
             const panel = document.getElementById('modalPanel');
 
             modal.classList.remove('hidden');
-
-            // Animasi Fade In
             setTimeout(() => {
                 backdrop.classList.remove('opacity-0');
                 panel.classList.remove('opacity-0', 'translate-y-4', 'sm:translate-y-0', 'sm:scale-95');
@@ -366,20 +349,16 @@
             const backdrop = document.getElementById('modalBackdrop');
             const panel = document.getElementById('modalPanel');
 
-            // Animasi Fade Out
             backdrop.classList.add('opacity-0');
             panel.classList.add('opacity-0', 'translate-y-4', 'sm:translate-y-0', 'sm:scale-95');
             panel.classList.remove('opacity-100', 'translate-y-0', 'sm:scale-100');
 
             setTimeout(() => {
                 modal.classList.add('hidden');
-            }, 300); // Tunggu durasi transisi selesai
+            }, 300);
         }
-
-        // Close when clicking backdrop
         document.getElementById('modalBackdrop').addEventListener('click', closeDetailModal);
     </script>
-
 </body>
 
 </html>
