@@ -160,7 +160,13 @@
 
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 @foreach($produkLain as $rek)
-                @php $hasDiskonRek = $rek->persen_diskon > 0; @endphp
+                @php 
+                    $hasDiskonRek = $rek->persen_diskon > 0; 
+                    // Fallback perhitungan harga final jika di model belum ada
+                    $hargaFinalRek = $hasDiskonRek 
+                        ? $rek->harga_produk - ($rek->harga_produk * ($rek->persen_diskon / 100)) 
+                        : $rek->harga_produk;
+                @endphp
 
                 <a href="{{ route('produk.show', $rek->id_produk) }}" class="bg-white p-3 rounded-xl border border-gray-200 hover:shadow-lg hover:border-blue-300 transition duration-300 group flex flex-col justify-between h-full relative">
 
@@ -185,7 +191,7 @@
                                 Rp{{ number_format($rek->harga_produk, 0, ',', '.') }}
                             </span>
                             <span class="text-blue-600 font-extrabold text-sm">
-                                Rp{{ number_format($rek->harga_final, 0, ',', '.') }}
+                                Rp{{ number_format($hargaFinalRek, 0, ',', '.') }}
                             </span>
                         </div>
                         @else
@@ -203,24 +209,23 @@
     @include('partials.footer-kiosk')
 
     <script>
-    // === 1. INISIALISASI VARIABEL ===
-    // Menggunakan harga_final (jika ada diskon) atau harga_produk biasa
-    // Tanda ?? 0 berguna agar javascript tidak error jika data kosong
-    const hargaSatuan = {{ $produk->harga_final ?? $produk->harga_produk ?? 0 }};
+    // === 1. INISIALISASI VARIABEL (Dengan Fallback Aman) ===
     const maxStok = {{ $produk->stok ?? 0 }};
+    // Gunakan harga_produk sebagai basis jika harga_final null/belum dihitung
+    const hargaAsliSatuan = {{ $produk->harga_produk ?? 0 }};
+    const hargaFinalSatuan = {{ $produk->harga_final ?? $produk->harga_produk ?? 0 }};
+    
     const qtyInput = document.getElementById('qtyInput');
-    const hargaAsliSatuan = {{ $produk->harga_produk }};
-    const hargaFinalSatuan = {{ $produk->harga_final }};
     const subtotalCoret = document.getElementById('subtotalCoret');
     const subtotalDisplay = document.getElementById('subtotalDisplay');
-    const cartBadge = document.getElementById('cart-badge');
+    const cartBadge = document.getElementById('cart-badge'); // Pastikan ID ini ada di navbar
 
     // === 2. FORMAT RUPIAH ===
     function formatRupiah(angka) {
         return 'Rp' + new Intl.NumberFormat('id-ID').format(angka);
     }
 
-    // === 3. UPDATE JUMLAH (Logika Script Lama) ===
+    // === 3. UPDATE JUMLAH & SUBTOTAL ===
     function updateQty(change) {
         let currentQty = parseInt(qtyInput.value) || 1;
         let newQty = currentQty + change;
@@ -228,70 +233,72 @@
         if (newQty >= 1 && newQty <= maxStok) {
             qtyInput.value = newQty;
             
-            // 1. Hitung Subtotal Final (Yang Besar & Tebal)
+            // Hitung Subtotal Final
             let totalFinal = newQty * hargaFinalSatuan;
-            if(subtotalDisplay) {
-                subtotalDisplay.innerText = formatRupiah(totalFinal);
-            }
+            if(subtotalDisplay) subtotalDisplay.innerText = formatRupiah(totalFinal);
 
-            // 2. Hitung Subtotal Coret (Jika ada elemennya)
+            // Hitung Subtotal Coret (Jika ada diskon)
             if(subtotalCoret) {
                 let totalAsli = newQty * hargaAsliSatuan;
                 subtotalCoret.innerText = formatRupiah(totalAsli);
             }
         } else if (newQty > maxStok) {
-            showToast("Stok mentok! Maksimal hanya " + maxStok, "error");
+            showToast("Stok tidak mencukupi! Maksimal " + maxStok, "error");
         }
     }
 
-    // === 4. FUNGSI TOAST (Visual) ===
+    // === 4. FUNGSI TOAST NOTIFICATION ===
     function showToast(message, type = 'success') {
         const toast = document.getElementById('toast-notification');
         const msg = document.getElementById('toast-message');
         const iconContainer = document.getElementById('toast-icon-container');
+        const icon = document.getElementById('toast-icon');
 
         if(!toast || !msg) return;
 
         msg.innerText = message;
         toast.classList.remove('hidden', 'border-green-500', 'border-red-500');
         iconContainer.classList.remove('bg-green-100', 'text-green-500', 'bg-red-100', 'text-red-500');
+        icon.className = "fa-solid text-lg"; // Reset class icon
 
         if (type === 'success') {
             toast.classList.add('border-green-500');
             iconContainer.classList.add('bg-green-100', 'text-green-500');
+            icon.classList.add('fa-check');
         } else {
             toast.classList.add('border-red-500');
             iconContainer.classList.add('bg-red-100', 'text-red-500');
+            icon.classList.add('fa-xmark');
         }
 
         toast.classList.add('toast-enter');
+        toast.classList.remove('hidden');
         setTimeout(() => { toast.classList.add('hidden'); }, 3000);
     }
 
-    // Cek Session Flash
+    // === 5. CEK SESSION FLASH ===
     @if(session('success')) showToast("{{ session('success') }}", "success"); @endif
     @if(session('error')) showToast("{{ session('error') }}", "error"); @endif
 
-    // === 5. SUBMIT CART (Logika Script Lama + Perbaikan Loading) ===
+    // === 6. SUBMIT CART (AJAX) ===
     async function submitCart(type) {
         let qty = qtyInput.value;
         if(qty < 1) { showToast("Jumlah minimal 1", "error"); return; }
 
         let url = "{{ route('kiosk.add', $produk->id_produk) }}?qty=" + qty + "&type=" + type;
 
-        // Jika Beli Langsung -> Redirect
+        // Mode Beli Langsung -> Redirect Biasa
         if (type === 'now') { 
             window.location.href = url; 
             return; 
         }
 
-        // Jika Keranjang -> AJAX
+        // Mode Keranjang -> AJAX
         try {
-            // Ambil tombol yang diklik
-            let btn = document.querySelector("button[onclick=\"submitCart('cart')\"]");
+            let btn = document.getElementById('btn-keranjang');
             let originalText = "";
             
-            // Ubah jadi loading
+            // Loading State
             if(btn) {
                 originalText = btn.innerHTML;
                 btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i>"; 
@@ -303,9 +310,10 @@
 
             if(data.status === 'success') {
                 showToast(data.message, "success");
-                // Update Badge
+                // Update Badge Keranjang di Navbar (Animasi)
                 if(cartBadge) {
                     cartBadge.innerText = data.total_cart;
+                    cartBadge.classList.remove('hidden');
                     cartBadge.style.display = 'flex';
                     cartBadge.classList.add('scale-125'); 
                     setTimeout(() => cartBadge.classList.remove('scale-125'), 200);
@@ -313,10 +321,10 @@
             } else if (data.redirect) {
                 window.location.href = data.redirect;
             } else {
-                showToast(data.message || "Gagal", "error");
+                showToast(data.message || "Gagal menambahkan keranjang", "error");
             }
 
-            // Kembalikan tombol
+            // Restore Button
             if(btn) {
                 btn.innerHTML = originalText; 
                 btn.disabled = false;
@@ -324,17 +332,16 @@
 
         } catch (error) {
             console.error(error); 
-            showToast("Koneksi Error", "error");
+            showToast("Terjadi kesalahan koneksi", "error");
             
-            // Kembalikan tombol jika error
-            let btn = document.querySelector("button[onclick=\"submitCart('cart')\"]");
+            let btn = document.getElementById('btn-keranjang');
             if(btn) {
                 btn.innerHTML = "<i class='fa-solid fa-plus mr-2'></i> Keranjang";
                 btn.disabled = false;
             }
         }
     }
-</script>
+    </script>
 
 </body>
 </html>

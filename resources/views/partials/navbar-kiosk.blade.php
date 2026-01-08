@@ -19,7 +19,7 @@
                             @endphp
                             <div class="flex flex-col max-h-[400px] overflow-y-auto custom-scrollbar p-1">
                                 @foreach($kategoriNav as $cat)
-                                <a href="{{ route('kiosk.index', ['kategori' => $cat->id_kategori]) }}" class="mx-1 px-4 py-2.5 text-sm text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 hover:font-bold transition flex items-center justify-between group/item">
+                                <a href="{{ route('kiosk.search', ['kategori[]' => $cat->id_kategori]) }}" class="mx-1 px-4 py-2.5 text-sm text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 hover:font-bold transition flex items-center justify-between group/item">
                                     <span>{{ $cat->nama_kategori }}</span>
                                 </a>
                                 @endforeach

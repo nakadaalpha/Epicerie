@@ -69,13 +69,13 @@ class KioskController extends Controller
             ]);
         }
 
-        $produkTerbaru = Produk::orderBy('created_at', 'desc')->limit(5)->get();
+        $produkTerbaru = Produk::orderBy('created_at', 'desc')->limit(6)->get();
 
         $produkTerlaris = Produk::select('produk.*', DB::raw('COALESCE(SUM(detail_transaksi.jumlah), 0) as total_terjual'))
             ->leftJoin('detail_transaksi', 'produk.id_produk', '=', 'detail_transaksi.id_produk')
             ->groupBy('produk.id_produk')
             ->orderBy('total_terjual', 'desc')
-            ->limit(5)
+            ->limit(6)
             ->get();
 
         $produk = Produk::inRandomOrder()->limit(12)->get();
@@ -90,41 +90,126 @@ class KioskController extends Controller
 
     public function search(Request $request)
     {
-        $query = Produk::query();
-        if ($request->has('search') && $request->search != '') {
-            $query->where('nama_produk', 'LIKE', '%' . $request->search . '%');
+        $keyword = $request->search;
+        $selectedKategori = $request->kategori ?? [];
+        $minPrice = $request->min_price;
+        $maxPrice = $request->max_price;
+
+        // 1. QUERY UTAMA (Pencarian User)
+        $query = \App\Models\Produk::query();
+
+        if ($keyword) {
+            $query->where('nama_produk', 'like', '%' . $keyword . '%');
         }
 
-        $selectedKategori = $request->input('kategori', []);
-        if (!is_array($selectedKategori) && $selectedKategori != '') $selectedKategori = [$selectedKategori];
-        if (!empty($selectedKategori)) $query->whereIn('id_kategori', $selectedKategori);
+        if (!empty($selectedKategori)) {
+            $query->whereIn('id_kategori', $selectedKategori);
+        }
 
-        $minPrice = $request->input('min_price');
-        $maxPrice = $request->input('max_price');
-        if ($minPrice) $query->where('harga_produk', '>=', $minPrice);
-        if ($maxPrice) $query->where('harga_produk', '<=', $maxPrice);
+        if ($minPrice) {
+            $query->where('harga_produk', '>=', $minPrice);
+        }
 
-        $produk = $query->orderBy('nama_produk', 'asc')->get();
-        $allCategories = Kategori::all();
-        $cartData = $this->getCartSummary();
-        $keyword = $request->search;
+        if ($maxPrice) {
+            $query->where('harga_produk', '<=', $maxPrice);
+        }
 
-        return view('kiosk.search', array_merge(
-            compact('produk', 'allCategories', 'keyword', 'selectedKategori', 'minPrice', 'maxPrice'),
-            $cartData
-        ));
+        $produk = $query->get();
+        $allCategories = \App\Models\Kategori::withCount('produk')->get();
+
+        // --- 2. LOGIKA CONTENT-BASED RECOMMENDATION ---
+        $rekomendasi = collect();
+
+        if ($produk->isNotEmpty()) {
+            // A. Jika ada hasil, ambil kategori dari produk-produk yang muncul
+            // Kita ambil ID Kategori yang paling sering muncul di hasil pencarian
+            $kategoriIds = $produk->pluck('id_kategori')->unique()->take(3); // Ambil maksimal 3 kategori relevan
+            $excludeIds = $produk->pluck('id_produk')->toArray(); // Jangan tampilkan lagi produk yang sudah ada di hasil
+
+            $rekomendasi = \App\Models\Produk::whereIn('id_kategori', $kategoriIds)
+                ->whereNotIn('id_produk', $excludeIds) // Exclude produk yang sedang dilihat
+                ->inRandomOrder()
+                ->limit(4)
+                ->get();
+        }
+
+        // B. Fallback: Jika rekomendasi kosong (atau hasil pencarian 0), cari berdasarkan kemiripan nama parsial
+        if ($rekomendasi->isEmpty() && $keyword) {
+            // Pecah keyword, misal "Roti Coklat" jadi ["Roti", "Coklat"]
+            $words = explode(' ', $keyword);
+
+            $queryRek = \App\Models\Produk::query();
+            $queryRek->where(function ($q) use ($words) {
+                foreach ($words as $word) {
+                    if (strlen($word) > 2) { // Abaikan kata pendek
+                        $q->orWhere('nama_produk', 'like', '%' . $word . '%');
+                    }
+                }
+            });
+
+            // Exclude hasil pencarian utama jika ada
+            if ($produk->isNotEmpty()) {
+                $queryRek->whereNotIn('id_produk', $produk->pluck('id_produk'));
+            }
+
+            $rekomendasi = $queryRek->limit(4)->inRandomOrder()->get();
+        }
+
+        // C. Fallback Terakhir: Jika masih kosong juga, tampilkan produk terlaris/random
+        if ($rekomendasi->isEmpty()) {
+            $rekomendasi = \App\Models\Produk::inRandomOrder()->limit(4)->get();
+        }
+
+        return view('kiosk.search', compact('produk', 'allCategories', 'keyword', 'selectedKategori', 'minPrice', 'maxPrice', 'rekomendasi'));
     }
 
     public function show($id)
     {
-        $produk = Produk::findOrFail($id);
-        $produkLain = Produk::where('id_kategori', $produk->id_kategori)
-            ->where('id_produk', '!=', $id)
-            ->inRandomOrder()
+        // 1. Ambil data produk yang sedang dilihat
+        $produk = \App\Models\Produk::with('kategori')->findOrFail($id);
+
+        // 2. Persiapkan Kata Kunci untuk Content-Based Filtering
+        // Contoh: "Kopi Susu Gula Aren" -> ["Kopi", "Susu", "Gula", "Aren"]
+        $keywords = explode(' ', $produk->nama_produk);
+
+        // Filter kata yang terlalu pendek (misal: "di", "ke", "yg" agar pencarian lebih akurat)
+        $keywords = array_filter($keywords, function ($word) {
+            return strlen($word) > 2;
+        });
+
+        // 3. Query Rekomendasi
+        $produkLain = \App\Models\Produk::where('id_produk', '!=', $id) // Jangan tampilkan produk yang sedang dilihat
+            ->where(function ($query) use ($produk, $keywords) {
+                // Rule A: Cari yang KATEGORI-nya sama (Bobot paling tinggi)
+                $query->where('id_kategori', $produk->id_kategori)
+
+                    // Rule B: ATAU cari yang NAMANYA mirip (mengandung salah satu kata kunci)
+                    ->orWhere(function ($subQuery) use ($keywords) {
+                        foreach ($keywords as $word) {
+                            $subQuery->orWhere('nama_produk', 'like', '%' . $word . '%');
+                        }
+                    });
+            })
+            // 4. Scoring / Pengurutan (Ranking)
+            // Prioritaskan produk yang Kategori-nya SAMA persis
+            ->orderByRaw("CASE WHEN id_kategori = ? THEN 1 ELSE 2 END", [$produk->id_kategori])
+            // Lalu urutkan berdasarkan yang terbaru
+            ->orderBy('created_at', 'desc')
             ->limit(6)
             ->get();
-        $cartData = $this->getCartSummary();
-        return view('kiosk.show', array_merge(compact('produk', 'produkLain'), $cartData));
+
+        // 5. Fallback (Jaga-jaga jika hasil di atas kosong/kurang dari 6)
+        if ($produkLain->count() < 6) {
+            $excludeIds = $produkLain->pluck('id_produk')->push($id);
+            $tambahan = \App\Models\Produk::whereNotIn('id_produk', $excludeIds)
+                ->orderBy('terjual', 'desc') // Isi kekosongan dengan produk terlaris
+                ->limit(6 - $produkLain->count())
+                ->get();
+
+            $produkLain = $produkLain->merge($tambahan);
+        }
+
+        return view('kiosk.show', compact('produk', 'produkLain'));
     }
 
     // ========================================================================

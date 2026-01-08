@@ -87,7 +87,7 @@
                 Belum ada barang nih. Yuk isi dengan kebutuhan harianmu!
             </p>
 
-            <a href="{{ route('kiosk.index') }}" class="group relative inline-flex items-center justify-center px-8 py-3 text-base font-bold text-white transition-all duration-200 bg-blue-600 border border-transparent rounded-full hover:bg-blue-700 shadow-lg shadow-blue-500/30 hover:-translate-y-1 mb-12">
+            <a href="{{ route('kiosk.index') }}" class="group relative inline-flex items-center justify-center px-8 py-3 text-base font-bold text-white transition-all duration-200 bg-blue-600 border border-transparent rounded-full hover:bg-blue-700 hover:-translate-y-1 mb-12">
                 <i class="fa-solid fa-magnifying-glass mr-2"></i> Mulai Belanja
             </a>
 
@@ -105,7 +105,7 @@
                     : $p->harga_produk;
                     @endphp
 
-                    <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between transition-all hover:shadow-md hover:border-orange-200 relative group overflow-hidden">
+                    <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between transition-all hover:shadow-md hover:border-blue-200 relative group overflow-hidden">
 
                         @if($hasDiskon)
                         <div class="absolute top-2 left-2 z-10 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm flex items-center gap-1">
@@ -129,12 +129,12 @@
                                 <span class="text-[10px] text-gray-400 line-through decoration-red-400">
                                     Rp{{ number_format($p->harga_produk, 0, ',', '.') }}
                                 </span>
-                                <span class="text-orange-600 font-extrabold text-sm block">
+                                <span class="text-blue-600 font-extrabold text-sm block">
                                     Rp{{ number_format($hargaFinal, 0, ',', '.') }}
                                 </span>
                             </div>
                             @else
-                            <span class="text-orange-600 font-extrabold text-sm mb-1 block">
+                            <span class="text-blue-600 font-extrabold text-sm mb-1 block">
                                 Rp{{ number_format($p->harga_produk, 0, ',', '.') }}
                             </span>
                             @endif
@@ -142,7 +142,7 @@
 
                         <div class="flex justify-end mt-2 z-20 relative">
                             @if($p->stok > 0)
-                            <a href="{{ route('kiosk.add', $p->id_produk) }}" class="bg-orange-500 hover:bg-orange-600 text-white w-8 h-8 flex items-center justify-center rounded-full shadow-md active:scale-90 transition">
+                            <a href="{{ route('kiosk.add', $p->id_produk) }}" class="bg-blue-600 hover:bg-blue-700 text-white w-8 h-8 flex items-center justify-center rounded-full shadow-md active:scale-90 transition">
                                 <i class="fa-solid fa-plus"></i>
                             </a>
                             @else
