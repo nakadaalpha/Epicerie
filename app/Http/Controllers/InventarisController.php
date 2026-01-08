@@ -10,10 +10,50 @@ use Illuminate\Support\Facades\Storage; // WAJIB: Import ini untuk hapus file
 class InventarisController extends Controller
 {
     // --- 1. INDEX (READ) ---
-    public function index()
+    public function index(Request $request)
     {
-        $produk = Produk::with('kategori')->orderBy('created_at', 'desc')->get();
-        return view('inventaris.index', compact('produk'));
+        // 1. Ambil Kategori untuk dropdown filter
+        $kategori = \App\Models\Kategori::all();
+
+        // 2. Query Produk
+        $query = \App\Models\Produk::query()->with('kategori');
+
+        // Filter Pencarian
+        if ($request->has('search') && $request->search != '') {
+            $query->where('nama_produk', 'like', '%' . $request->search . '%');
+        }
+
+        // Filter Kategori
+        if ($request->has('kategori') && $request->kategori != '') {
+            $query->where('id_kategori', $request->kategori);
+        }
+
+        // Sorting (Urutan)
+        if ($request->has('sort')) {
+            switch ($request->sort) {
+                case 'termahal':
+                    $query->orderBy('harga_produk', 'desc');
+                    break;
+                case 'termurah':
+                    $query->orderBy('harga_produk', 'asc');
+                    break;
+                case 'stok_sedikit':
+                    $query->orderBy('stok', 'asc');
+                    break;
+                case 'stok_banyak':
+                    $query->orderBy('stok', 'desc');
+                    break;
+                default: // 'terbaru'
+                    $query->orderBy('created_at', 'desc');
+                    break;
+            }
+        } else {
+            $query->orderBy('created_at', 'desc'); // Default urutan
+        }
+
+        $produk = $query->paginate(9)->withQueryString(); // Gunakan paginate agar rapi
+
+        return view('inventaris.index', compact('produk', 'kategori'));
     }
 
     // --- 2. CREATE (FORM) ---

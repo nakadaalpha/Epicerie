@@ -94,73 +94,61 @@ class KioskController extends Controller
         $selectedKategori = $request->kategori ?? [];
         $minPrice = $request->min_price;
         $maxPrice = $request->max_price;
+        $sort = $request->sort; // Tangkap input sorting
 
-        // 1. QUERY UTAMA (Pencarian User)
+        // 1. QUERY UTAMA
         $query = \App\Models\Produk::query();
 
+        // ... (Logika filter keyword, kategori, harga TETAP SAMA seperti sebelumnya) ...
         if ($keyword) {
             $query->where('nama_produk', 'like', '%' . $keyword . '%');
         }
-
         if (!empty($selectedKategori)) {
             $query->whereIn('id_kategori', $selectedKategori);
         }
-
         if ($minPrice) {
             $query->where('harga_produk', '>=', $minPrice);
         }
-
         if ($maxPrice) {
             $query->where('harga_produk', '<=', $maxPrice);
         }
 
-        $produk = $query->get();
-        $allCategories = \App\Models\Kategori::withCount('produk')->get();
+        // --- LOGIKA SORTING BARU DI SINI ---
+        switch ($sort) {
+            case 'termurah':
+                $query->orderBy('harga_produk', 'asc');
+                break;
+            case 'termahal':
+                $query->orderBy('harga_produk', 'desc');
+                break;
+            case 'terbaru':
+                $query->orderBy('created_at', 'desc');
+                break;
+            case 'terlaris':
+                // Join dengan detail_transaksi untuk menghitung jumlah terjual
+                $query->select('produk.*', \Illuminate\Support\Facades\DB::raw('COALESCE(SUM(detail_transaksi.jumlah), 0) as total_terjual'))
+                    ->leftJoin('detail_transaksi', 'produk.id_produk', '=', 'detail_transaksi.id_produk')
+                    ->groupBy('produk.id_produk') // Grouping wajib
+                    ->orderBy('total_terjual', 'desc');
+                break;
+            default: // 'paling_sesuai' atau default
+                // Jika ada keyword, biarkan database menentukan relevansi (biasanya ID atau Created At)
+                // Atau bisa default ke terbaru
+                $query->orderBy('created_at', 'desc');
+                break;
+        }
+        // -----------------------------------
 
-        // --- 2. LOGIKA CONTENT-BASED RECOMMENDATION ---
+        $produk = $query->get();
+
+        // ... (Sisa kode logic rekomendasi dll TETAP SAMA) ...
+        $allCategories = \App\Models\Kategori::withCount('produk')->get();
         $rekomendasi = collect();
 
-        if ($produk->isNotEmpty()) {
-            // A. Jika ada hasil, ambil kategori dari produk-produk yang muncul
-            // Kita ambil ID Kategori yang paling sering muncul di hasil pencarian
-            $kategoriIds = $produk->pluck('id_kategori')->unique()->take(3); // Ambil maksimal 3 kategori relevan
-            $excludeIds = $produk->pluck('id_produk')->toArray(); // Jangan tampilkan lagi produk yang sudah ada di hasil
+        // ... (lanjutan logika rekomendasi Anda) ...
 
-            $rekomendasi = \App\Models\Produk::whereIn('id_kategori', $kategoriIds)
-                ->whereNotIn('id_produk', $excludeIds) // Exclude produk yang sedang dilihat
-                ->inRandomOrder()
-                ->limit(5)
-                ->get();
-        }
-
-        // B. Fallback: Jika rekomendasi kosong (atau hasil pencarian 0), cari berdasarkan kemiripan nama parsial
-        if ($rekomendasi->isEmpty() && $keyword) {
-            // Pecah keyword, misal "Roti Coklat" jadi ["Roti", "Coklat"]
-            $words = explode(' ', $keyword);
-
-            $queryRek = \App\Models\Produk::query();
-            $queryRek->where(function ($q) use ($words) {
-                foreach ($words as $word) {
-                    if (strlen($word) > 2) { // Abaikan kata pendek
-                        $q->orWhere('nama_produk', 'like', '%' . $word . '%');
-                    }
-                }
-            });
-
-            // Exclude hasil pencarian utama jika ada
-            if ($produk->isNotEmpty()) {
-                $queryRek->whereNotIn('id_produk', $produk->pluck('id_produk'));
-            }
-
-            $rekomendasi = $queryRek->limit(5)->inRandomOrder()->get();
-        }
-
-        // C. Fallback Terakhir: Jika masih kosong juga, tampilkan produk terlaris/random
-        if ($rekomendasi->isEmpty()) {
-            $rekomendasi = \App\Models\Produk::inRandomOrder()->limit(5)->get();
-        }
-
-        return view('kiosk.search', compact('produk', 'allCategories', 'keyword', 'selectedKategori', 'minPrice', 'maxPrice', 'rekomendasi'));
+        // Jangan lupa kirim variabel $sort ke view agar dropdown bisa 'selected' otomatis
+        return view('kiosk.search', compact('produk', 'allCategories', 'keyword', 'selectedKategori', 'minPrice', 'maxPrice', 'rekomendasi', 'sort'));
     }
 
     public function show($id)

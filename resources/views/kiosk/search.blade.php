@@ -24,15 +24,17 @@
     </style>
 </head>
 
-<body class=" text-gray-700 font-sans pb-20">
+<body class="text-gray-700 font-sans pb-20">
 
     @include('partials.navbar-kiosk')
 
     <div class="max-w-[1280px] mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
 
         <aside class="w-full lg:w-[280px] shrink-0">
-            <form action="{{ route('kiosk.search') }}" method="GET">
+            <form id="filterForm" action="{{ route('kiosk.search') }}" method="GET">
                 <input type="hidden" name="search" value="{{ $keyword }}">
+
+                <input type="hidden" name="sort" id="hiddenSortInput" value="{{ request('sort') }}">
 
                 <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm sticky top-24">
                     <div class="flex justify-between items-center mb-4">
@@ -85,34 +87,53 @@
         <div class="flex-1">
 
             <div class="mb-6">
-                @php
-                $namaKategori = $allCategories->whereIn('id_kategori', $selectedKategori)->pluck('nama_kategori')->toArray();
-                $stringKategori = implode(', ', $namaKategori);
+                <div class="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
+                    <div>
+                        @php
+                        $namaKategori = $allCategories->whereIn('id_kategori', $selectedKategori)->pluck('nama_kategori')->toArray();
+                        $stringKategori = implode(', ', $namaKategori);
 
-                if ($keyword && !empty($namaKategori)) {
-                $judul = 'Hasil pencarian "' . $keyword . '"';
-                $subJudul = 'di kategori ' . $stringKategori;
-                } elseif ($keyword) {
-                $judul = 'Hasil pencarian "' . $keyword . '"';
-                $subJudul = '';
-                } elseif (!empty($namaKategori)) {
-                $judul = 'Kategori: ' . $stringKategori;
-                $subJudul = '';
-                } else {
-                $judul = 'Semua Produk';
-                $subJudul = '';
-                }
-                @endphp
+                        if ($keyword && !empty($namaKategori)) {
+                        $judul = 'Hasil pencarian "' . $keyword . '"';
+                        $subJudul = 'di kategori ' . $stringKategori;
+                        } elseif ($keyword) {
+                        $judul = 'Hasil pencarian "' . $keyword . '"';
+                        $subJudul = '';
+                        } elseif (!empty($namaKategori)) {
+                        $judul = 'Kategori: ' . $stringKategori;
+                        $subJudul = '';
+                        } else {
+                        $judul = 'Semua Produk';
+                        $subJudul = '';
+                        }
+                        @endphp
 
-                <h1 class="text-2xl font-extrabold text-gray-800">
-                    {{ $judul }}
-                </h1>
+                        <h1 class="text-2xl font-extrabold text-gray-800 leading-tight">
+                            {{ $judul }}
+                        </h1>
 
-                @if($subJudul)
-                <p class="text-gray-500 font-medium text-sm mt-1">{{ $subJudul }}</p>
-                @endif
+                        @if($subJudul)
+                        <p class="text-gray-500 font-medium text-sm mt-1">{{ $subJudul }}</p>
+                        @endif
 
-                <p class="text-sm text-gray-400 mt-2">Menampilkan <strong>{{ count($produk) }}</strong> produk</p>
+                        <p class="text-sm text-gray-400 mt-2">Menampilkan <strong>{{ count($produk) }}</strong> produk</p>
+                    </div>
+
+                    <div class="w-full md:w-auto">
+                        <div class="relative">
+                            <select onchange="applySort(this.value)" class="appearance-none w-full md:w-48 bg-white border border-gray-300 text-gray-700 py-2 pl-4 pr-8 rounded-lg leading-tight focus:outline-none focus:bg-white focus:border-blue-500 text-sm font-bold cursor-pointer shadow-sm">
+                                <option value="paling_sesuai" {{ request('sort') == 'paling_sesuai' ? 'selected' : '' }}>Paling Sesuai</option>
+                                <option value="terbaru" {{ request('sort') == 'terbaru' ? 'selected' : '' }}>Terbaru</option>
+                                <option value="terlaris" {{ request('sort') == 'terlaris' ? 'selected' : '' }}>Terlaris</option>
+                                <option value="termurah" {{ request('sort') == 'termurah' ? 'selected' : '' }}>Harga Terendah</option>
+                                <option value="termahal" {{ request('sort') == 'termahal' ? 'selected' : '' }}>Harga Tertinggi</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                <i class="fa-solid fa-sort text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             @if(session('success'))
@@ -194,7 +215,6 @@
             @endif
 
             @if(isset($rekomendasi) && $rekomendasi->isNotEmpty())
-
             <div class="mb-10 mt-12">
                 <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
                     <i class="fa-solid fa-wand-magic-sparkles text-yellow-500"></i>
@@ -204,22 +224,13 @@
                     Produk Sejenis Lainnya
                     @endif
                 </h3>
-
                 <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
                     @foreach($rekomendasi as $p)
-                    @php
-                    $hasDiskon = $p->persen_diskon > 0;
-                    $hargaFinal = $hasDiskon ? $p->harga_produk - ($p->harga_produk * ($p->persen_diskon / 100)) : $p->harga_produk;
-                    @endphp
-
                     <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between h-full transition-all hover:shadow-md hover:border-yellow-200 relative group overflow-hidden">
-
-                        @if($hasDiskon)
-                        <div class="absolute top-2 left-2 z-10 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm">
-                            -{{ $p->persen_diskon }}%
-                        </div>
-                        @endif
-
+                        @php
+                        $hasDiskon = $p->persen_diskon > 0;
+                        $hargaFinal = $hasDiskon ? $p->harga_produk - ($p->harga_produk * ($p->persen_diskon / 100)) : $p->harga_produk;
+                        @endphp
                         <a href="{{ route('produk.show', $p->id_produk) }}" class="flex-1 flex flex-col">
                             <div class="aspect-square rounded-xl mb-3 flex items-center justify-center overflow-hidden relative">
                                 @if($p->gambar)
@@ -228,23 +239,11 @@
                                 <i class="fa-solid fa-box text-gray-300 text-3xl"></i>
                                 @endif
                             </div>
-
-                            <h3 class="font-bold text-gray-800 text-sm leading-tight mb-1 line-clamp-2 min-h-[2.5em]">
-                                {{ $p->nama_produk }}
-                            </h3>
-
+                            <h3 class="font-bold text-gray-800 text-sm leading-tight mb-1 line-clamp-2 min-h-[2.5em]">{{ $p->nama_produk }}</h3>
                             <div class="mt-auto">
-                                @if($hasDiskon)
-                                <div class="flex flex-col">
-                                    <span class="text-[10px] text-gray-400 line-through">Rp{{ number_format($p->harga_produk, 0, ',', '.') }}</span>
-                                    <span class="text-blue-600 font-extrabold text-sm">Rp{{ number_format($hargaFinal, 0, ',', '.') }}</span>
-                                </div>
-                                @else
-                                <span class="text-blue-600 font-extrabold text-sm">Rp{{ number_format($p->harga_produk, 0, ',', '.') }}</span>
-                                @endif
+                                <span class="text-blue-600 font-extrabold text-sm block">Rp{{ number_format($hargaFinal, 0, ',', '.') }}</span>
                             </div>
                         </a>
-
                         <div class="flex justify-end mt-3 pt-3 border-t border-gray-50">
                             @if($p->stok > 0)
                             <form action="{{ route('kiosk.add', $p->id_produk) }}" method="POST">
@@ -264,6 +263,15 @@
             @endif
         </div>
     </div>
+
+    <script>
+        function applySort(value) {
+            // Set nilai input hidden di form sidebar
+            document.getElementById('hiddenSortInput').value = value;
+            // Submit form sidebar
+            document.getElementById('filterForm').submit();
+        }
+    </script>
 
 </body>
 
