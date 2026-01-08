@@ -234,15 +234,15 @@
             </div>
         </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
+        {{-- 1. Tambahkan ID 'product-grid' di sini --}}
+        <div id="product-grid" class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-4">
             @forelse($produk as $p)
             @php
             $qty = $keranjangItems[$p->id_produk] ?? 0;
-            // Akses accessor model Produk
             $hasDiskon = $p->persen_diskon > 0;
             @endphp
 
-            <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between transition-all hover:shadow-md hover:border-blue-200 relative group">
+            <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between transition-all hover:shadow-md hover:border-blue-200 relative group product-item">
 
                 @if($hasDiskon)
                 <div class="absolute top-2 left-2 z-10 bg-red-500 text-white text-[10px] font-bold px-2 py-1 rounded-md shadow-sm flex items-center gap-1">
@@ -297,12 +297,25 @@
             </div>
             @endforelse
         </div>
+
+        {{-- 2. Tombol Load More (Hanya muncul jika ada halaman berikutnya) --}}
+        @if($produk->hasMorePages())
+        <div class="mt-8 flex justify-center">
+            <button id="loadMoreBtn" data-url="{{ $produk->nextPageUrl() }}" onclick="loadMoreProducts()" class="bg-white border border-gray-300 text-gray-600 font-bold py-3 px-8 rounded-full shadow-sm hover:bg-blue-50 hover:border-blue-300 hover:text-blue-600 transition-all flex items-center gap-2 group">
+                <span id="btnText">Muat Lebih Banyak</span>
+                <i id="btnIcon" class="fa-solid fa-chevron-down group-hover:translate-y-1 transition-transform"></i>
+                <i id="btnSpinner" class="fa-solid fa-circle-notch fa-spin hidden"></i>
+            </button>
+        </div>
+        @endif
     </div>
 
     <script>
         document.addEventListener("DOMContentLoaded", function(event) {
 
-            // --- LOGIKA INFINITE SLIDER ---
+            // ==========================================
+            // 1. LOGIKA INFINITE SLIDER (Kode Lama)
+            // ==========================================
             const track = document.getElementById('slider-track');
             const items = document.querySelectorAll('.slider-item');
             const prevBtn = document.getElementById('prevBtn');
@@ -310,21 +323,17 @@
             const dots = document.querySelectorAll('.slider-dot');
 
             if (items.length > 0) {
-                let currentIndex = 1; // Mulai dari 1 karena kita akan clone
+                let currentIndex = 1;
                 const totalSlides = items.length;
                 let isTransitioning = false;
                 let autoSlideInterval;
 
-                // Clone elemen pertama dan terakhir
                 const firstClone = items[0].cloneNode(true);
                 const lastClone = items[totalSlides - 1].cloneNode(true);
 
                 track.appendChild(firstClone);
                 track.insertBefore(lastClone, items[0]);
 
-                const allSlides = document.querySelectorAll('.slider-item'); // List baru termasuk clone
-
-                // Set posisi awal (menampilkan slide asli pertama)
                 track.style.transform = `translateX(-100%)`;
 
                 function updateSlider(index, withTransition = true) {
@@ -335,7 +344,6 @@
                     }
                     track.style.transform = `translateX(-${index * 100}%)`;
 
-                    // Update Dots (Handle logic untuk index clone)
                     let dotIndex = index - 1;
                     if (index === 0) dotIndex = totalSlides - 1;
                     if (index === totalSlides + 1) dotIndex = 0;
@@ -365,20 +373,18 @@
                     updateSlider(currentIndex);
                 }
 
-                // Event Listener untuk transisi selesai (Infinite Loop Logic)
                 track.addEventListener('transitionend', () => {
                     isTransitioning = false;
-                    if (currentIndex === 0) { // Jika di clone terakhir (kiri)
+                    if (currentIndex === 0) {
                         currentIndex = totalSlides;
                         updateSlider(currentIndex, false);
                     }
-                    if (currentIndex === totalSlides + 1) { // Jika di clone pertama (kanan)
+                    if (currentIndex === totalSlides + 1) {
                         currentIndex = 1;
                         updateSlider(currentIndex, false);
                     }
                 });
 
-                // Button Listeners
                 nextBtn.addEventListener('click', () => {
                     nextSlide();
                     resetAutoSlide();
@@ -388,9 +394,8 @@
                     resetAutoSlide();
                 });
 
-                // Auto Slide
                 function startAutoSlide() {
-                    autoSlideInterval = setInterval(nextSlide, 4000); // 4 detik
+                    autoSlideInterval = setInterval(nextSlide, 4000);
                 }
 
                 function resetAutoSlide() {
@@ -400,23 +405,95 @@
 
                 startAutoSlide();
 
-                // Pause saat hover
                 const container = document.getElementById('slider-container');
                 container.addEventListener('mouseenter', () => clearInterval(autoSlideInterval));
                 container.addEventListener('mouseleave', startAutoSlide);
             }
 
-            // --- Scroll Position Retention ---
+            // ==========================================
+            // 2. SCROLL POSITION RETENTION
+            // ==========================================
             var scrollpos = sessionStorage.getItem('scrollpos');
             if (scrollpos) window.scrollTo(0, scrollpos);
         });
 
+        // ==========================================
+        // 3. FUNGSI GLOBAL (Load More & Helpers)
+        // ==========================================
+
+        // Simpan posisi scroll saat unload
         window.onbeforeunload = function(e) {
             sessionStorage.setItem('scrollpos', window.scrollY);
         };
 
         function closeQtyModal() {
             document.getElementById('modalQty').classList.add('hidden');
+        }
+
+        // --- LOGIKA LOAD MORE PRODUCTS (BARU) ---
+        function loadMoreProducts() {
+            const btn = document.getElementById('loadMoreBtn');
+            const btnText = document.getElementById('btnText');
+            const btnIcon = document.getElementById('btnIcon');
+            const btnSpinner = document.getElementById('btnSpinner');
+
+            // Ambil URL halaman selanjutnya dari atribut tombol
+            const url = btn.getAttribute('data-url');
+
+            if (!url) return;
+
+            // 1. Ubah tampilan tombol jadi 'Loading...'
+            btn.disabled = true;
+            btnText.innerText = 'Memuat...';
+            btnIcon.classList.add('hidden');
+            btnSpinner.classList.remove('hidden');
+
+            // 2. Request data ke server
+            fetch(url)
+                .then(response => response.text())
+                .then(html => {
+                    // 3. Parse hasil HTML
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(html, 'text/html');
+
+                    // 4. Ambil item produk baru
+                    const newItems = doc.querySelectorAll('#product-grid > div');
+                    const grid = document.getElementById('product-grid');
+
+                    // 5. Masukkan item baru ke grid
+                    newItems.forEach(item => {
+                        // Tambahkan class animasi biar munculnya smooth
+                        item.classList.add('opacity-0', 'translate-y-4');
+                        grid.appendChild(item);
+
+                        // Trigger animasi fade-in
+                        setTimeout(() => {
+                            item.classList.remove('opacity-0', 'translate-y-4');
+                        }, 50);
+                    });
+
+                    // 6. Cek apakah masih ada halaman berikutnya?
+                    const newBtn = doc.getElementById('loadMoreBtn');
+                    if (newBtn) {
+                        // Update URL di tombol kita dengan URL baru
+                        btn.setAttribute('data-url', newBtn.getAttribute('data-url'));
+
+                        // Kembalikan tombol ke kondisi normal
+                        btn.disabled = false;
+                        btnText.innerText = 'Muat Lebih Banyak';
+                        btnIcon.classList.remove('hidden');
+                        btnSpinner.classList.add('hidden');
+                    } else {
+                        // Jika sudah habis, hapus tombolnya
+                        btn.remove();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error loading products:', error);
+                    btn.disabled = false;
+                    btnText.innerText = 'Coba Lagi';
+                    btnSpinner.classList.add('hidden');
+                });
         }
     </script>
 

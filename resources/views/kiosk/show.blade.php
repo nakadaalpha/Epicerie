@@ -8,23 +8,46 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
-        .hide-scroll::-webkit-scrollbar { display: none; }
-        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-        .sticky-card { position: sticky; top: 100px; }
+        .hide-scroll::-webkit-scrollbar {
+            display: none;
+        }
+
+        .hide-scroll {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        .sticky-card {
+            position: sticky;
+            top: 100px;
+        }
     </style>
 </head>
 
 <body class="bg-white font-sans text-gray-800 min-h-screen flex flex-col">
 
-<div id="toast-notification" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[999] hidden flex items-center w-full max-w-xs p-4 space-x-4 text-gray-500 bg-white rounded-xl shadow-2xl border-l-4 transition-all duration-300" role="alert">
+    <div id="toast-notification" class="fixed top-5 left-1/2 transform -translate-x-1/2 z-[999] hidden flex items-center w-full max-w-xs p-4 space-x-4 text-gray-500 bg-white rounded-xl shadow-2xl border-l-4 transition-all duration-300" role="alert">
         <div id="toast-icon-container" class="inline-flex items-center justify-center flex-shrink-0 w-8 h-8 rounded-lg">
             <i id="toast-icon" class="fa-solid text-lg"></i>
         </div>
         <div class="ml-3 text-sm font-bold text-gray-800" id="toast-message">Pesan Notifikasi</div>
     </div>
     <style>
-        @keyframes slideInDown { from { transform: translate(-50%, -100%); opacity: 0; } to { transform: translate(-50%, 0); opacity: 1; } }
-        .toast-enter { animation: slideInDown 0.4s ease-out forwards; }
+        @keyframes slideInDown {
+            from {
+                transform: translate(-50%, -100%);
+                opacity: 0;
+            }
+
+            to {
+                transform: translate(-50%, 0);
+                opacity: 1;
+            }
+        }
+
+        .toast-enter {
+            animation: slideInDown 0.4s ease-out forwards;
+        }
     </style>
 
     @include('partials.navbar-kiosk')
@@ -32,15 +55,23 @@
     <main class="flex-grow max-w-[1200px] mx-auto w-full px-4 py-6">
 
         <nav class="flex items-center gap-2 text-sm text-gray-500 mt-5 mb-1 overflow-x-auto whitespace-nowrap pb-2 border-b border-transparent">
-            <a href="{{ route('kiosk.index') }}" class="text-blue-600 font-bold hover:text-blue-800 transition">Beranda</a>
+            {{-- Link ke Beranda --}}
+            <a href="{{ route('kiosk.index') }}" class="text-blue-600 font-bold hover:text-blue-800 transition">
+                Beranda
+            </a>
+
             <i class="fa-solid fa-chevron-right text-[10px] text-gray-400"></i>
+
+            {{-- Link ke Kategori (Disesuaikan agar mengirim array) --}}
             @if($produk->kategori)
-            <a href="{{ route('kiosk.index', ['kategori' => $produk->id_kategori]) }}" class="text-blue-600 font-bold hover:text-blue-800 transition">
+            <a href="{{ route('kiosk.search', ['kategori[]' => $produk->id_kategori]) }}" class="text-blue-600 font-bold hover:text-blue-800 transition">
                 {{ $produk->kategori->nama_kategori }}
             </a>
             <i class="fa-solid fa-chevron-right text-[10px] text-gray-400"></i>
             @endif
-            <span class="text-gray-600 truncate font-medium max-w-[200px] md:max-w-md cursor-default" title="{{ $produk->nama_produk }}">
+
+            {{-- Nama Produk Saat Ini --}}
+            <span class="text-gray-600 truncate font-medium max-w-[200px] md:max-w-md cursor-default select-none" title="{{ $produk->nama_produk }}">
                 {{ $produk->nama_produk }}
             </span>
         </nav>
@@ -70,7 +101,9 @@
                     <h1 class="text-2xl md:text-3xl font-extrabold text-gray-900 leading-snug mb-2">{{ $produk->nama_produk }}</h1>
 
                     <div class="flex items-center gap-3 text-sm mb-4">
-                        <span class="text-gray-900 font-bold">Terjual {{ $produk->terjual ?? 0 }}</span>
+                        <span class="text-gray-900 font-bold">
+                            Terjual {{ number_format($totalTerjual, 0, ',', '.') }}
+                        </span>
                     </div>
                     @if($produk->persen_diskon > 0)
                     <div class="flex items-center gap-2 mb-1">
@@ -90,7 +123,7 @@
                     </h2>
                     @endif
                 </div>
-                
+
                 <hr class="border-gray-100 my-2">
 
                 <div class="space-y-2">
@@ -120,14 +153,14 @@
 
                     <div class="flex justify-between items-center mb-5">
                         <span class="text-gray-500 text-sm">Subtotal</span>
-                        
+
                         <div class="flex flex-col items-end">
                             @if($produk->harga_produk > $produk->harga_final)
-                                <span class="text-xs text-gray-400 line-through decoration-gray-400" id="subtotalCoret">
-                                    Rp{{ number_format($produk->harga_produk, 0, ',', '.') }}
-                                </span>
+                            <span class="text-xs text-gray-400 line-through decoration-gray-400" id="subtotalCoret">
+                                Rp{{ number_format($produk->harga_produk, 0, ',', '.') }}
+                            </span>
                             @endif
-                            
+
                             <span class="font-extrabold text-xl text-gray-900" id="subtotalDisplay">
                                 Rp{{ number_format($produk->harga_final, 0, ',', '.') }}
                             </span>
@@ -154,18 +187,18 @@
         @if(isset($produkLain) && count($produkLain) > 0)
         <div class="mt-20 border-t border-gray-100 pt-10">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-extrabold text-gray-900">Pilihan Lainnya</h3>
+                <h3 class="text-xl font-extrabold text-gray-900">Produk Lainnya</h3>
                 <a href="{{ route('kiosk.index') }}" class="text-blue-600 font-bold text-sm hover:underline">Lihat Semua</a>
             </div>
 
             <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
                 @foreach($produkLain as $rek)
-                @php 
-                    $hasDiskonRek = $rek->persen_diskon > 0; 
-                    // Fallback perhitungan harga final jika di model belum ada
-                    $hargaFinalRek = $hasDiskonRek 
-                        ? $rek->harga_produk - ($rek->harga_produk * ($rek->persen_diskon / 100)) 
-                        : $rek->harga_produk;
+                @php
+                $hasDiskonRek = $rek->persen_diskon > 0;
+                // Fallback perhitungan harga final jika di model belum ada
+                $hargaFinalRek = $hasDiskonRek
+                ? $rek->harga_produk - ($rek->harga_produk * ($rek->persen_diskon / 100))
+                : $rek->harga_produk;
                 @endphp
 
                 <a href="{{ route('produk.show', $rek->id_produk) }}" class="bg-white p-3 rounded-xl border border-gray-200 hover:shadow-lg hover:border-blue-300 transition duration-300 group flex flex-col justify-between h-full relative">
@@ -209,139 +242,163 @@
     @include('partials.footer-kiosk')
 
     <script>
-    // === 1. INISIALISASI VARIABEL (Dengan Fallback Aman) ===
-    const maxStok = {{ $produk->stok ?? 0 }};
-    // Gunakan harga_produk sebagai basis jika harga_final null/belum dihitung
-    const hargaAsliSatuan = {{ $produk->harga_produk ?? 0 }};
-    const hargaFinalSatuan = {{ $produk->harga_final ?? $produk->harga_produk ?? 0 }};
-    
-    const qtyInput = document.getElementById('qtyInput');
-    const subtotalCoret = document.getElementById('subtotalCoret');
-    const subtotalDisplay = document.getElementById('subtotalDisplay');
-    const cartBadge = document.getElementById('cart-badge'); // Pastikan ID ini ada di navbar
-
-    // === 2. FORMAT RUPIAH ===
-    function formatRupiah(angka) {
-        return 'Rp' + new Intl.NumberFormat('id-ID').format(angka);
-    }
-
-    // === 3. UPDATE JUMLAH & SUBTOTAL ===
-    function updateQty(change) {
-        let currentQty = parseInt(qtyInput.value) || 1;
-        let newQty = currentQty + change;
-
-        if (newQty >= 1 && newQty <= maxStok) {
-            qtyInput.value = newQty;
-            
-            // Hitung Subtotal Final
-            let totalFinal = newQty * hargaFinalSatuan;
-            if(subtotalDisplay) subtotalDisplay.innerText = formatRupiah(totalFinal);
-
-            // Hitung Subtotal Coret (Jika ada diskon)
-            if(subtotalCoret) {
-                let totalAsli = newQty * hargaAsliSatuan;
-                subtotalCoret.innerText = formatRupiah(totalAsli);
+        // === 1. INISIALISASI VARIABEL (Dengan Fallback Aman) ===
+        const maxStok = {
+            {
+                $produk - > stok ?? 0
             }
-        } else if (newQty > maxStok) {
-            showToast("Stok tidak mencukupi! Maksimal " + maxStok, "error");
-        }
-    }
-
-    // === 4. FUNGSI TOAST NOTIFICATION ===
-    function showToast(message, type = 'success') {
-        const toast = document.getElementById('toast-notification');
-        const msg = document.getElementById('toast-message');
-        const iconContainer = document.getElementById('toast-icon-container');
-        const icon = document.getElementById('toast-icon');
-
-        if(!toast || !msg) return;
-
-        msg.innerText = message;
-        toast.classList.remove('hidden', 'border-green-500', 'border-red-500');
-        iconContainer.classList.remove('bg-green-100', 'text-green-500', 'bg-red-100', 'text-red-500');
-        icon.className = "fa-solid text-lg"; // Reset class icon
-
-        if (type === 'success') {
-            toast.classList.add('border-green-500');
-            iconContainer.classList.add('bg-green-100', 'text-green-500');
-            icon.classList.add('fa-check');
-        } else {
-            toast.classList.add('border-red-500');
-            iconContainer.classList.add('bg-red-100', 'text-red-500');
-            icon.classList.add('fa-xmark');
-        }
-
-        toast.classList.add('toast-enter');
-        toast.classList.remove('hidden');
-        setTimeout(() => { toast.classList.add('hidden'); }, 3000);
-    }
-
-    // === 5. CEK SESSION FLASH ===
-    @if(session('success')) showToast("{{ session('success') }}", "success"); @endif
-    @if(session('error')) showToast("{{ session('error') }}", "error"); @endif
-
-    // === 6. SUBMIT CART (AJAX) ===
-    async function submitCart(type) {
-        let qty = qtyInput.value;
-        if(qty < 1) { showToast("Jumlah minimal 1", "error"); return; }
-
-        let url = "{{ route('kiosk.add', $produk->id_produk) }}?qty=" + qty + "&type=" + type;
-
-        // Mode Beli Langsung -> Redirect Biasa
-        if (type === 'now') { 
-            window.location.href = url; 
-            return; 
-        }
-
-        // Mode Keranjang -> AJAX
-        try {
-            let btn = document.getElementById('btn-keranjang');
-            let originalText = "";
-            
-            // Loading State
-            if(btn) {
-                originalText = btn.innerHTML;
-                btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i>"; 
-                btn.disabled = true;
+        };
+        // Gunakan harga_produk sebagai basis jika harga_final null/belum dihitung
+        const hargaAsliSatuan = {
+            {
+                $produk - > harga_produk ?? 0
             }
+        };
+        const hargaFinalSatuan = {
+            {
+                $produk - > harga_final ?? $produk - > harga_produk ?? 0
+            }
+        };
 
-            let response = await fetch(url, { headers: { "X-Requested-With": "XMLHttpRequest" } });
-            let data = await response.json();
+        const qtyInput = document.getElementById('qtyInput');
+        const subtotalCoret = document.getElementById('subtotalCoret');
+        const subtotalDisplay = document.getElementById('subtotalDisplay');
+        const cartBadge = document.getElementById('cart-badge'); // Pastikan ID ini ada di navbar
 
-            if(data.status === 'success') {
-                showToast(data.message, "success");
-                // Update Badge Keranjang di Navbar (Animasi)
-                if(cartBadge) {
-                    cartBadge.innerText = data.total_cart;
-                    cartBadge.classList.remove('hidden');
-                    cartBadge.style.display = 'flex';
-                    cartBadge.classList.add('scale-125'); 
-                    setTimeout(() => cartBadge.classList.remove('scale-125'), 200);
+        // === 2. FORMAT RUPIAH ===
+        function formatRupiah(angka) {
+            return 'Rp' + new Intl.NumberFormat('id-ID').format(angka);
+        }
+
+        // === 3. UPDATE JUMLAH & SUBTOTAL ===
+        function updateQty(change) {
+            let currentQty = parseInt(qtyInput.value) || 1;
+            let newQty = currentQty + change;
+
+            if (newQty >= 1 && newQty <= maxStok) {
+                qtyInput.value = newQty;
+
+                // Hitung Subtotal Final
+                let totalFinal = newQty * hargaFinalSatuan;
+                if (subtotalDisplay) subtotalDisplay.innerText = formatRupiah(totalFinal);
+
+                // Hitung Subtotal Coret (Jika ada diskon)
+                if (subtotalCoret) {
+                    let totalAsli = newQty * hargaAsliSatuan;
+                    subtotalCoret.innerText = formatRupiah(totalAsli);
                 }
-            } else if (data.redirect) {
-                window.location.href = data.redirect;
-            } else {
-                showToast(data.message || "Gagal menambahkan keranjang", "error");
-            }
-
-            // Restore Button
-            if(btn) {
-                btn.innerHTML = originalText; 
-                btn.disabled = false;
-            }
-
-        } catch (error) {
-            console.error(error); 
-            showToast("Terjadi kesalahan koneksi", "error");
-            
-            let btn = document.getElementById('btn-keranjang');
-            if(btn) {
-                btn.innerHTML = "<i class='fa-solid fa-plus mr-2'></i> Keranjang";
-                btn.disabled = false;
+            } else if (newQty > maxStok) {
+                showToast("Stok tidak mencukupi! Maksimal " + maxStok, "error");
             }
         }
-    }
+
+        // === 4. FUNGSI TOAST NOTIFICATION ===
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast-notification');
+            const msg = document.getElementById('toast-message');
+            const iconContainer = document.getElementById('toast-icon-container');
+            const icon = document.getElementById('toast-icon');
+
+            if (!toast || !msg) return;
+
+            msg.innerText = message;
+            toast.classList.remove('hidden', 'border-green-500', 'border-red-500');
+            iconContainer.classList.remove('bg-green-100', 'text-green-500', 'bg-red-100', 'text-red-500');
+            icon.className = "fa-solid text-lg"; // Reset class icon
+
+            if (type === 'success') {
+                toast.classList.add('border-green-500');
+                iconContainer.classList.add('bg-green-100', 'text-green-500');
+                icon.classList.add('fa-check');
+            } else {
+                toast.classList.add('border-red-500');
+                iconContainer.classList.add('bg-red-100', 'text-red-500');
+                icon.classList.add('fa-xmark');
+            }
+
+            toast.classList.add('toast-enter');
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        // === 5. CEK SESSION FLASH ===
+        @if(session('success')) showToast("{{ session('success') }}", "success");
+        @endif
+        @if(session('error')) showToast("{{ session('error') }}", "error");
+        @endif
+
+        // === 6. SUBMIT CART (AJAX) ===
+        async function submitCart(type) {
+            let qty = qtyInput.value;
+            if (qty < 1) {
+                showToast("Jumlah minimal 1", "error");
+                return;
+            }
+
+            let url = "{{ route('kiosk.add', $produk->id_produk) }}?qty=" + qty + "&type=" + type;
+
+            // Mode Beli Langsung -> Redirect Biasa
+            if (type === 'now') {
+                window.location.href = url;
+                return;
+            }
+
+            // Mode Keranjang -> AJAX
+            try {
+                let btn = document.getElementById('btn-keranjang');
+                let originalText = "";
+
+                // Loading State
+                if (btn) {
+                    originalText = btn.innerHTML;
+                    btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i>";
+                    btn.disabled = true;
+                }
+
+                let response = await fetch(url, {
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest"
+                    }
+                });
+                let data = await response.json();
+
+                if (data.status === 'success') {
+                    showToast(data.message, "success");
+                    // Update Badge Keranjang di Navbar (Animasi)
+                    if (cartBadge) {
+                        cartBadge.innerText = data.total_cart;
+                        cartBadge.classList.remove('hidden');
+                        cartBadge.style.display = 'flex';
+                        cartBadge.classList.add('scale-125');
+                        setTimeout(() => cartBadge.classList.remove('scale-125'), 200);
+                    }
+                } else if (data.redirect) {
+                    window.location.href = data.redirect;
+                } else {
+                    showToast(data.message || "Gagal menambahkan keranjang", "error");
+                }
+
+                // Restore Button
+                if (btn) {
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+
+            } catch (error) {
+                console.error(error);
+                showToast("Terjadi kesalahan koneksi", "error");
+
+                let btn = document.getElementById('btn-keranjang');
+                if (btn) {
+                    btn.innerHTML = "<i class='fa-solid fa-plus mr-2'></i> Keranjang";
+                    btn.disabled = false;
+                }
+            }
+        }
     </script>
 
 </body>
+
 </html>
