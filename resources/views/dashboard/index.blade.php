@@ -4,161 +4,241 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - ÈPICERIE</title>
+    <title>Dashboard Admin - ÈPICERIE</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+        body {
+            font-family: 'Nunito', sans-serif;
+        }
+    </style>
 </head>
 
-<body class="bg-gradient-to-br from-blue-500 to-teal-400 min-h-screen font-sans">
+<body class="bg-gradient-to-b from-blue-500 to-teal-400 min-h-screen text-gray-800">
 
     @include('partials.navbar')
 
-    <div class="container mx-auto p-6 max-w-5xl">
-
-        <div class="text-white mb-8 flex justify-between items-end">
-            <div>
-                <h1 class="text-xl opacity-90">Selamat Datang,</h1>
-                <h2 class="text-3xl font-bold">{{ Auth::user()->nama }}</h2>
+    <div class="pt-10 px-6 pb-10">
+        <div class="container mx-auto max-w-6xl">
+            <div class="flex flex-col md:flex-row justify-between items-center text-white mb-6">
+                <div>
+                    <h1 class="text-lg opacity-90 font-medium">Selamat Datang kembali,</h1>
+                    <h2 class="text-3xl font-extrabold tracking-tight drop-shadow-md">{{ Auth::user()->nama ?? 'Admin' }}</h2>
+                </div>
             </div>
-            
-            <a href="{{ route('transaksi.index') }}" class="bg-white/20 hover:bg-white/30 text-white px-4 py-2 rounded-full text-sm flex items-center shadow backdrop-blur-sm transition cursor-pointer text-decoration-none">
-                <i class="fa-solid fa-clock-rotate-left mr-2"></i> Riwayat Transaksi
-            </a>
+        </div>
+    </div>
+
+    <div class="container mx-auto p-6 max-w-6xl -mt-6">
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            <div class="bg-white/95 backdrop-blur-sm p-4 rounded-2xl shadow-lg border border-white/20 flex flex-col justify-between">
+                <div class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Total Produk</div>
+                <div class="flex justify-between items-end">
+                    <span class="text-2xl font-black text-gray-800">{{ $totalProduk }}</span>
+                    <i class="fa-solid fa-box text-blue-300 text-2xl"></i>
+                </div>
+            </div>
+
+            <div class="bg-white/95 backdrop-blur-sm p-4 rounded-2xl shadow-lg border border-white/20 flex flex-col justify-between">
+                <div class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Pelanggan</div>
+                <div class="flex justify-between items-end">
+                    <span class="text-2xl font-black text-gray-800">{{ $totalUser }}</span>
+                    <i class="fa-solid fa-users text-teal-300 text-2xl"></i>
+                </div>
+            </div>
+
+            <div class="bg-white/95 backdrop-blur-sm p-4 rounded-2xl shadow-lg border border-white/20 flex flex-col justify-between">
+                <div class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Order Hari Ini</div>
+                <div class="flex justify-between items-end">
+                    <span class="text-2xl font-black text-blue-600">{{ $totalTransaksiHariIni }}</span>
+                    <i class="fa-solid fa-receipt text-blue-200 text-2xl"></i>
+                </div>
+            </div>
+
+            <div class="bg-white/95 backdrop-blur-sm p-4 rounded-2xl shadow-lg border border-white/20 flex flex-col justify-between">
+                <div class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Omzet Hari Ini</div>
+                <div class="flex justify-between items-end">
+                    <span class="text-lg font-black text-teal-600">Rp{{ number_format($omzetHariIni, 0, ',', '.') }}</span>
+                    <i class="fa-solid fa-coins text-yellow-400 text-2xl"></i>
+                </div>
+            </div>
         </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-            <div class="space-y-6">
-                <div class="bg-white rounded-3xl p-8 shadow-2xl">
-                    <div class="flex justify-between items-center mb-4">
+            <div class="lg:col-span-2 space-y-6">
+                <div class="bg-white rounded-3xl p-6 shadow-xl border border-gray-100">
+                    <div class="flex justify-between items-center mb-6">
                         <div>
-                            <h3 class="text-gray-500 text-sm font-semibold">Laporan Penjualan</h3>
-                            <p class="text-2xl font-bold text-blue-600">
-                                Rp {{ number_format($omzetHariIni ?? 0, 0, ',', '.') }}
-                            </p>
-                            <p class="text-xs text-gray-400">Total Hari Ini</p>
+                            <h3 class="font-bold text-gray-800 text-lg">Grafik Pendapatan</h3>
+                            <p class="text-xs text-gray-400">7 Hari Terakhir</p>
                         </div>
-                        <select class="text-xs border rounded p-1 bg-gray-50 outline-none">
-                            <option>Hari Ini</option>
-                        </select>
+                        <div class="bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                            <i class="fa-solid fa-arrow-trend-up"></i> Realtime
+                        </div>
                     </div>
-                    <canvas id="salesChart" height="150"></canvas>
+                    <div class="relative h-64 w-full">
+                        <canvas id="salesChart"></canvas>
+                    </div>
                 </div>
 
-                <div class="bg-white rounded-3xl p-8 shadow-2xl flex justify-between items-center">
-                    <div>
-                        <h3 class="text-blue-500 font-semibold text-sm">Jumlah Transaksi</h3>
-                        <p class="text-xs text-gray-400">Hari ini</p>
-                    </div>
-                    <div class="bg-[#3b4bbd] text-white px-6 py-3 rounded-full font-bold text-xl shadow-lg">
-                        {{ $totalTransaksiHariIni ?? 0 }} Pesanan
+                <div class="bg-white rounded-3xl p-6 shadow-xl border border-gray-100">
+                    <h3 class="font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fa-solid fa-crown text-yellow-500 mr-2"></i> Paling Laris
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-500">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+                                <tr>
+                                    <th class="px-4 py-3 rounded-l-lg">Produk</th>
+                                    <th class="px-4 py-3 text-center">Terjual</th>
+                                    <th class="px-4 py-3 text-right rounded-r-lg">Sisa Stok</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @forelse($produkTerlaris as $index => $item)
+                                <tr class="bg-white border-b hover:bg-gray-50 transition">
+                                    <td class="px-4 py-3 font-medium text-gray-900 flex items-center gap-3">
+                                        <div class="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold text-xs">
+                                            #{{ $index + 1 }}
+                                        </div>
+                                        <span class="truncate max-w-[150px]">{{ $item->nama_produk }}</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-center">
+                                        <span class="bg-blue-100 text-blue-800 text-xs font-bold px-2.5 py-0.5 rounded">{{ $item->total_terjual }}</span>
+                                    </td>
+                                    <td class="px-4 py-3 text-right font-bold {{ $item->stok <= 15 ? 'text-red-500' : 'text-gray-600' }}">
+                                        {{ $item->stok }}
+                                    </td>
+                                </tr>
+                                @empty
+                                <tr>
+                                    <td colspan="3" class="text-center py-4 text-gray-400">Belum ada penjualan.</td>
+                                </tr>
+                                @endforelse
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
 
             <div class="space-y-6">
-                <div class="bg-white rounded-3xl p-8 shadow-2xl">
-                    <h3 class="text-blue-500 font-semibold mb-4 ml-1">Produk Terlaris (Top 4)</h3>
-                    <ul class="space-y-3">
-                        @forelse($produkTerlaris as $index => $item)
-                        <li class="flex justify-between items-center p-3 rounded-2xl {{ $index == 0 ? 'bg-[#3b4bbd] text-white shadow-md' : 'bg-gray-50 text-gray-700' }}">
-                            <div class="flex items-center">
-                                <span class="mr-3 font-bold w-6 text-center">{{ $index + 1 }}.</span>
-                                <span class="font-medium truncate max-w-[150px]">{{ $item->nama_produk ?? 'Produk' }}</span>
-                            </div>
-                            <span class="text-sm font-bold bg-white/20 px-3 py-1 rounded-full text-xs">Stok: {{ $item->stok }}</span>
-                        </li>
-                        @empty
-                        <li class="text-center text-gray-400 text-sm py-4">Belum ada data penjualan.</li>
-                        @endforelse
-                    </ul>
-                </div>
 
-                <div class="bg-white rounded-3xl p-6 shadow-xl relative overflow-hidden min-h-[300px]">
+                <div class="bg-white rounded-3xl p-6 shadow-xl border border-gray-100 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-20 h-20 bg-red-100 rounded-bl-[4rem] -mr-4 -mt-4 opacity-50"></div>
 
-                    <h3 class="font-bold text-gray-700 mb-4 flex items-center">
-                        <i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i> Stok Hampir Habis
+                    <h3 class="font-bold text-gray-800 mb-4 flex items-center">
+                        <i class="fa-solid fa-triangle-exclamation text-red-500 mr-2"></i> Stok Menipis
                     </h3>
 
                     <div class="space-y-3">
                         @forelse($stokHampirHabis as $item)
-
-                        <a href="{{ route('produk.edit', $item->id_produk) }}"
-                            class="group block relative bg-red-50 rounded-xl p-3 border border-red-100 transition-all duration-300 hover:shadow-md hover:bg-red-100 cursor-pointer overflow-hidden">
-
-                            <div class="flex justify-between items-center transition-all duration-300 group-hover:opacity-20 group-hover:blur-[1px]">
-
-                                <div class="flex items-center overflow-hidden mr-2">
-                                    <div class="w-2 h-2 bg-red-500 rounded-full mr-3 flex-shrink-0 animate-pulse"></div>
-                                    <span class="font-bold text-gray-700 text-sm truncate">
-                                        {{ $item->nama_produk }}
-                                    </span>
-                                </div>
-
-                                <div class="flex items-center gap-2">
-                                    <span class="text-red-600 font-bold text-sm bg-white px-3 py-1.5 rounded-lg shadow-sm border border-red-100 whitespace-nowrap">
-                                        {{ $item->stok }} Unit
-                                    </span>
+                        <div class="flex justify-between items-center bg-gray-50 p-3 rounded-xl hover:bg-red-50 transition border border-gray-100 hover:border-red-100 group">
+                            <div class="flex items-center gap-3 overflow-hidden">
+                                <div class="w-2 h-2 bg-red-500 rounded-full animate-pulse shrink-0"></div>
+                                <div class="flex flex-col">
+                                    <span class="font-bold text-gray-700 text-sm truncate max-w-[100px]">{{ $item->nama_produk }}</span>
+                                    <span class="text-[10px] text-gray-400">Sisa: <span class="text-red-600 font-bold">{{ $item->stok }}</span></span>
                                 </div>
                             </div>
-
-                            <div class="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 z-10">
-                                <div class="bg-blue-600 text-white text-xs font-bold px-4 py-2 rounded-full shadow-lg flex items-center gap-2 transform scale-90 group-hover:scale-100 transition-transform">
-                                    <i class="fa-solid fa-plus"></i> Tambah Stok
-                                </div>
-                            </div>
-
-                        </a>
-
-                        @empty
-                        <div class="flex flex-col items-center justify-center h-40 text-gray-400 opacity-60">
-                            <i class="fa-solid fa-check-circle text-4xl text-green-300 mb-2"></i>
-                            <p class="text-sm">Stok aman terkendali.</p>
+                            <a href="{{ route('inventaris.produk.edit', $item->id_produk) }}" class="text-xs bg-white border border-gray-200 text-gray-600 hover:border-red-500 hover:text-red-600 px-3 py-1.5 rounded-lg font-bold transition shadow-sm">
+                                + Isi
+                            </a>
                         </div>
+                        @empty
+                        <div class="text-center py-4 text-gray-400 text-xs">Stok aman.</div>
                         @endforelse
                     </div>
                 </div>
-            </div>
 
+                <div class="bg-white/10 backdrop-blur-md border border-white/30 rounded-3xl p-6 shadow-xl text-white">
+                    <h3 class="font-bold text-lg mb-1 drop-shadow-md">Aksi Cepat</h3>
+                    <p class="text-blue-100 text-xs mb-4">Shortcut pengelolaan.</p>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <a href="{{ route('kategori.index') }}" class="bg-white/20 hover:bg-white/30 border border-white/20 p-3 rounded-xl flex flex-col items-center justify-center text-center transition cursor-pointer text-white no-underline shadow-sm">
+                            <i class="fa-solid fa-tags text-xl mb-1"></i>
+                            <span class="text-xs font-bold">Kategori</span>
+                        </a>
+                        <a href="{{ route('slider.index') }}" class="bg-white/20 hover:bg-white/30 border border-white/20 p-3 rounded-xl flex flex-col items-center justify-center text-center transition cursor-pointer text-white no-underline shadow-sm">
+                            <i class="fa-regular fa-images text-xl mb-1"></i>
+                            <span class="text-xs font-bold">Slider</span>
+                        </a>
+                        <a href="{{ route('transaksi.index') }}" class="col-span-2 bg-white text-blue-600 hover:bg-gray-50 p-3 rounded-xl flex items-center justify-center text-center transition cursor-pointer font-bold text-sm shadow-md">
+                            <i class="fa-solid fa-file-invoice mr-2"></i> Kelola Pesanan
+                        </a>
+                    </div>
+                </div>
+
+            </div>
         </div>
     </div>
 
     <script>
-        // SAYA BUAT DATA DUMMY DULU AGAR TIDAK ERROR (Karena controller belum kirim $chartData)
         const ctx = document.getElementById('salesChart').getContext('2d');
-        
+
+        // Gradient Biru ke Teal untuk Chart
+        const gradient = ctx.createLinearGradient(0, 0, 0, 400);
+        gradient.addColorStop(0, 'rgba(20, 184, 166, 0.5)'); // Teal-500
+        gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)'); // Blue-500 transparent
+
+        const labels = @json($chartLabels);
+        const data = @json($chartData);
+
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
+                labels: labels,
                 datasets: [{
-                    label: 'Penjualan',
-                    data: [12, 19, 3, 5, 2, 3, 10], // Data Dummy Sementara
-                    borderColor: '#3b4bbd',
-                    backgroundColor: 'rgba(59, 75, 189, 0.1)',
+                    label: 'Pendapatan',
+                    data: data,
+                    borderColor: '#0d9488', // Teal-600
+                    backgroundColor: gradient,
+                    borderWidth: 3,
                     tension: 0.4,
                     pointRadius: 4,
-                    pointBackgroundColor: '#ffffff',
-                    pointBorderColor: '#3b4bbd',
-                    pointBorderWidth: 2,
+                    pointBackgroundColor: '#fff',
+                    pointBorderColor: '#0d9488',
                     fill: true
                 }]
             },
             options: {
                 responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
-                    legend: { display: false }
+                    legend: {
+                        display: false
+                    }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        grid: { color: '#f3f4f6', drawBorder: false },
-                        ticks: { font: { size: 10 } }
+                        grid: {
+                            color: '#f3f4f6',
+                            borderDash: [5, 5]
+                        },
+                        ticks: {
+                            font: {
+                                size: 10
+                            },
+                            callback: function(value) {
+                                return 'Rp ' + (value / 1000) + 'k';
+                            }
+                        }
                     },
                     x: {
-                        grid: { display: false },
-                        ticks: { font: { size: 10 } }
+                        grid: {
+                            display: false
+                        },
+                        ticks: {
+                            font: {
+                                size: 10
+                            }
+                        }
                     }
                 }
             }

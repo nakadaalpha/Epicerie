@@ -78,7 +78,7 @@ class KioskController extends Controller
             ->limit(6)
             ->get();
 
-        $produk = Produk::inRandomOrder()->limit(12)->get();
+        $produk = Produk::latest()->paginate(12);
         $kategoriList = Kategori::all();
         $cartData = $this->getCartSummary();
 
@@ -129,7 +129,7 @@ class KioskController extends Controller
             $rekomendasi = \App\Models\Produk::whereIn('id_kategori', $kategoriIds)
                 ->whereNotIn('id_produk', $excludeIds) // Exclude produk yang sedang dilihat
                 ->inRandomOrder()
-                ->limit(4)
+                ->limit(5)
                 ->get();
         }
 
@@ -152,12 +152,12 @@ class KioskController extends Controller
                 $queryRek->whereNotIn('id_produk', $produk->pluck('id_produk'));
             }
 
-            $rekomendasi = $queryRek->limit(4)->inRandomOrder()->get();
+            $rekomendasi = $queryRek->limit(5)->inRandomOrder()->get();
         }
 
         // C. Fallback Terakhir: Jika masih kosong juga, tampilkan produk terlaris/random
         if ($rekomendasi->isEmpty()) {
-            $rekomendasi = \App\Models\Produk::inRandomOrder()->limit(4)->get();
+            $rekomendasi = \App\Models\Produk::inRandomOrder()->limit(5)->get();
         }
 
         return view('kiosk.search', compact('produk', 'allCategories', 'keyword', 'selectedKategori', 'minPrice', 'maxPrice', 'rekomendasi'));
@@ -176,6 +176,10 @@ class KioskController extends Controller
         $keywords = array_filter($keywords, function ($word) {
             return strlen($word) > 2;
         });
+
+        $totalTerjual = \Illuminate\Support\Facades\DB::table('detail_transaksi')
+            ->where('id_produk', $id)
+            ->sum('jumlah');
 
         // 3. Query Rekomendasi
         $produkLain = \App\Models\Produk::where('id_produk', '!=', $id) // Jangan tampilkan produk yang sedang dilihat
@@ -201,15 +205,21 @@ class KioskController extends Controller
         // 5. Fallback (Jaga-jaga jika hasil di atas kosong/kurang dari 6)
         if ($produkLain->count() < 6) {
             $excludeIds = $produkLain->pluck('id_produk')->push($id);
-            $tambahan = \App\Models\Produk::whereNotIn('id_produk', $excludeIds)
-                ->orderBy('terjual', 'desc') // Isi kekosongan dengan produk terlaris
-                ->limit(6 - $produkLain->count())
+
+            // --- LOGIKA BARU: MENGHITUNG TERLARIS SECARA DINAMIS ---
+            $tambahan = \App\Models\Produk::select('produk.*', DB::raw('COALESCE(SUM(detail_transaksi.jumlah), 0) as total_terjual'))
+                ->leftJoin('detail_transaksi', 'produk.id_produk', '=', 'detail_transaksi.id_produk')
+                ->whereNotIn('produk.id_produk', $excludeIds) // Filter produk yang sudah tampil
+                ->groupBy('produk.id_produk') // Grouping wajib karena ada agregasi SUM
+                ->orderBy('total_terjual', 'desc') // Urutkan dari penjualan terbanyak
+                ->limit(6 - $produkLain->count()) // Ambil sisa slot yang kosong
                 ->get();
+            // -------------------------------------------------------
 
             $produkLain = $produkLain->merge($tambahan);
         }
 
-        return view('kiosk.show', compact('produk', 'produkLain'));
+        return view('kiosk.show', compact('produk', 'produkLain', 'totalTerjual'));
     }
 
     // ========================================================================
