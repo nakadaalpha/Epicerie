@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Produk;
 use App\Models\Transaksi;
-use App\Models\User; // Tambahkan Model User
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
@@ -16,22 +16,21 @@ class Dashboard extends Controller
         $today = Carbon::today();
 
         // 1. RINGKASAN ATAS (Quick Stats)
-        // Omzet Hari Ini
-        $omzetHariIni = Transaksi::whereDate('tanggal_transaksi', $today)
-            ->where('status', 'selesai') // Pastikan hanya yg selesai
+        // Omzet Hari Ini (Hanya status 'selesai')
+        $omzetHariIni = Transaksi::whereDate('created_at', $today)
+            ->where('status', 'selesai')
             ->sum('total_bayar');
 
-        // Jumlah Transaksi Hari Ini
-        $totalTransaksiHariIni = Transaksi::whereDate('tanggal_transaksi', $today)->count();
+        // Jumlah Transaksi Hari Ini (Semua status)
+        $totalTransaksiHariIni = Transaksi::whereDate('created_at', $today)->count();
 
         // Total Produk & User
         $totalProduk = Produk::count();
-        // Asumsi ada kolom 'role', hitung yg bukan admin (pelanggan)
         $totalUser = User::where('role', '!=', 'Admin')->count();
 
 
         // 2. LOGIC: STOK HAMPIR HABIS
-        // Mengambil produk dengan stok kurang dari 15
+        // Mengambil produk dengan stok <= 15
         $stokHampirHabis = Produk::where('stok', '<=', 15)
             ->orderBy('stok', 'asc')
             ->take(5)
@@ -39,7 +38,7 @@ class Dashboard extends Controller
 
 
         // 3. LOGIC: PRODUK TERLARIS (Top 5)
-        // Kita gunakan Join agar bisa langsung dapat nama_produk dan total_terjual dalam satu object
+        // Join ke detail_transaksi untuk hitung jumlah terjual
         $produkTerlaris = Produk::select('produk.nama_produk', 'produk.stok', DB::raw('COALESCE(SUM(detail_transaksi.jumlah), 0) as total_terjual'))
             ->leftJoin('detail_transaksi', 'produk.id_produk', '=', 'detail_transaksi.id_produk')
             ->groupBy('produk.id_produk', 'produk.nama_produk', 'produk.stok')
@@ -49,7 +48,6 @@ class Dashboard extends Controller
 
 
         // 4. DATA GRAFIK (7 HARI TERAKHIR)
-        // Kita loop 7 hari ke belakang agar grafiknya detail per hari
         $chartLabels = [];
         $chartData = [];
 
@@ -57,12 +55,20 @@ class Dashboard extends Controller
             $date = Carbon::now()->subDays($i);
             $chartLabels[] = $date->format('D, d M'); // Label: Senin, 01 Jan
 
-            $total = Transaksi::whereDate('tanggal_transaksi', $date->format('Y-m-d'))
+            // Hitung total bayar per tanggal tersebut (hanya yang selesai)
+            $total = Transaksi::whereDate('created_at', $date->format('Y-m-d'))
                 ->where('status', 'selesai')
                 ->sum('total_bayar');
 
             $chartData[] = $total;
         }
+
+        // 5. TRANSAKSI TERBARU (Untuk Card Kanan Dashboard)
+        // Load relasi agar data di modal lengkap (user, kurir, produk, alamat)
+        $transaksiTerbaru = Transaksi::with(['user', 'kurir', 'detailTransaksi.produk', 'alamat'])
+            ->orderBy('created_at', 'desc')
+            ->limit(5)
+            ->get();
 
         // Kirim semua data ke View
         return view('dashboard.index', compact(
@@ -72,8 +78,9 @@ class Dashboard extends Controller
             'totalUser',
             'stokHampirHabis',
             'produkTerlaris',
-            'chartLabels', // Array label tanggal
-            'chartData'    // Array nominal omzet
+            'chartLabels',
+            'chartData',
+            'transaksiTerbaru' // Data baru untuk list di kanan
         ));
     }
 }

@@ -11,14 +11,16 @@ class KategoriController extends Controller
     // --- 1. INDEX (READ + SEARCH) ---
     public function index(Request $request)
     {
-        $query = Kategori::withCount('produk');
+        // Gunakan withCount untuk menghitung jumlah produk (agar $k->produk_count di view tidak error/0)
+        $query = \App\Models\Kategori::withCount('produk');
 
-        // Logika Pencarian
-        if ($request->has('search') && $request->search != '') {
+        if ($request->has('search')) {
             $query->where('nama_kategori', 'like', '%' . $request->search . '%');
         }
 
-        $kategori = $query->orderBy('created_at', 'desc')->get();
+        // PENTING: Gunakan paginate(), bukan get() atau all()
+        // Angka 10 adalah jumlah item per halaman
+        $kategori = $query->paginate(10);
 
         return view('kategori.index', compact('kategori'));
     }
