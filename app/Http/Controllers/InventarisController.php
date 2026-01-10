@@ -31,6 +31,12 @@ class InventarisController extends Controller
         // Sorting (Urutan)
         if ($request->has('sort')) {
             switch ($request->sort) {
+                case 'nama_asc':
+                    $query->orderBy('nama_produk', 'asc'); // Urutkan A ke Z
+                    break;
+                case 'nama_desc':
+                    $query->orderBy('nama_produk', 'desc'); // Urutkan Z ke A
+                    break;
                 case 'termahal':
                     $query->orderBy('harga_produk', 'desc');
                     break;

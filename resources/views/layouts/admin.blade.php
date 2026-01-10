@@ -26,7 +26,7 @@
     <aside id="sidebar" class="bg-white w-64 flex-shrink-0 flex flex-col transition-transform duration-300 transform -translate-x-full md:translate-x-0 fixed md:relative z-50 h-full shadow-[4px_0_24px_rgba(0,0,0,0.05)] border-r border-white/20">
 
         <div class="h-20 flex items-center px-6 border-b border-gray-100 shrink-0">
-            <a href="{{ route('dashboard') }}" class="text-2xl font-extrabold text-blue-600 tracking-widest flex items-center gap-2">
+            <a href="{{ route('kiosk.index') }}" class="text-2xl font-extrabold text-blue-600 tracking-widest flex items-center gap-2">
                 <i class="fa-solid fa-store"></i> ÈPICERIE
             </a>
             <button onclick="toggleSidebar()" class="md:hidden ml-auto text-gray-400 hover:text-red-500">
