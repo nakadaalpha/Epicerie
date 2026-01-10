@@ -166,7 +166,7 @@
                 </div>
 
                 <div class="flex justify-between items-center text-xs font-bold text-gray-500 mb-4 px-1">
-                    <span>Kembalian:</span>
+                    <span id="labelKembalian">Kembalian:</span>
                     <span class="text-green-600 text-base" id="kembalianDisplay">Rp 0</span>
                 </div>
 
@@ -201,14 +201,11 @@
         'Classic': 0
     };
 
-    // Data Keranjang
     let cart = [];
     let currentDiscountRate = 0;
-
-    // Data Pelanggan dari Controller (Disimpan ke JS Array)
     const allCustomers = @json($pelanggan);
 
-    // DOM Elements (Pastikan ID ini ada di HTML)
+    // DOM Elements
     const cartItemsContainer = document.getElementById('cartItems');
     const emptyCartMsg = document.getElementById('emptyCart');
     const subtotalDisplay = document.getElementById('subtotalDisplay');
@@ -217,15 +214,19 @@
     const discountRateEl = document.getElementById('discountRate');
     const discountDisplay = document.getElementById('discountDisplay');
 
-    // Input & Form Elements
+    // Checkout Elements
     const idUserInput = document.getElementById('idUserInput');
     const manualCustomerInput = document.getElementById('manualCustomerInput');
     const bayarInput = document.getElementById('bayarInput');
+
+    // Display Kembalian / Kurang (UPDATED)
     const kembalianDisplay = document.getElementById('kembalianDisplay');
+    const labelKembalian = document.getElementById('labelKembalian');
+
     const cartDataInput = document.getElementById('cartDataInput');
     const totalBayarInput = document.getElementById('totalBayarInput');
 
-    // Element Pencarian Member (Baru)
+    // Search Elements
     const phoneInput = document.getElementById('phoneInput');
     const memberResultCard = document.getElementById('memberResultCard');
     const searchContainer = document.getElementById('searchContainer');
@@ -242,42 +243,30 @@
     }).format(number);
 
 
-    // --- 2. LOGIC PENCARIAN MEMBER (Manual & Scan) ---
+    // --- 2. LOGIC PENCARIAN MEMBER ---
 
-    // A. Fungsi Utama Memilih Member (Dipakai Search & Scanner)
     function selectMember(user) {
-        // Update Logic Diskon
         const tier = user.membership;
         currentDiscountRate = DISCOUNTS[tier] || 0;
 
-        // Update UI Kartu Hasil
         resultName.innerText = user.nama;
         resultPhone.innerText = user.no_hp || '-';
-
-        // Badge Style
         memberBadge.className = `text-[10px] font-bold px-2 py-1 rounded border ${user.membership_color || 'bg-gray-100'}`;
         memberBadge.innerText = `${tier} (${(currentDiscountRate * 100)}%)`;
 
-        // Toggle Tampilan
         searchContainer.classList.add('hidden');
         memberResultCard.classList.remove('hidden');
-        manualCustomerInput.classList.add('hidden'); // Sembunyikan input nama manual
+        manualCustomerInput.classList.add('hidden');
         searchError.classList.add('hidden');
 
-        // Set Hidden Input Value untuk dikirim ke Backend
         idUserInput.value = user.id_user;
-
-        // Hitung ulang total belanja
         renderCart();
     }
 
-    // B. Fungsi Reset Member
     function resetMember() {
-        // Reset Logic
         currentDiscountRate = 0;
         idUserInput.value = '';
 
-        // Reset UI
         searchContainer.classList.remove('hidden');
         memberResultCard.classList.add('hidden');
         manualCustomerInput.classList.remove('hidden');
@@ -287,20 +276,16 @@
         renderCart();
     }
 
-    // C. Fungsi Pencarian Manual by Phone
     function searchByPhone() {
         const query = phoneInput.value.trim();
-
         if (!query) return;
-
-        // Cari di array allCustomers
         const found = allCustomers.find(c => c.no_hp === query || (c.no_hp && c.no_hp.includes(query)));
 
         if (found) {
             selectMember(found);
         } else {
             searchError.classList.remove('hidden');
-            setTimeout(() => searchError.classList.add('hidden'), 3000); // Hilang auto setelah 3 detik
+            setTimeout(() => searchError.classList.add('hidden'), 3000);
         }
     }
 
@@ -312,7 +297,7 @@
     }
 
 
-    // --- 3. LOGIC KERANJANG BELANJA (CART) ---
+    // --- 3. LOGIC CART & KALKULASI ---
 
     window.addToCart = (el) => {
         const id = el.dataset.id;
@@ -389,11 +374,10 @@
             });
         }
 
-        // Hitung Diskon
+        // Kalkulasi Total
         const discountAmount = subtotal * currentDiscountRate;
         const finalTotal = subtotal - discountAmount;
 
-        // Update Tampilan
         subtotalDisplay.innerText = formatRupiah(subtotal);
         if (currentDiscountRate > 0) {
             discountRow.classList.remove('hidden');
@@ -404,22 +388,42 @@
         }
         totalDisplay.innerText = formatRupiah(finalTotal);
 
-        // Update Input Hidden
         cartDataInput.value = JSON.stringify(cart);
         totalBayarInput.value = finalTotal;
 
-        // Trigger hitung kembalian jika ada input bayar
         calculateChange(finalTotal);
     }
 
+    // --- FITUR BARU: KALKULASI MINUS/KEMBALIAN ---
     const calculateChange = (total) => {
         const bayar = parseInt(bayarInput.value || 0);
-        if (bayar >= total && total > 0) {
-            kembalianDisplay.innerText = formatRupiah(bayar - total);
-            kembalianDisplay.classList.replace('text-red-500', 'text-green-600');
-        } else {
+
+        // Jika belum ada item di keranjang
+        if (total === 0) {
             kembalianDisplay.innerText = 'Rp 0';
-            kembalianDisplay.classList.replace('text-green-600', 'text-red-500');
+            kembalianDisplay.classList.remove('text-red-500', 'text-green-600');
+            return;
+        }
+
+        const selisih = bayar - total;
+
+        // Tampilkan nominal (Format rupiah otomatis menangani minus "-Rp 5.000")
+        kembalianDisplay.innerText = formatRupiah(selisih);
+
+        if (selisih >= 0) {
+            // UANG CUKUP / LEBIH
+            labelKembalian.innerText = "Kembalian:";
+            labelKembalian.classList.remove('text-red-500');
+
+            kembalianDisplay.classList.remove('text-red-500');
+            kembalianDisplay.classList.add('text-green-600');
+        } else {
+            // UANG KURANG
+            labelKembalian.innerText = "Kurang:";
+            labelKembalian.classList.add('text-red-500'); // Label jadi merah agar warning
+
+            kembalianDisplay.classList.remove('text-green-600');
+            kembalianDisplay.classList.add('text-red-500'); // Nominal jadi merah
         }
     }
 
@@ -432,30 +436,28 @@
         }
         const total = parseInt(totalBayarInput.value);
         const bayar = parseInt(bayarInput.value || 0);
+
         if (bayar < total) {
-            alert('Uang pembayaran kurang!');
+            const kurang = formatRupiah(total - bayar);
+            alert(`Uang pembayaran kurang ${kurang}!`); // Alert lebih informatif
             return false;
         }
         return confirm('Proses transaksi?');
     }
 
 
-    // --- 4. LOGIC QR CODE SCANNER (PERBAIKAN UTAMA) ---
+    // --- 4. LOGIC QR CODE SCANNER ---
 
     let html5QrcodeScanner = null;
 
     function openScanner() {
         document.getElementById('scannerModal').classList.remove('hidden');
-
-        // Inisialisasi Scanner hanya jika belum ada
         if (!html5QrcodeScanner) {
             html5QrcodeScanner = new Html5Qrcode("reader");
         }
-
         html5QrcodeScanner.start({
                 facingMode: "environment"
-            }, // Kamera Belakang
-            {
+            }, {
                 fps: 10,
                 qrbox: {
                     width: 250,
@@ -463,16 +465,13 @@
                 }
             },
             (decodedText, decodedResult) => {
-                // SUKSES SCAN
                 console.log(`Scan result: ${decodedText}`);
                 handleScanSuccess(decodedText);
             },
-            (errorMessage) => {
-                // Parse error, abaikan log ini agar console bersih
-            }
+            (errorMessage) => {}
         ).catch(err => {
             console.log("Error starting scanner", err);
-            alert("Gagal membuka kamera. Pastikan izin kamera diberikan.");
+            alert("Gagal membuka kamera.");
         });
     }
 
@@ -481,7 +480,6 @@
             html5QrcodeScanner.stop().then(() => {
                 document.getElementById('scannerModal').classList.add('hidden');
             }).catch(err => {
-                console.log("Failed to stop scanner", err);
                 document.getElementById('scannerModal').classList.add('hidden');
             });
         } else {
@@ -490,26 +488,16 @@
     }
 
     function handleScanSuccess(userId) {
-        // Logika Scan: Mencari user ID di array allCustomers
-        // Note: Gunakan '==' agar cocok meskipun tipe data string vs integer
         const found = allCustomers.find(c => c.id_user == userId);
-
         if (found) {
-            // Jika ketemu, panggil fungsi selectMember yang sama dengan pencarian manual
             selectMember(found);
-
-            // Tutup scanner
             closeScanner();
-
-            // Feedback
-            // alert(`Berhasil! Member: ${found.nama}`);
         } else {
-            alert("QR Code tidak terdaftar sebagai member!");
-            // Jangan tutup scanner agar kasir bisa coba scan ulang
+            alert("QR Code tidak terdaftar!");
         }
     }
 
-    // --- 5. SEARCH PRODUCT LOGIC ---
+    // --- 5. SEARCH PRODUCT ---
     const searchInput = document.getElementById('searchInput');
     const categoryFilter = document.getElementById('categoryFilter');
 
@@ -521,10 +509,8 @@
         cards.forEach(card => {
             const name = card.dataset.name.toLowerCase();
             const catId = card.dataset.category;
-
             const matchSearch = name.includes(keyword);
             const matchCat = category === 'all' || category === catId;
-
             if (matchSearch && matchCat) {
                 card.classList.remove('hidden');
             } else {

@@ -4,17 +4,22 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Transaksi;
+use App\Models\DetailTransaksi; // Pastikan model ini di-import
+use App\Models\Produk;          // Pastikan model ini di-import
+use App\Models\User;            // Pastikan model ini di-import
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 class TransaksiController extends Controller
 {
+    // =================================================
+    // 1. HALAMAN UTAMA (RIWAYAT TRANSAKSI)
+    // =================================================
     public function index(Request $request)
     {
-        // 1. Query Dasar dengan Relasi
         $query = Transaksi::with(['user', 'kurir', 'detailTransaksi.produk']);
 
-        // 2. Logika PENCARIAN (Search)
+        // Logika PENCARIAN
         if ($request->has('search') && $request->search != '') {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
@@ -25,7 +30,7 @@ class TransaksiController extends Controller
             });
         }
 
-        // 3. Logika PENGURUTAN (Sorting)
+        // Logika PENGURUTAN
         if ($request->has('sort')) {
             switch ($request->sort) {
                 case 'terlama':
@@ -42,95 +47,138 @@ class TransaksiController extends Controller
                     break;
             }
         } else {
-            // Default: Transaksi Terbaru di atas
             $query->orderBy('created_at', 'desc');
         }
 
-        // 4. Pagination (Ganti get() dengan paginate())
+        // Pagination
         $transaksi = $query->paginate(10)->withQueryString();
 
         return view('transaksi.index', compact('transaksi'));
     }
 
+    // =================================================
+    // 2. HALAMAN KASIR (POS)
+    // =================================================
     public function create()
     {
-        // 1. Ambil Produk (Stok > 0)
-        $produk = \App\Models\Produk::where('stok', '>', 0)->get();
+        // Ambil Produk (Stok > 0)
+        $produk = Produk::where('stok', '>', 0)->get();
 
-        // 2. Ambil Kategori
+        // Ambil Kategori
         $kategori = \App\Models\Kategori::all();
 
-        // 3. AMBIL DATA PELANGGAN (INI YANG HILANG/KURANG)
-        // Pastikan User model memiliki role 'pelanggan'
-        $pelanggan = \App\Models\User::where('role', 'pelanggan')
+        // Ambil Data Pelanggan (Untuk Dropdown/Search Member)
+        $pelanggan = User::where('role', 'pelanggan')
             ->get()
-            ->append(['membership', 'membership_color']); // Append accessor membership
+            ->append(['membership', 'membership_color']);
 
-        // 4. Generate Kode Transaksi Otomatis
+        // Generate Kode Transaksi Otomatis
         $today = date('Ymd');
-        $lastTrx = \App\Models\Transaksi::whereDate('created_at', today())->latest()->first();
+        $lastTrx = Transaksi::whereDate('created_at', today())->latest()->first();
         $urut = $lastTrx ? (int)substr($lastTrx->kode_transaksi, -3) + 1 : 1;
         $kode_transaksi = 'TRX-' . $today . '-' . sprintf('%03d', $urut);
 
-        // 5. Kirim semua variabel ke View (termasuk $pelanggan)
         return view('transaksi.create', compact('produk', 'kategori', 'kode_transaksi', 'pelanggan'));
     }
 
+    // =================================================
+    // 3. PROSES SIMPAN TRANSAKSI (STORE)
+    // =================================================
     public function store(Request $request)
     {
-        // Validasi data (Cart dikirim sebagai JSON string)
+        // Validasi Input
         $request->validate([
             'cart_data' => 'required',
-            'total_bayar' => 'required|numeric',
-            'bayar_diterima' => 'required|numeric|gte:total_bayar',
+            'bayar_diterima' => 'required|numeric',
         ]);
 
-        // Decode JSON Cart dari Frontend
+        // Decode Data Keranjang dari JSON
         $items = json_decode($request->cart_data);
 
         if (empty($items)) {
             return back()->with('error', 'Keranjang belanja kosong!');
         }
 
-        // Gunakan Database Transaction agar aman
-        \DB::transaction(function () use ($request, $items) {
-            // 1. Simpan Transaksi Utama
-            $trx = \App\Models\Transaksi::create([
+        // --- HITUNG ULANG TOTAL DI BACKEND (KEAMANAN) ---
+        $subtotal = 0;
+        foreach ($items as $item) {
+            $subtotal += $item->price * $item->qty;
+        }
+
+        // Hitung Diskon Membership
+        $diskon = 0;
+        $id_user_pembeli = $request->id_user; // Ambil ID dari hidden input
+
+        if ($id_user_pembeli) {
+            $user = User::find($id_user_pembeli);
+            if ($user) {
+                switch ($user->membership) {
+                    case 'Gold': $diskon = $subtotal * 0.10; break;
+                    case 'Silver': $diskon = $subtotal * 0.05; break;
+                    case 'Bronze': $diskon = $subtotal * 0.02; break;
+                    default: $diskon = 0; break;
+                }
+            }
+        }
+
+        // Total Akhir yang harus dibayar
+        $final_total = $subtotal - $diskon;
+
+        // Cek Pembayaran
+        if ($request->bayar_diterima < $final_total) {
+            return back()->with('error', 'Uang pembayaran kurang!');
+        }
+
+        // --- SIMPAN KE DATABASE (TRANSACTION) ---
+        DB::transaction(function () use ($request, $items, $final_total, $id_user_pembeli) {
+            
+            // 1. Simpan Header Transaksi
+            $trx = Transaksi::create([
                 'kode_transaksi' => $request->kode_transaksi,
-                'total_bayar' => $request->total_bayar,
-                'status' => 'Selesai', // Langsung selesai karena bayar di kasir
-                // Sesuaikan field user_id/id_user dengan database Anda
-                'id_user' => auth()->id() ?? null, // Jika ada login kasir
-                'nama_pelanggan' => $request->nama_pelanggan ?? 'Umum',
+                'total_bayar'    => $final_total,
+                'status'         => 'Selesai', // Langsung selesai karena POS
+                
+                // PERBAIKAN UTAMA: Menggunakan 'id_user_pembeli' sesuai database
+                'id_user_pembeli' => $id_user_pembeli, 
+                
+                // Nama Pelanggan: Jika member ambil dari DB, jika umum ambil inputan
+                'nama_pelanggan' => $id_user_pembeli 
+                                    ? User::find($id_user_pembeli)->nama 
+                                    : ($request->nama_pelanggan ?? 'Umum'),
             ]);
 
             // 2. Simpan Detail & Kurangi Stok
             foreach ($items as $item) {
-                \App\Models\DetailTransaksi::create([
+                DetailTransaksi::create([
                     'id_transaksi' => $trx->id_transaksi,
                     'id_produk' => $item->id,
                     'jumlah' => $item->qty,
-                    'harga_produk_saat_beli' => $item->price, // Harga saat ini
+                    'harga_produk_saat_beli' => $item->price,
                 ]);
 
-                // Kurangi Stok
-                $produk = \App\Models\Produk::find($item->id);
-                $produk->decrement('stok', $item->qty);
+                // Kurangi Stok Produk
+                $produk = Produk::find($item->id);
+                if ($produk) {
+                    $produk->decrement('stok', $item->qty);
+                }
             }
         });
 
         return redirect()->route('transaksi.index')->with('success', 'Transaksi Berhasil Disimpan!');
     }
 
+    // =================================================
+    // 4. UPDATE STATUS (UNTUK PESANAN ONLINE)
+    // =================================================
     public function updateStatus(Request $request, $id)
     {
         $trx = Transaksi::findOrFail($id);
         $statusBaru = $request->status;
 
-        // UPDATE: Izinkan jika status sekarang 'Dikemas' ATAU 'diproses'
+        // Validasi Alur Status
         if ($statusBaru == 'Dikirim' && in_array($trx->status, ['Dikemas', 'diproses'])) {
             $trx->status = 'Dikirim';
-            $trx->id_karyawan = auth()->id();
+            $trx->id_karyawan = auth()->id(); // Catat siapa yang memproses
         } elseif ($statusBaru == 'Selesai' && $trx->status == 'Dikirim') {
             $trx->status = 'Selesai';
         }
@@ -139,10 +187,13 @@ class TransaksiController extends Controller
         return back()->with('success', 'Status pesanan diperbarui!');
     }
 
+    // =================================================
+    // 5. LAPORAN KEUANGAN
+    // =================================================
     public function laporan(Request $request)
     {
-        // 1. Tentukan Rentang Waktu berdasarkan Filter
-        $range = $request->range ?? '1_minggu'; // Default jika tidak ada pilihan
+        // Tentukan Rentang Waktu
+        $range = $request->range ?? '1_minggu';
         $startDate = now();
         $labelPeriode = '';
 
@@ -169,21 +220,20 @@ class TransaksiController extends Controller
                 break;
         }
 
-        // 2. Query Data Grafik (Dikelompokkan per Tanggal)
+        // Query Data Grafik (Group by Date)
         $laporan = Transaksi::selectRaw('DATE(created_at) as tanggal, SUM(total_bayar) as total')
-            ->whereRaw('LOWER(status) = ?', ['selesai']) // Case-insensitive check
-            ->where('created_at', '>=', $startDate)      // Filter Tanggal Dinamis
+            ->whereRaw('LOWER(status) = ?', ['selesai'])
+            ->where('created_at', '>=', $startDate)
             ->groupBy('tanggal')
             ->orderBy('tanggal', 'asc')
             ->get();
 
-        // Format Tanggal agar lebih cantik di Grafik (contoh: "10 Jan")
         $laporan->transform(function ($item) {
             $item->tanggal = Carbon::parse($item->tanggal)->format('d M');
             return $item;
         });
 
-        // 3. Query Total Omzet & Transaksi (Sesuai Rentang Waktu)
+        // Query Total Ringkasan
         $totalOmzet = Transaksi::whereRaw('LOWER(status) = ?', ['selesai'])
             ->where('created_at', '>=', $startDate)
             ->sum('total_bayar');
@@ -193,5 +243,26 @@ class TransaksiController extends Controller
             ->count();
 
         return view('laporan.index', compact('laporan', 'totalOmzet', 'totalTransaksi', 'labelPeriode'));
+    }
+    
+    // Fitur Hapus (Tambahan jika diperlukan)
+    public function destroy($id)
+    {
+        $trx = Transaksi::findOrFail($id);
+        
+        // Opsional: Kembalikan stok jika transaksi dihapus
+        // foreach($trx->detailTransaksi as $detail) {
+        //     $detail->produk->increment('stok', $detail->jumlah);
+        // }
+        
+        $trx->delete();
+        return back()->with('success', 'Data transaksi dihapus.');
+    }
+    
+    // Fitur Detail (Tambahan untuk Modal Detail)
+    public function show($id)
+    {
+        $transaksi = Transaksi::with(['detailTransaksi.produk', 'user', 'kurir'])->findOrFail($id);
+        return view('transaksi.show', compact('transaksi')); // Atau return JSON jika pakai AJAX murni
     }
 }
