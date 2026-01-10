@@ -36,7 +36,7 @@
 
         <nav class="flex-1 overflow-y-auto hide-scroll p-4 space-y-1.5">
 
-            <a href="{{ route('transaksi.index') }}" class="flex items-center justify-center gap-2 w-full px-4 py-3 mb-6 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 rounded-xl shadow-lg shadow-blue-200 transition-all group transform hover:scale-[1.02]">
+            <a href="{{ route('transaksi.create') }}" class="flex items-center justify-center gap-2 w-full px-4 py-3 mb-6 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 rounded-xl shadow-lg shadow-blue-200 transition-all group transform hover:scale-[1.02]">
                 <i class="fa-solid fa-plus transition-transform group-hover:rotate-90"></i>
                 <span>Pesanan Baru</span>
             </a>

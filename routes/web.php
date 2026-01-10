@@ -36,7 +36,7 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 // ====================================================
 Route::get('/', [KioskController::class, 'index'])->name('kiosk.index');
 Route::get('/produk/{id}', [KioskController::class, 'show'])->name('produk.show');
-Route::get('/kiosk/search', [KioskController::class, 'search'])->name('kiosk.search'); // Route Search Baru
+Route::get('/kiosk/search', [KioskController::class, 'search'])->name('kiosk.search');
 
 // ====================================================
 // 3. ROUTE PELANGGAN / BELANJA (WAJIB LOGIN)
@@ -46,7 +46,6 @@ Route::middleware(['auth'])->group(function () {
     // --- Keranjang & Checkout ---
     Route::get('/add-to-cart/{id}', [KioskController::class, 'addToCart'])->name('kiosk.add');
     Route::get('/keranjang', [KioskController::class, 'cart'])->name('kiosk.cart');
-    // Route Checkout (Halaman Baru) <-- TAMBAHKAN INI
     Route::get('/checkout', [KioskController::class, 'checkoutPage'])->name('kiosk.checkout');
 
     // --- Manajemen Item Keranjang ---
@@ -59,8 +58,7 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/pay', [KioskController::class, 'processPayment'])->name('kiosk.pay');
     Route::post('/midtrans-success', [KioskController::class, 'midtransSuccess'])->name('kiosk.midtrans.success');
     Route::get('/kiosk/success/{id}', [KioskController::class, 'successPage'])->name('kiosk.success');
-    // Tambahkan di dalam group middleware auth
-    Route::post('/transaksi/{id}/selesai', [App\Http\Controllers\KioskController::class, 'completeTransaction'])->name('kiosk.complete');
+    Route::post('/transaksi/{id}/selesai', [KioskController::class, 'completeTransaction'])->name('kiosk.complete');
 
     // --- User Dashboard & Profile ---
     Route::get('/profile', [KioskController::class, 'profile'])->name('kiosk.profile');
@@ -77,7 +75,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile/address/delete/{id}', [KioskController::class, 'deleteAddress'])->name('profile.address.delete');
     Route::post('/profile/address/set-primary/{id}', [KioskController::class, 'setPrimaryAddress'])->name('address.setPrimary');
 
-    // --- Placeholder Routes (Untuk mencegah error route not found di JS lama) ---
+    // --- Placeholder Routes ---
     Route::post('/kiosk/set-qty/{id}', [KioskController::class, 'setCartQuantity'])->name('kiosk.set.qty');
     Route::get('/kiosk/add-packet/{key}', [KioskController::class, 'addPacketToCart'])->name('kiosk.add.packet');
     Route::get('/kiosk/pending', [KioskController::class, 'listPending'])->name('kiosk.pending');
@@ -87,8 +85,8 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/kurir/dashboard', [KurirController::class, 'index'])->name('kurir.index');
     Route::post('/kurir/mulai/{id}', [KurirController::class, 'mulaiAntar'])->name('kurir.mulai');
     Route::post('/kurir/selesai/{id}', [KurirController::class, 'selesaiAntar'])->name('kurir.selesai');
-    Route::get('/kurir/transaksi/detail/{id}', [App\Http\Controllers\KurirController::class, 'getDetailTransaksi']);
-    Route::post('/kurir/update-lokasi', [App\Http\Controllers\KurirController::class, 'updateLokasi'])->name('kurir.update_lokasi');
+    Route::get('/kurir/transaksi/detail/{id}', [KurirController::class, 'getDetailTransaksi']);
+    Route::post('/kurir/update-lokasi', [KurirController::class, 'updateLokasi'])->name('kurir.update_lokasi');
 });
 
 
@@ -99,6 +97,7 @@ Route::middleware(['auth', AdminOnly::class])->prefix('admin')->group(function (
 
     Route::get('/', [Dashboard::class, 'index'])->name('dashboard');
 
+    // --- INVENTARIS ---
     Route::prefix('inventaris')->group(function () {
         Route::get('/', [InventarisController::class, 'index'])->name('inventaris.index');
         Route::get('/produk/create', [InventarisController::class, 'create'])->name('produk.create');
@@ -108,15 +107,17 @@ Route::middleware(['auth', AdminOnly::class])->prefix('admin')->group(function (
         Route::delete('/produk/{id}', [InventarisController::class, 'destroy'])->name('produk.destroy');
     });
 
+    // --- KATEGORI ---
     Route::prefix('kategori')->name('kategori.')->group(function () {
         Route::get('/', [KategoriController::class, 'index'])->name('index');
         Route::get('/create', [KategoriController::class, 'create'])->name('create');
         Route::post('/store', [KategoriController::class, 'store'])->name('store');
         Route::get('/edit/{id}', [KategoriController::class, 'edit'])->name('edit');
         Route::put('/update/{id}', [KategoriController::class, 'update'])->name('update');
-        Route::get('/delete/{id}', [KategoriController::class, 'destroy'])->name('destroy');
+        Route::delete('/delete/{id}', [KategoriController::class, 'destroy'])->name('destroy'); // Perbaikan method delete
     });
 
+    // --- SLIDER ---
     Route::prefix('slider')->name('slider.')->group(function () {
         Route::get('/', [SliderController::class, 'index'])->name('index');
         Route::get('/create', [SliderController::class, 'create'])->name('create');
@@ -126,6 +127,7 @@ Route::middleware(['auth', AdminOnly::class])->prefix('admin')->group(function (
         Route::delete('/delete/{id}', [SliderController::class, 'destroy'])->name('destroy');
     });
 
+    // --- KARYAWAN ---
     Route::prefix('karyawan')->name('karyawan.')->group(function () {
         Route::get('/', [KaryawanController::class, 'index'])->name('index');
         Route::get('/create', [KaryawanController::class, 'create'])->name('create');
@@ -135,7 +137,25 @@ Route::middleware(['auth', AdminOnly::class])->prefix('admin')->group(function (
         Route::get('/hapus/{id}', [KaryawanController::class, 'destroy'])->name('hapus');
     });
 
-    Route::get('/transaksi', [TransaksiController::class, 'index'])->name('transaksi.index');
-    Route::post('/transaksi/update-status/{id}', [TransaksiController::class, 'updateStatus'])->name('transaksi.update');
-    Route::get('/laporan', [TransaksiController::class, 'laporan'])->name('laporan.index');
+    // ==============================================
+    // PERBAIKAN: MANAJEMEN TRANSAKSI & KASIR (POS)
+    // ==============================================
+    Route::controller(TransaksiController::class)->group(function () {
+
+        // 1. Laporan (Akses via route: laporan.index)
+        Route::get('/laporan', 'laporan')->name('laporan.index');
+
+        // 2. KASIR / POS (Fitur Baru - WAJIB DI ATAS route {id})
+        Route::get('/transaksi/baru', 'create')->name('transaksi.create');
+        Route::post('/transaksi/store', 'store')->name('transaksi.store');
+
+        // 3. Daftar Transaksi Utama
+        Route::get('/transaksi', 'index')->name('transaksi.index');
+
+        // 4. Aksi Detail (Menggunakan ID)
+        Route::post('/transaksi/update-status/{id}', 'updateStatus')->name('transaksi.update');
+        Route::get('/transaksi/{id}', 'show')->name('transaksi.show');         // Untuk Modal Detail
+        Route::delete('/transaksi/{id}', 'destroy')->name('transaksi.destroy'); // Untuk Hapus
+        Route::get('/transaksi/{id}/print', 'print')->name('transaksi.print');  // Untuk Cetak
+    });
 });

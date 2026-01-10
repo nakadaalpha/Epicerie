@@ -52,6 +52,76 @@ class TransaksiController extends Controller
         return view('transaksi.index', compact('transaksi'));
     }
 
+    public function create()
+    {
+        // 1. Ambil Produk (Stok > 0)
+        $produk = \App\Models\Produk::where('stok', '>', 0)->get();
+
+        // 2. Ambil Kategori
+        $kategori = \App\Models\Kategori::all();
+
+        // 3. AMBIL DATA PELANGGAN (INI YANG HILANG/KURANG)
+        // Pastikan User model memiliki role 'pelanggan'
+        $pelanggan = \App\Models\User::where('role', 'pelanggan')
+            ->get()
+            ->append(['membership', 'membership_color']); // Append accessor membership
+
+        // 4. Generate Kode Transaksi Otomatis
+        $today = date('Ymd');
+        $lastTrx = \App\Models\Transaksi::whereDate('created_at', today())->latest()->first();
+        $urut = $lastTrx ? (int)substr($lastTrx->kode_transaksi, -3) + 1 : 1;
+        $kode_transaksi = 'TRX-' . $today . '-' . sprintf('%03d', $urut);
+
+        // 5. Kirim semua variabel ke View (termasuk $pelanggan)
+        return view('transaksi.create', compact('produk', 'kategori', 'kode_transaksi', 'pelanggan'));
+    }
+
+    public function store(Request $request)
+    {
+        // Validasi data (Cart dikirim sebagai JSON string)
+        $request->validate([
+            'cart_data' => 'required',
+            'total_bayar' => 'required|numeric',
+            'bayar_diterima' => 'required|numeric|gte:total_bayar',
+        ]);
+
+        // Decode JSON Cart dari Frontend
+        $items = json_decode($request->cart_data);
+
+        if (empty($items)) {
+            return back()->with('error', 'Keranjang belanja kosong!');
+        }
+
+        // Gunakan Database Transaction agar aman
+        \DB::transaction(function () use ($request, $items) {
+            // 1. Simpan Transaksi Utama
+            $trx = \App\Models\Transaksi::create([
+                'kode_transaksi' => $request->kode_transaksi,
+                'total_bayar' => $request->total_bayar,
+                'status' => 'Selesai', // Langsung selesai karena bayar di kasir
+                // Sesuaikan field user_id/id_user dengan database Anda
+                'id_user' => auth()->id() ?? null, // Jika ada login kasir
+                'nama_pelanggan' => $request->nama_pelanggan ?? 'Umum',
+            ]);
+
+            // 2. Simpan Detail & Kurangi Stok
+            foreach ($items as $item) {
+                \App\Models\DetailTransaksi::create([
+                    'id_transaksi' => $trx->id_transaksi,
+                    'id_produk' => $item->id,
+                    'jumlah' => $item->qty,
+                    'harga_produk_saat_beli' => $item->price, // Harga saat ini
+                ]);
+
+                // Kurangi Stok
+                $produk = \App\Models\Produk::find($item->id);
+                $produk->decrement('stok', $item->qty);
+            }
+        });
+
+        return redirect()->route('transaksi.index')->with('success', 'Transaksi Berhasil Disimpan!');
+    }
+
     public function updateStatus(Request $request, $id)
     {
         $trx = Transaksi::findOrFail($id);
