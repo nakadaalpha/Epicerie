@@ -20,7 +20,9 @@ class User extends Authenticatable
         'password',
         'role',
         'email',
+        'email_verified_at',
         'no_hp',
+        'no_hp_verified_at',
         'foto_profil'
     ];
 
@@ -33,6 +35,8 @@ class User extends Authenticatable
     {
         return [
             'password' => 'hashed',
+            'email_verified_at' => 'datetime',
+            'no_hp_verified_at' => 'datetime', // Casting datetime
         ];
     }
 

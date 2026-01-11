@@ -26,16 +26,6 @@
             }
         }
 
-        @keyframes fadeOut {
-            0% {
-                opacity: 1;
-            }
-
-            100% {
-                opacity: 0;
-            }
-        }
-
         .toast-center {
             position: fixed;
             top: 50%;
@@ -51,8 +41,8 @@
 
     @include('partials.navbar-kiosk')
 
+    {{-- TOAST NOTIFICATION --}}
     <div id="toast-container"></div>
-
     @if(session('success'))
     <div id="toast" class="toast-center bg-gray-900/95 text-white px-8 py-6 rounded-2xl shadow-2xl flex flex-col items-center gap-3 backdrop-blur-sm min-w-[300px]">
         <div class="w-12 h-12 bg-blue-500 rounded-full flex items-center justify-center text-xl shadow-lg shadow-blue-500/30">
@@ -72,6 +62,7 @@
 
     <div class="max-w-[1100px] mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
 
+        {{-- SIDEBAR: FOTO, QR, & MENU --}}
         <div class="w-full md:w-[300px] shrink-0">
             <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm sticky top-24">
 
@@ -92,10 +83,15 @@
                 <form action="{{ route('profile.photo') }}" method="POST" enctype="multipart/form-data">
                     @csrf
                     <input type="file" name="foto_profil" id="fotoInput" class="hidden" onchange="this.form.submit()">
-                    <button type="button" onclick="document.getElementById('fotoInput').click()" class="w-full border border-gray-200 bg-white text-gray-600 font-bold py-3 rounded-xl hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition text-sm mb-6 flex items-center justify-center gap-2">
+                    <button type="button" onclick="document.getElementById('fotoInput').click()" class="w-full border border-gray-200 bg-white text-gray-600 font-bold py-3 rounded-xl hover:border-blue-500 hover:text-blue-600 hover:bg-blue-50 transition text-sm mb-4 flex items-center justify-center gap-2">
                         <i class="fa-solid fa-camera"></i> Ganti Foto
                     </button>
                 </form>
+
+                {{-- TOMBOL UNDUH QR (Penting agar tidak error 404) --}}
+                <a href="{{ route('profile.download-qr') }}" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition text-sm mb-6 flex items-center justify-center gap-2 shadow-lg shadow-blue-200">
+                    <i class="fa-solid fa-qrcode"></i> Kartu Member
+                </a>
 
                 <div class="border-t border-gray-100 pt-5">
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">Menu Akun</p>
@@ -119,6 +115,7 @@
 
         <div class="flex-1 space-y-6">
 
+            {{-- 1. CARD MEMBERSHIP (Tidak diubah) --}}
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-6 text-white relative overflow-hidden">
                     <i class="fa-solid fa-crown absolute -right-4 -bottom-4 text-9xl text-white opacity-10 rotate-12"></i>
@@ -231,6 +228,7 @@
                 </div>
             </div>
 
+            {{-- 2. CARD BIODATA --}}
             <div class="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm relative overflow-hidden">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-lg font-bold text-gray-800 flex items-center gap-3">
@@ -274,6 +272,7 @@
                 </form>
             </div>
 
+            {{-- 3. CARD KONTAK (SUDAH DIINTEGRASIKAN DENGAN VERIFIKASI) --}}
             <div class="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm relative">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-lg font-bold text-gray-800 flex items-center gap-3">
@@ -286,16 +285,49 @@
                 </div>
 
                 <div id="view-kontak" class="space-y-6">
+
+                    {{-- BARIS EMAIL --}}
                     <div class="flex flex-col sm:flex-row sm:items-center border-b border-gray-50 pb-4">
                         <div class="w-48 text-sm font-medium text-gray-400">Email</div>
-                        <div class="flex-1 text-sm font-bold text-gray-800 flex items-center">
-                            {{ Auth::user()->email ?? 'Belum diatur' }}
-                            @if(Auth::user()->email) <i class="fa-solid fa-circle-check text-blue-500 ml-2 text-xs" title="Terverifikasi"></i> @endif
+                        <div class="flex-1 flex justify-between items-center">
+                            <span class="text-sm font-bold text-gray-800">{{ Auth::user()->email ?? 'Belum diatur' }}</span>
+
+                            @if(Auth::user()->email)
+                            @if(Auth::user()->hasVerifiedEmail())
+                            <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded border border-green-200 flex items-center gap-1">
+                                <i class="fa-solid fa-check-circle"></i> Terverifikasi
+                            </span>
+                            @else
+                            {{-- Form ini menggunakan route 'verifikasi.manual' yang baru --}}
+                            <form action="{{ route('verifikasi.manual') }}" method="POST">
+                                @csrf
+                                <button type="submit" class="text-[10px] font-bold text-yellow-700 bg-yellow-50 px-3 py-1.5 rounded border border-yellow-200 hover:bg-yellow-100 transition">
+                                    Verifikasi
+                                </button>
+                            </form>
+                            @endif
+                            @endif
                         </div>
                     </div>
+
+                    {{-- BARIS NO HP --}}
                     <div class="flex flex-col sm:flex-row sm:items-center border-b border-gray-50 pb-4">
                         <div class="w-48 text-sm font-medium text-gray-400">Nomor HP</div>
-                        <div class="flex-1 text-sm font-bold text-gray-800">{{ Auth::user()->no_hp ?? 'Belum diatur' }}</div>
+                        <div class="flex-1 flex justify-between items-center">
+                            <span class="text-sm font-bold text-gray-800">{{ Auth::user()->no_hp ?? 'Belum diatur' }}</span>
+
+                            @if(Auth::user()->no_hp)
+                            @if(Auth::user()->no_hp_verified_at)
+                            <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded border border-green-200 flex items-center gap-1">
+                                <i class="fa-solid fa-check-circle"></i> Terverifikasi
+                            </span>
+                            @else
+                            <button type="button" onclick="startOtpProcess()" class="text-[10px] font-bold text-blue-700 bg-blue-50 px-3 py-1.5 rounded border border-blue-200 hover:bg-blue-100 transition">
+                                Kirim OTP
+                            </button>
+                            @endif
+                            @endif
+                        </div>
                     </div>
                 </div>
 
@@ -323,6 +355,7 @@
                 </form>
             </div>
 
+            {{-- 4. CARD ALAMAT (TIDAK BERUBAH) --}}
             <div class="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-lg font-bold text-gray-800 flex items-center gap-3">
@@ -451,6 +484,31 @@
         </div>
     </div>
 
+    {{-- MODAL OTP --}}
+    <div id="otpModal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center bg-gray-900/80 backdrop-blur-sm p-4 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative transform scale-100 transition-transform duration-300">
+            <button onclick="closeOtpModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
+
+            <div class="text-center mb-6">
+                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl shadow-sm">
+                    <i class="fa-solid fa-shield-halved"></i>
+                </div>
+                <h3 class="font-bold text-xl text-gray-800">Verifikasi No. HP</h3>
+                <p class="text-xs text-gray-500 mt-1">Masukkan kode OTP 6 digit.</p>
+            </div>
+
+            <div class="space-y-5">
+                <input type="text" id="otpInput" maxlength="6"
+                    class="w-full text-center text-3xl font-bold tracking-[0.5em] border-b-2 border-gray-300 focus:border-blue-600 focus:outline-none py-2 bg-transparent transition-colors placeholder:text-gray-300 placeholder:tracking-normal placeholder:text-sm"
+                    placeholder="KODE">
+
+                <button onclick="submitOtp()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition shadow-lg shadow-blue-200">
+                    Verifikasi Sekarang
+                </button>
+            </div>
+        </div>
+    </div>
+
     <script>
         function toggleEdit(section) {
             const view = document.getElementById('view-' + section);
@@ -468,17 +526,15 @@
             }
         }
 
-        // --- SCRIPT MODAL TAMBAH ALAMAT ---
         function openAddAddressModal() {
             document.getElementById('form-address-new').classList.remove('hidden');
-            document.getElementById('form-address-edit').classList.add('hidden'); // Tutup edit kalau ada
+            document.getElementById('form-address-edit').classList.add('hidden');
         }
 
         function closeAddAddressModal() {
             document.getElementById('form-address-new').classList.add('hidden');
         }
 
-        // --- SCRIPT MODAL EDIT ALAMAT ---
         function openEditAddressModal(id, label, penerima, hp, plus, detail) {
             closeAddAddressModal();
             document.getElementById('edit_label').value = label;
@@ -500,6 +556,54 @@
 
         function closeEditAddressModal() {
             document.getElementById('form-address-edit').classList.add('hidden');
+        }
+
+        // --- OTP LOGIC ---
+        function startOtpProcess() {
+            fetch("{{ route('phone.requestOtp') }}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                        "Content-Type": "application/json"
+                    }
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert("SIMULASI OTP: " + data.debug_otp);
+                        document.getElementById('otpModal').classList.remove('hidden');
+                    } else {
+                        alert(data.message);
+                    }
+                })
+                .catch(err => alert("Terjadi kesalahan sistem."));
+        }
+
+        function submitOtp() {
+            const code = document.getElementById('otpInput').value;
+            fetch("{{ route('phone.verifyOtp') }}", {
+                    method: "POST",
+                    headers: {
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        otp: code
+                    })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        alert("Berhasil Verifikasi!");
+                        location.reload();
+                    } else {
+                        alert(data.message);
+                    }
+                });
+        }
+
+        function closeOtpModal() {
+            document.getElementById('otpModal').classList.add('hidden');
         }
     </script>
 </body>

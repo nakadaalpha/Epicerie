@@ -11,6 +11,7 @@ use App\Http\Controllers\InventarisController;
 use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\KurirController;
 use App\Http\Middleware\AdminOnly;
+use App\Http\Controllers\VerificationController; // Pastikan ini ada
 
 // ====================================================
 // 1. ROUTE GUEST (Hanya yang BELUM Login)
@@ -18,21 +19,17 @@ use App\Http\Middleware\AdminOnly;
 Route::middleware(['guest'])->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'authenticate'])->name('login.authenticate');
-
     Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
     Route::post('/register', [AuthController::class, 'register'])->name('register.proses');
-
-    // --- FITUR LUPA PASSWORD ---
     Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('password.forgot');
     Route::post('/forgot-password', [AuthController::class, 'verifyUser'])->name('password.verify');
     Route::post('/reset-password', [AuthController::class, 'processResetPassword'])->name('password.reset.process');
 });
 
-// Route Logout
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
 // ====================================================
-// 2. ROUTE PUBLIK (Bisa Diakses Siapa Saja)
+// 2. ROUTE PUBLIK
 // ====================================================
 Route::get('/', [KioskController::class, 'index'])->name('kiosk.index');
 Route::get('/produk/{id}', [KioskController::class, 'show'])->name('produk.show');
@@ -48,11 +45,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/keranjang', [KioskController::class, 'cart'])->name('kiosk.cart');
     Route::get('/checkout', [KioskController::class, 'checkoutPage'])->name('kiosk.checkout');
 
-    // --- Manajemen Item Keranjang ---
+    // --- Manajemen Item ---
     Route::get('/kiosk/remove/{id}', [KioskController::class, 'removeItem'])->name('kiosk.remove');
     Route::get('/kiosk/increase/{id}', [KioskController::class, 'increaseItem'])->name('kiosk.increase');
     Route::get('/kiosk/decrease/{id}', [KioskController::class, 'decreaseItem'])->name('kiosk.decrease');
     Route::get('/kiosk/empty-cart', [KioskController::class, 'emptyCart'])->name('kiosk.empty');
+    Route::post('/kiosk/set-qty/{id}', [KioskController::class, 'setCartQuantity'])->name('kiosk.set.qty');
 
     // --- Pembayaran ---
     Route::post('/pay', [KioskController::class, 'processPayment'])->name('kiosk.pay');
@@ -68,6 +66,17 @@ Route::middleware(['auth'])->group(function () {
     // --- FITUR UPDATE PROFIL ---
     Route::post('/profile/photo', [KioskController::class, 'updatePhoto'])->name('profile.photo');
     Route::post('/profile/update', [KioskController::class, 'updateProfile'])->name('profile.update');
+    // Route untuk download QR (Penting karena ada tombolnya di view)
+    Route::get('/profile/download-qr', [KioskController::class, 'downloadQr'])->name('profile.download-qr');
+
+    // --- FITUR VERIFIKASI (EMAIL & OTP) ---
+    // Menggunakan nama route custom 'verifikasi.manual' agar tidak bentrok
+    Route::post('/email/verify-manual', [VerificationController::class, 'sendEmailVerification'])->name('verifikasi.manual');
+    Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verifyHandler'])
+        ->middleware(['signed']) // Wajib ada middleware signed agar aman
+        ->name('verification.verify'); // Nama ini WAJIB 'verification.verify'
+    Route::post('/phone/request-otp', [VerificationController::class, 'requestOtp'])->name('phone.requestOtp');
+    Route::post('/phone/verify-otp', [VerificationController::class, 'verifyOtp'])->name('phone.verifyOtp');
 
     // --- FITUR ALAMAT ---
     Route::post('/profile/address', [KioskController::class, 'addAddress'])->name('profile.address.add');
@@ -76,7 +85,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/profile/address/set-primary/{id}', [KioskController::class, 'setPrimaryAddress'])->name('address.setPrimary');
 
     // --- Placeholder Routes ---
-    Route::post('/kiosk/set-qty/{id}', [KioskController::class, 'setCartQuantity'])->name('kiosk.set.qty');
     Route::get('/kiosk/add-packet/{key}', [KioskController::class, 'addPacketToCart'])->name('kiosk.add.packet');
     Route::get('/kiosk/pending', [KioskController::class, 'listPending'])->name('kiosk.pending');
     Route::get('/kiosk/recall/{id}', [KioskController::class, 'recallOrder'])->name('kiosk.recall');
@@ -89,9 +97,8 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/kurir/update-lokasi', [KurirController::class, 'updateLokasi'])->name('kurir.update_lokasi');
 });
 
-
 // ====================================================
-// 4. ROUTE ADMIN / KARYAWAN (DASHBOARD)
+// 4. ROUTE ADMIN (DASHBOARD)
 // ====================================================
 Route::middleware(['auth', AdminOnly::class])->prefix('admin')->group(function () {
 
@@ -114,7 +121,7 @@ Route::middleware(['auth', AdminOnly::class])->prefix('admin')->group(function (
         Route::post('/store', [KategoriController::class, 'store'])->name('store');
         Route::get('/edit/{id}', [KategoriController::class, 'edit'])->name('edit');
         Route::put('/update/{id}', [KategoriController::class, 'update'])->name('update');
-        Route::delete('/delete/{id}', [KategoriController::class, 'destroy'])->name('destroy'); // Perbaikan method delete
+        Route::delete('/delete/{id}', [KategoriController::class, 'destroy'])->name('destroy');
     });
 
     // --- SLIDER ---
@@ -137,25 +144,15 @@ Route::middleware(['auth', AdminOnly::class])->prefix('admin')->group(function (
         Route::get('/hapus/{id}', [KaryawanController::class, 'destroy'])->name('hapus');
     });
 
-    // ==============================================
-    // PERBAIKAN: MANAJEMEN TRANSAKSI & KASIR (POS)
-    // ==============================================
+    // --- TRANSAKSI & KASIR ---
     Route::controller(TransaksiController::class)->group(function () {
-
-        // 1. Laporan (Akses via route: laporan.index)
         Route::get('/laporan', 'laporan')->name('laporan.index');
-
-        // 2. KASIR / POS (Fitur Baru - WAJIB DI ATAS route {id})
         Route::get('/transaksi/baru', 'create')->name('transaksi.create');
         Route::post('/transaksi/store', 'store')->name('transaksi.store');
-
-        // 3. Daftar Transaksi Utama
         Route::get('/transaksi', 'index')->name('transaksi.index');
-
-        // 4. Aksi Detail (Menggunakan ID)
         Route::post('/transaksi/update-status/{id}', 'updateStatus')->name('transaksi.update');
-        Route::get('/transaksi/{id}', 'show')->name('transaksi.show');         // Untuk Modal Detail
-        Route::delete('/transaksi/{id}', 'destroy')->name('transaksi.destroy'); // Untuk Hapus
-        Route::get('/transaksi/{id}/print', 'print')->name('transaksi.print');  // Untuk Cetak
+        Route::get('/transaksi/{id}', 'show')->name('transaksi.show');
+        Route::delete('/transaksi/{id}', 'destroy')->name('transaksi.destroy');
+        Route::get('/transaksi/{id}/print', 'print')->name('transaksi.print');
     });
 });
