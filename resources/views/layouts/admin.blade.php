@@ -43,40 +43,53 @@
 
             <p class="px-2 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-2 mt-2">Menu Utama</p>
 
-            <a href="{{ route('dashboard') }}"
-                class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all {{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600' }}">
+            <a href="{{ route('dashboard') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all {{ request()->routeIs('dashboard') ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600' }}">
                 <i class="fa-solid fa-chart-pie w-5 text-center {{ request()->routeIs('dashboard') ? 'text-blue-600' : 'text-gray-400' }}"></i> Dashboard
             </a>
 
-            <a href="{{ route('transaksi.index') }}"
-                class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all {{ request()->routeIs('transaksi*') ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600' }}">
+            <a href="{{ route('transaksi.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all {{ request()->routeIs('transaksi*') ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600' }}">
                 <i class="fa-solid fa-receipt w-5 text-center {{ request()->routeIs('transaksi*') ? 'text-blue-600' : 'text-gray-400' }}"></i> Transaksi
             </a>
 
-            <a href="{{ route('inventaris.index') }}"
-                class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all {{ request()->routeIs('inventaris*') || request()->routeIs('produk*') ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600' }}">
+            <a href="{{ route('inventaris.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all {{ request()->routeIs('inventaris*') || request()->routeIs('produk*') ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600' }}">
                 <i class="fa-solid fa-box w-5 text-center {{ request()->routeIs('inventaris*') ? 'text-blue-600' : 'text-gray-400' }}"></i> Inventaris
             </a>
 
-            <a href="{{ route('kategori.index') }}"
-                class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all {{ request()->routeIs('kategori*') ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600' }}">
+            <a href="{{ route('kategori.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all {{ request()->routeIs('kategori*') ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600' }}">
                 <i class="fa-solid fa-tags w-5 text-center {{ request()->routeIs('kategori*') ? 'text-blue-600' : 'text-gray-400' }}"></i> Kategori
             </a>
 
-            <a href="{{ route('slider.index') }}"
-                class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all {{ request()->routeIs('slider*') ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600' }}">
+            {{-- MENU MANAJEMEN KARTU (DIPISAH SUPAYA JELAS) --}}
+            <p class="px-2 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-2 mt-4">Membership</p>
+
+            {{-- 1. Antrian Cetak (List Request) --}}
+            <a href="{{ route('card.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all {{ request()->routeIs('card.index') ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600' }}">
+                <i class="fa-solid fa-print w-5 text-center {{ request()->routeIs('card.index') ? 'text-blue-600' : 'text-gray-400' }}"></i> Antrian Cetak
+
+                @php $pendingCount = \App\Models\User::where('status_cetak_kartu', 'pending')->count(); @endphp
+                @if($pendingCount > 0)
+                <span class="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full animate-pulse">{{ $pendingCount }}</span>
+                @endif
+            </a>
+
+            {{-- 2. Desain Kartu (Settings) --}}
+            <a href="{{ route('card.settings') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all {{ request()->routeIs('card.settings') ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600' }}">
+                <i class="fa-solid fa-palette w-5 text-center {{ request()->routeIs('card.settings') ? 'text-blue-600' : 'text-gray-400' }}"></i> Desain Kartu
+            </a>
+
+            <p class="px-2 text-[10px] font-extrabold text-gray-400 uppercase tracking-widest mb-2 mt-4">Lainnya</p>
+
+            <a href="{{ route('slider.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all {{ request()->routeIs('slider*') ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600' }}">
                 <i class="fa-regular fa-images w-5 text-center {{ request()->routeIs('slider*') ? 'text-blue-600' : 'text-gray-400' }}"></i> Slider
             </a>
 
-            <a href="{{ route('laporan.index') }}"
-                class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all {{ request()->routeIs('laporan*') ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600' }}">
+            <a href="{{ route('laporan.index') }}" class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all {{ request()->routeIs('laporan*') ? 'bg-blue-50 text-blue-600 shadow-sm' : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600' }}">
                 <i class="fa-solid fa-file-invoice w-5 text-center {{ request()->routeIs('laporan*') ? 'text-blue-600' : 'text-gray-400' }}"></i> Laporan
             </a>
 
         </nav>
 
         <div class="border-t border-gray-100 p-4 shrink-0 relative bg-white z-50">
-
             <button onclick="toggleUserMenu()" class="flex items-center gap-3 w-full px-2 py-2 rounded-xl hover:bg-gray-50/50 hover:shadow-sm hover:border-gray-200 border border-transparent transition-all text-left group">
                 @if(Auth::check() && Auth::user()->foto_profil)
                 <img src="{{ asset('storage/' . Auth::user()->foto_profil) }}" class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm">
@@ -90,7 +103,6 @@
                     <p class="text-sm font-bold text-gray-800 truncate">{{ Auth::user()->nama ?? 'User' }}</p>
                     <p class="text-[10px] text-gray-500 font-bold uppercase tracking-wide truncate">{{ Auth::user()->role ?? 'Admin' }}</p>
                 </div>
-
                 <i class="fa-solid text-gray-400 text-xs group-hover:text-blue-600 transition"></i>
             </button>
 
@@ -109,23 +121,19 @@
                     </button>
                 </form>
             </div>
-
         </div>
     </aside>
 
     <main class="flex-1 flex flex-col h-screen overflow-hidden relative">
-
         <header class="md:hidden h-16 flex items-center justify-between px-6 shrink-0 z-30">
             <span class="font-extrabold text-white text-lg drop-shadow-md">@yield('header_title', 'Dashboard')</span>
             <button onclick="toggleSidebar()" class="text-white bg-white/20 p-2 rounded-lg backdrop-blur-sm shadow-sm">
                 <i class="fa-solid fa-bars text-xl"></i>
             </button>
         </header>
-
         <div class="flex-1 overflow-y-auto p-4 md:p-8 relative scroll-smooth" id="mainContent">
             @yield('content')
         </div>
-
     </main>
 
     <div id="sidebarOverlay" onclick="toggleSidebar()" class="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 hidden md:hidden"></div>
@@ -134,7 +142,6 @@
         function toggleSidebar() {
             const sidebar = document.getElementById('sidebar');
             const overlay = document.getElementById('sidebarOverlay');
-
             if (sidebar.classList.contains('-translate-x-full')) {
                 sidebar.classList.remove('-translate-x-full');
                 overlay.classList.remove('hidden');
@@ -152,7 +159,6 @@
         window.addEventListener('click', function(e) {
             const menu = document.getElementById('userMenu');
             const button = document.querySelector('button[onclick="toggleUserMenu()"]');
-
             if (menu && !menu.classList.contains('hidden')) {
                 if (!menu.contains(e.target) && !button.contains(e.target)) {
                     menu.classList.add('hidden');

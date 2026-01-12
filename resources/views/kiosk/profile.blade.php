@@ -62,10 +62,11 @@
 
     <div class="max-w-[1100px] mx-auto px-4 py-8 flex flex-col md:flex-row gap-8">
 
-        {{-- SIDEBAR: FOTO, QR, & MENU --}}
+        {{-- SIDEBAR: FOTO & MENU --}}
         <div class="w-full md:w-[300px] shrink-0">
             <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm sticky top-24">
 
+                {{-- FOTO PROFIL --}}
                 <div class="aspect-square bg-gray-50 rounded-2xl overflow-hidden mb-5 flex items-center justify-center relative group border border-gray-100">
                     @if(Auth::check() && Auth::user()->foto_profil)
                     <img src="{{ asset('storage/' . Auth::user()->foto_profil) }}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
@@ -88,10 +89,23 @@
                     </button>
                 </form>
 
-                {{-- TOMBOL UNDUH QR (Penting agar tidak error 404) --}}
-                <a href="{{ route('profile.download-qr') }}" class="w-full bg-blue-600 text-white font-bold py-3 rounded-xl hover:bg-blue-700 transition text-sm mb-6 flex items-center justify-center gap-2 shadow-lg shadow-blue-200">
-                    <i class="fa-solid fa-qrcode"></i> Kartu Member
-                </a>
+                {{-- TOMBOL KARTU MEMBER (MEMBUKA MODAL) --}}
+                <div class="mb-6">
+                    <button onclick="openCardModal()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-200">
+                        <i class="fa-solid fa-id-card"></i> Lihat Kartu Member
+                    </button>
+
+                    {{-- Status Request Cetak (Info Kecil) --}}
+                    @if(Auth::user()->status_cetak_kartu == 'pending')
+                    <p class="text-[10px] text-yellow-600 text-center mt-2 flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-clock"></i> Request cetak fisik diproses.
+                    </p>
+                    @elseif(Auth::user()->status_cetak_kartu == 'completed')
+                    <p class="text-[10px] text-green-600 text-center mt-2 flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-check-circle"></i> Kartu fisik telah dicetak.
+                    </p>
+                    @endif
+                </div>
 
                 <div class="border-t border-gray-100 pt-5">
                     <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3 px-1">Menu Akun</p>
@@ -115,7 +129,7 @@
 
         <div class="flex-1 space-y-6">
 
-            {{-- 1. CARD MEMBERSHIP (Tidak diubah) --}}
+            {{-- 1. CARD MEMBERSHIP --}}
             <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
                 <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-6 text-white relative overflow-hidden">
                     <i class="fa-solid fa-crown absolute -right-4 -bottom-4 text-9xl text-white opacity-10 rotate-12"></i>
@@ -272,7 +286,7 @@
                 </form>
             </div>
 
-            {{-- 3. CARD KONTAK (SUDAH DIINTEGRASIKAN DENGAN VERIFIKASI) --}}
+            {{-- 3. CARD KONTAK --}}
             <div class="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm relative">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-lg font-bold text-gray-800 flex items-center gap-3">
@@ -285,20 +299,16 @@
                 </div>
 
                 <div id="view-kontak" class="space-y-6">
-
-                    {{-- BARIS EMAIL --}}
                     <div class="flex flex-col sm:flex-row sm:items-center border-b border-gray-50 pb-4">
                         <div class="w-48 text-sm font-medium text-gray-400">Email</div>
                         <div class="flex-1 flex justify-between items-center">
                             <span class="text-sm font-bold text-gray-800">{{ Auth::user()->email ?? 'Belum diatur' }}</span>
-
                             @if(Auth::user()->email)
                             @if(Auth::user()->hasVerifiedEmail())
                             <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded border border-green-200 flex items-center gap-1">
                                 <i class="fa-solid fa-check-circle"></i> Terverifikasi
                             </span>
                             @else
-                            {{-- Form ini menggunakan route 'verifikasi.manual' yang baru --}}
                             <form action="{{ route('verifikasi.manual') }}" method="POST">
                                 @csrf
                                 <button type="submit" class="text-[10px] font-bold text-yellow-700 bg-yellow-50 px-3 py-1.5 rounded border border-yellow-200 hover:bg-yellow-100 transition">
@@ -310,12 +320,10 @@
                         </div>
                     </div>
 
-                    {{-- BARIS NO HP --}}
                     <div class="flex flex-col sm:flex-row sm:items-center border-b border-gray-50 pb-4">
                         <div class="w-48 text-sm font-medium text-gray-400">Nomor HP</div>
                         <div class="flex-1 flex justify-between items-center">
                             <span class="text-sm font-bold text-gray-800">{{ Auth::user()->no_hp ?? 'Belum diatur' }}</span>
-
                             @if(Auth::user()->no_hp)
                             @if(Auth::user()->no_hp_verified_at)
                             <span class="text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded border border-green-200 flex items-center gap-1">
@@ -334,7 +342,6 @@
                 <form id="form-kontak" action="{{ route('profile.update') }}" method="POST" class="hidden space-y-5">
                     @csrf
                     <input type="hidden" name="nama" value="{{ Auth::user()->nama }}">
-
                     <div class="flex flex-col sm:flex-row sm:items-center border-b border-gray-100 pb-2">
                         <div class="w-48 text-sm font-bold text-blue-600 pt-2 sm:pt-0">Email</div>
                         <div class="flex-1">
@@ -347,7 +354,6 @@
                             <input type="text" name="no_hp" value="{{ Auth::user()->no_hp }}" placeholder="08..." class="w-full bg-gray-50 border border-gray-200 rounded-lg px-4 py-2 text-sm font-bold text-gray-800 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:border-transparent outline-none transition">
                         </div>
                     </div>
-
                     <div class="flex justify-end gap-3 mt-4 pt-2">
                         <button type="button" onclick="toggleEdit('kontak')" class="px-5 py-2 rounded-lg text-sm font-bold text-gray-500 hover:bg-gray-100 transition">Batal</button>
                         <button type="submit" class="px-6 py-2 rounded-lg text-sm font-bold bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/20 transition">Simpan Kontak</button>
@@ -355,7 +361,7 @@
                 </form>
             </div>
 
-            {{-- 4. CARD ALAMAT (TIDAK BERUBAH) --}}
+            {{-- 4. CARD ALAMAT --}}
             <div class="bg-white border border-gray-100 rounded-2xl p-8 shadow-sm">
                 <div class="flex justify-between items-center mb-6">
                     <h2 class="text-lg font-bold text-gray-800 flex items-center gap-3">
@@ -484,27 +490,88 @@
         </div>
     </div>
 
+    {{-- MODAL KARTU MEMBER (SINKRON DENGAN BACKGROUND ADMIN) --}}
+    <div id="cardModalDisplay" class="fixed inset-0 z-[9999] hidden flex items-center justify-center bg-gray-900/90 backdrop-blur-md p-4 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md relative transform scale-100 transition-transform duration-300 overflow-hidden">
+
+            {{-- Header Modal --}}
+            <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-indigo-600">
+                <div>
+                    <h3 class="font-extrabold text-white text-lg">Kartu Member Digital</h3>
+                </div>
+                <button onclick="closeCardModal()" class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white hover:text-indigo-600 transition"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+
+            {{-- Body: Tampilan Kartu --}}
+            <div class="p-8 bg-gray-50 flex justify-center items-center">
+                {{-- KARTU UTAMA: 342px x 216px --}}
+                <div class="relative w-[342px] h-[216px] rounded-xl shadow-2xl overflow-hidden shrink-0 select-none bg-[#050505] text-white transition-transform hover:scale-[1.02] duration-500">
+
+                    {{-- LAYER 1: BACKGROUND GAMBAR DARI ADMIN --}}
+                    {{-- Jika admin upload di public/images/card_bg.png --}}
+                    <img src="{{ asset('images/card_bg.png') }}"
+                        class="absolute inset-0 w-full h-full object-cover z-0"
+                        onerror="this.style.display='none'; document.getElementById('fallback-confetti').style.display='block';">
+
+                    {{-- LAYER 2: FALLBACK CONFETTI (Hanya muncul jika gambar admin tidak ada) --}}
+                    <div id="fallback-confetti" class="hidden absolute inset-0 z-0">
+                        <div class="absolute top-[40px] left-[15px] w-[22px] h-[6px] bg-[#0d9488]"></div>
+                        <div class="absolute top-[35px] left-[40px] w-[22px] h-[12px] bg-[#1e293b] opacity-90"></div>
+                        <div class="absolute top-[25px] left-[115px] w-[40px] h-[85px] bg-[#1e293b] opacity-80"></div>
+                        <div class="absolute top-[18px] left-[138px] w-[12px] h-[12px] bg-[#7c2d12]"></div>
+                        <div class="absolute top-[100px] left-[108px] w-[20px] h-[6px] bg-[#1e3a8a]"></div>
+                        <div class="absolute top-[100px] left-[150px] w-[10px] h-[10px] bg-[#b45309]"></div>
+                        <div class="absolute top-[110px] right-[30px] w-[30px] h-[35px] bg-[#1e293b] opacity-80"></div>
+                        <div class="absolute top-[90px] right-[20px] w-[12px] h-[12px] bg-[#15803d]"></div>
+                        <div class="absolute top-[135px] right-[65px] w-[12px] h-[6px] bg-[#c2410c]"></div>
+                    </div>
+
+                    {{-- LAYER 3: KONTEN TEKS & QR --}}
+                    <div class="relative z-10 w-full h-full">
+                        <div class="absolute top-[10%] left-[7%]">
+                            <h1 class="font-extrabold text-2xl tracking-widest uppercase text-white drop-shadow-md">ÉPICERIE</h1>
+                        </div>
+
+                        <div class="absolute top-[10%] right-[7%]">
+                            <div class="border border-[#2dd4bf] bg-black/40 backdrop-blur-sm rounded px-2 py-1">
+                                <p class="text-[8px] font-bold text-[#2dd4bf] tracking-widest uppercase">{{ Auth::user()->membership }} MEMBER</p>
+                            </div>
+                        </div>
+
+                        <div class="absolute bottom-[10%] left-[7%]">
+                            <p class="font-bold text-lg uppercase leading-tight text-white drop-shadow-md">{{ Str::limit(Auth::user()->nama, 18) }}</p>
+                            <p class="text-[9px] text-[#94a3b8] font-mono tracking-widest">{{ Auth::user()->username }}</p>
+                        </div>
+
+                        <div class="absolute bottom-[10%] right-[7%]">
+                            <div class="p-1 rounded shadow-lg bg-black/20 backdrop-blur-sm">
+                                <div class="w-[45px] h-[45px] flex items-center justify-center">
+                                    {!! SimpleSoftwareIO\QrCode\Facades\QrCode::size(45)
+                                    ->margin(0)
+                                    ->color(255, 255, 255)
+                                    ->backgroundColor(0, 0, 0, 0) // Membuat background QR transparan
+                                    ->generate(Auth::user()->id_user) !!}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     {{-- MODAL OTP --}}
     <div id="otpModal" class="fixed inset-0 z-[9999] hidden flex items-center justify-center bg-gray-900/80 backdrop-blur-sm p-4 transition-opacity duration-300">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 relative transform scale-100 transition-transform duration-300">
             <button onclick="closeOtpModal()" class="absolute top-4 right-4 text-gray-400 hover:text-red-500 transition"><i class="fa-solid fa-xmark text-xl"></i></button>
-
             <div class="text-center mb-6">
-                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl shadow-sm">
-                    <i class="fa-solid fa-shield-halved"></i>
-                </div>
+                <div class="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl shadow-sm"><i class="fa-solid fa-shield-halved"></i></div>
                 <h3 class="font-bold text-xl text-gray-800">Verifikasi No. HP</h3>
                 <p class="text-xs text-gray-500 mt-1">Masukkan kode OTP 6 digit.</p>
             </div>
-
             <div class="space-y-5">
-                <input type="text" id="otpInput" maxlength="6"
-                    class="w-full text-center text-3xl font-bold tracking-[0.5em] border-b-2 border-gray-300 focus:border-blue-600 focus:outline-none py-2 bg-transparent transition-colors placeholder:text-gray-300 placeholder:tracking-normal placeholder:text-sm"
-                    placeholder="KODE">
-
-                <button onclick="submitOtp()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition shadow-lg shadow-blue-200">
-                    Verifikasi Sekarang
-                </button>
+                <input type="text" id="otpInput" maxlength="6" class="w-full text-center text-3xl font-bold tracking-[0.5em] border-b-2 border-gray-300 focus:border-blue-600 focus:outline-none py-2 bg-transparent transition-colors placeholder:text-gray-300 placeholder:tracking-normal placeholder:text-sm" placeholder="KODE">
+                <button onclick="submitOtp()" class="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-xl font-bold transition shadow-lg shadow-blue-200">Verifikasi Sekarang</button>
             </div>
         </div>
     </div>
@@ -514,7 +581,6 @@
             const view = document.getElementById('view-' + section);
             const form = document.getElementById('form-' + section);
             const btn = document.getElementById('btn-edit-' + section);
-
             if (form.classList.contains('hidden')) {
                 view.classList.add('hidden');
                 form.classList.remove('hidden');
@@ -542,11 +608,9 @@
             document.getElementById('edit_hp').value = hp;
             document.getElementById('edit_plus').value = plus;
             document.getElementById('edit_detail').value = detail;
-
             let url = "{{ route('profile.address.update', ':id') }}";
             url = url.replace(':id', id);
             document.getElementById('editAddressForm').action = url;
-
             document.getElementById('form-address-edit').classList.remove('hidden');
             document.getElementById('form-address-edit').scrollIntoView({
                 behavior: 'smooth',
@@ -560,6 +624,10 @@
 
         // --- OTP LOGIC ---
         function startOtpProcess() {
+            // Beri loading jika perlu
+            const btn = document.querySelector('button[onclick="startOtpProcess()"]');
+            if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
+
             fetch("{{ route('phone.requestOtp') }}", {
                     method: "POST",
                     headers: {
@@ -567,16 +635,21 @@
                         "Content-Type": "application/json"
                     }
                 })
-                .then(res => res.json())
-                .then(data => {
+                .then(res => res.json()).then(data => {
+                    if (btn) btn.innerHTML = 'Kirim OTP'; // Kembalikan teks tombol
+
                     if (data.status === 'success') {
-                        alert("SIMULASI OTP: " + data.debug_otp);
+                        // Notifikasi sukses
+                        alert(data.message); // Akan muncul "OTP berhasil dikirim ke WhatsApp Anda!"
                         document.getElementById('otpModal').classList.remove('hidden');
                     } else {
                         alert(data.message);
                     }
                 })
-                .catch(err => alert("Terjadi kesalahan sistem."));
+                .catch(err => {
+                    if (btn) btn.innerHTML = 'Kirim OTP';
+                    alert("Terjadi kesalahan sistem.");
+                });
         }
 
         function submitOtp() {
@@ -591,8 +664,7 @@
                         otp: code
                     })
                 })
-                .then(res => res.json())
-                .then(data => {
+                .then(res => res.json()).then(data => {
                     if (data.status === 'success') {
                         alert("Berhasil Verifikasi!");
                         location.reload();
@@ -605,6 +677,28 @@
         function closeOtpModal() {
             document.getElementById('otpModal').classList.add('hidden');
         }
+
+        // --- MODAL KARTU ---
+        function openCardModal() {
+            const modal = document.getElementById('cardModalDisplay');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.children[0].classList.remove('scale-95', 'opacity-0');
+                modal.children[0].classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeCardModal() {
+            const modal = document.getElementById('cardModalDisplay');
+            modal.children[0].classList.remove('scale-100', 'opacity-100');
+            modal.children[0].classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 200);
+        }
+        document.getElementById('cardModalDisplay').addEventListener('click', function(e) {
+            if (e.target === this) closeCardModal();
+        });
     </script>
 </body>
 

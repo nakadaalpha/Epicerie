@@ -11,7 +11,8 @@ use App\Http\Controllers\InventarisController;
 use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\KurirController;
 use App\Http\Middleware\AdminOnly;
-use App\Http\Controllers\VerificationController; // Pastikan ini ada
+use App\Http\Controllers\VerificationController;
+use App\Http\Controllers\CardSettingController; // <--- Menambahkan Import
 
 // ====================================================
 // 1. ROUTE GUEST (Hanya yang BELUM Login)
@@ -66,15 +67,14 @@ Route::middleware(['auth'])->group(function () {
     // --- FITUR UPDATE PROFIL ---
     Route::post('/profile/photo', [KioskController::class, 'updatePhoto'])->name('profile.photo');
     Route::post('/profile/update', [KioskController::class, 'updateProfile'])->name('profile.update');
-    // Route untuk download QR (Penting karena ada tombolnya di view)
     Route::get('/profile/download-qr', [KioskController::class, 'downloadQr'])->name('profile.download-qr');
+    Route::post('/profile/request-card', [KioskController::class, 'requestCetakKartu'])->name('profile.request.card');
 
     // --- FITUR VERIFIKASI (EMAIL & OTP) ---
-    // Menggunakan nama route custom 'verifikasi.manual' agar tidak bentrok
     Route::post('/email/verify-manual', [VerificationController::class, 'sendEmailVerification'])->name('verifikasi.manual');
     Route::get('/email/verify/{id}/{hash}', [VerificationController::class, 'verifyHandler'])
-        ->middleware(['signed']) // Wajib ada middleware signed agar aman
-        ->name('verification.verify'); // Nama ini WAJIB 'verification.verify'
+        ->middleware(['signed'])
+        ->name('verification.verify');
     Route::post('/phone/request-otp', [VerificationController::class, 'requestOtp'])->name('phone.requestOtp');
     Route::post('/phone/verify-otp', [VerificationController::class, 'verifyOtp'])->name('phone.verifyOtp');
 
@@ -83,11 +83,6 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/profile/address/update/{id}', [KioskController::class, 'updateAddress'])->name('profile.address.update');
     Route::get('/profile/address/delete/{id}', [KioskController::class, 'deleteAddress'])->name('profile.address.delete');
     Route::post('/profile/address/set-primary/{id}', [KioskController::class, 'setPrimaryAddress'])->name('address.setPrimary');
-
-    // --- Placeholder Routes ---
-    Route::get('/kiosk/add-packet/{key}', [KioskController::class, 'addPacketToCart'])->name('kiosk.add.packet');
-    Route::get('/kiosk/pending', [KioskController::class, 'listPending'])->name('kiosk.pending');
-    Route::get('/kiosk/recall/{id}', [KioskController::class, 'recallOrder'])->name('kiosk.recall');
 
     // --- ROUTE KHUSUS KURIR ---
     Route::get('/kurir/dashboard', [KurirController::class, 'index'])->name('kurir.index');
@@ -154,5 +149,15 @@ Route::middleware(['auth', AdminOnly::class])->prefix('admin')->group(function (
         Route::get('/transaksi/{id}', 'show')->name('transaksi.show');
         Route::delete('/transaksi/{id}', 'destroy')->name('transaksi.destroy');
         Route::get('/transaksi/{id}/print', 'print')->name('transaksi.print');
+    });
+
+    // --- MANAJEMEN KARTU (FITUR BARU) ---
+    // Ditambahkan tanpa mengubah route lama agar tidak terjadi RouteNotFoundException
+    Route::controller(CardSettingController::class)->prefix('member-card')->name('card.')->group(function () {
+        Route::get('/', 'index')->name('index');
+        Route::get('/settings', 'settings')->name('settings');
+        Route::post('/settings', 'updateSettings')->name('update');
+        Route::get('/print/{id}', 'printPdf')->name('print');
+        Route::post('/complete/{id}', 'markAsComplete')->name('complete');
     });
 });

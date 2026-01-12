@@ -16,6 +16,8 @@ use App\Models\Transaksi;
 use App\Models\DetailTransaksi;
 use App\Models\User;
 use App\Models\Slider;
+use Barryvdh\DomPDF\Facade\Pdf; // Import PDF
+use SimpleSoftwareIO\QrCode\Facades\QrCode; // Import QR Code
 
 class KioskController extends Controller
 {
@@ -26,23 +28,18 @@ class KioskController extends Controller
     const ONGKIR_FLAT = 5000;
     const MIN_BELANJA = 30000;
 
-    // === HELPER PENTING: HITUNG SUBTOTAL (JANGAN DIHAPUS) ===
-    // Fungsi ini memperbaiki masalah stuck di keranjang karena harga dianggap 0
+    // === HELPER PENTING: HITUNG SUBTOTAL ===
     private function hitungSubtotal($keranjang)
     {
         return $keranjang->sum(function ($item) {
-            // Ambil harga dan diskon dengan aman
             $harga = $item->produk->harga_produk ?? 0;
             $diskon = $item->produk->persen_diskon ?? 0;
-
-            // Hitung harga final setelah diskon
             $hargaFinal = $harga - ($harga * ($diskon / 100));
-
             return $hargaFinal * $item->jumlah;
         });
     }
 
-    // === HELPER: Data Ringkas Keranjang (Untuk Navbar) ===
+    // === HELPER: Data Ringkas Keranjang ===
     private function getCartSummary()
     {
         if (!Auth::check()) return ['totalItemKeranjang' => 0, 'keranjangItems' => []];
@@ -70,7 +67,6 @@ class KioskController extends Controller
         }
 
         $produkTerbaru = Produk::orderBy('created_at', 'desc')->limit(6)->get();
-
         $produkTerlaris = Produk::select('produk.*', DB::raw('COALESCE(SUM(detail_transaksi.jumlah), 0) as total_terjual'))
             ->leftJoin('detail_transaksi', 'produk.id_produk', '=', 'detail_transaksi.id_produk')
             ->groupBy('produk.id_produk')
@@ -94,26 +90,15 @@ class KioskController extends Controller
         $selectedKategori = $request->kategori ?? [];
         $minPrice = $request->min_price;
         $maxPrice = $request->max_price;
-        $sort = $request->sort; // Tangkap input sorting
+        $sort = $request->sort;
 
-        // 1. QUERY UTAMA
-        $query = \App\Models\Produk::query();
+        $query = Produk::query();
 
-        // ... (Logika filter keyword, kategori, harga TETAP SAMA seperti sebelumnya) ...
-        if ($keyword) {
-            $query->where('nama_produk', 'like', '%' . $keyword . '%');
-        }
-        if (!empty($selectedKategori)) {
-            $query->whereIn('id_kategori', $selectedKategori);
-        }
-        if ($minPrice) {
-            $query->where('harga_produk', '>=', $minPrice);
-        }
-        if ($maxPrice) {
-            $query->where('harga_produk', '<=', $maxPrice);
-        }
+        if ($keyword) $query->where('nama_produk', 'like', '%' . $keyword . '%');
+        if (!empty($selectedKategori)) $query->whereIn('id_kategori', $selectedKategori);
+        if ($minPrice) $query->where('harga_produk', '>=', $minPrice);
+        if ($maxPrice) $query->where('harga_produk', '<=', $maxPrice);
 
-        // --- LOGIKA SORTING BARU DI SINI ---
         switch ($sort) {
             case 'termurah':
                 $query->orderBy('harga_produk', 'asc');
@@ -125,85 +110,51 @@ class KioskController extends Controller
                 $query->orderBy('created_at', 'desc');
                 break;
             case 'terlaris':
-                // Join dengan detail_transaksi untuk menghitung jumlah terjual
-                $query->select('produk.*', \Illuminate\Support\Facades\DB::raw('COALESCE(SUM(detail_transaksi.jumlah), 0) as total_terjual'))
+                $query->select('produk.*', DB::raw('COALESCE(SUM(detail_transaksi.jumlah), 0) as total_terjual'))
                     ->leftJoin('detail_transaksi', 'produk.id_produk', '=', 'detail_transaksi.id_produk')
-                    ->groupBy('produk.id_produk') // Grouping wajib
+                    ->groupBy('produk.id_produk')
                     ->orderBy('total_terjual', 'desc');
                 break;
-            default: // 'paling_sesuai' atau default
-                // Jika ada keyword, biarkan database menentukan relevansi (biasanya ID atau Created At)
-                // Atau bisa default ke terbaru
+            default:
                 $query->orderBy('created_at', 'desc');
                 break;
         }
-        // -----------------------------------
 
         $produk = $query->get();
-
-        // ... (Sisa kode logic rekomendasi dll TETAP SAMA) ...
-        $allCategories = \App\Models\Kategori::withCount('produk')->get();
+        $allCategories = Kategori::withCount('produk')->get();
         $rekomendasi = collect();
 
-        // ... (lanjutan logika rekomendasi Anda) ...
-
-        // Jangan lupa kirim variabel $sort ke view agar dropdown bisa 'selected' otomatis
         return view('kiosk.search', compact('produk', 'allCategories', 'keyword', 'selectedKategori', 'minPrice', 'maxPrice', 'rekomendasi', 'sort'));
     }
 
     public function show($id)
     {
-        // 1. Ambil data produk yang sedang dilihat
-        $produk = \App\Models\Produk::with('kategori')->findOrFail($id);
+        $produk = Produk::with('kategori')->findOrFail($id);
+        $keywords = array_filter(explode(' ', $produk->nama_produk), fn($word) => strlen($word) > 2);
 
-        // 2. Persiapkan Kata Kunci untuk Content-Based Filtering
-        // Contoh: "Kopi Susu Gula Aren" -> ["Kopi", "Susu", "Gula", "Aren"]
-        $keywords = explode(' ', $produk->nama_produk);
+        $totalTerjual = DB::table('detail_transaksi')->where('id_produk', $id)->sum('jumlah');
 
-        // Filter kata yang terlalu pendek (misal: "di", "ke", "yg" agar pencarian lebih akurat)
-        $keywords = array_filter($keywords, function ($word) {
-            return strlen($word) > 2;
-        });
-
-        $totalTerjual = \Illuminate\Support\Facades\DB::table('detail_transaksi')
-            ->where('id_produk', $id)
-            ->sum('jumlah');
-
-        // 3. Query Rekomendasi
-        $produkLain = \App\Models\Produk::where('id_produk', '!=', $id) // Jangan tampilkan produk yang sedang dilihat
+        $produkLain = Produk::where('id_produk', '!=', $id)
             ->where(function ($query) use ($produk, $keywords) {
-                // Rule A: Cari yang KATEGORI-nya sama (Bobot paling tinggi)
                 $query->where('id_kategori', $produk->id_kategori)
-
-                    // Rule B: ATAU cari yang NAMANYA mirip (mengandung salah satu kata kunci)
                     ->orWhere(function ($subQuery) use ($keywords) {
-                        foreach ($keywords as $word) {
-                            $subQuery->orWhere('nama_produk', 'like', '%' . $word . '%');
-                        }
+                        foreach ($keywords as $word) $subQuery->orWhere('nama_produk', 'like', '%' . $word . '%');
                     });
             })
-            // 4. Scoring / Pengurutan (Ranking)
-            // Prioritaskan produk yang Kategori-nya SAMA persis
             ->orderByRaw("CASE WHEN id_kategori = ? THEN 1 ELSE 2 END", [$produk->id_kategori])
-            // Lalu urutkan berdasarkan yang terbaru
             ->orderBy('created_at', 'desc')
             ->limit(6)
             ->get();
 
-        // 5. Fallback (Jaga-jaga jika hasil di atas kosong/kurang dari 6)
         if ($produkLain->count() < 6) {
             $excludeIds = $produkLain->pluck('id_produk')->push($id);
-
-            // --- LOGIKA BARU: MENGHITUNG TERLARIS SECARA DINAMIS ---
-            $tambahan = \App\Models\Produk::select('produk.*', DB::raw('COALESCE(SUM(detail_transaksi.jumlah), 0) as total_terjual'))
+            $tambahan = Produk::select('produk.*', DB::raw('COALESCE(SUM(detail_transaksi.jumlah), 0) as total_terjual'))
                 ->leftJoin('detail_transaksi', 'produk.id_produk', '=', 'detail_transaksi.id_produk')
-                ->whereNotIn('produk.id_produk', $excludeIds) // Filter produk yang sudah tampil
-                ->groupBy('produk.id_produk') // Grouping wajib karena ada agregasi SUM
-                ->orderBy('total_terjual', 'desc') // Urutkan dari penjualan terbanyak
-                ->limit(6 - $produkLain->count()) // Ambil sisa slot yang kosong
+                ->whereNotIn('produk.id_produk', $excludeIds)
+                ->groupBy('produk.id_produk')
+                ->orderBy('total_terjual', 'desc')
+                ->limit(6 - $produkLain->count())
                 ->get();
-            // -------------------------------------------------------
-
             $produkLain = $produkLain->merge($tambahan);
         }
 
@@ -211,57 +162,35 @@ class KioskController extends Controller
     }
 
     // ========================================================================
-    // 2. KERANJANG (CART) & CHECKOUT
+    // 2. KERANJANG & CHECKOUT
     // ========================================================================
 
-    // Halaman Keranjang
     public function cart()
     {
         if (!Auth::check()) return redirect()->route('login');
-
         $keranjang = Keranjang::with('produk')->where('id_user', Auth::id())->get();
-
         $subtotal = $this->hitungSubtotal($keranjang);
         $minBelanja = self::MIN_BELANJA;
-
-        // TAMBAHAN: Ambil 4 produk acak sebagai rekomendasi
         $rekomendasi = Produk::inRandomOrder()->limit(6)->get();
 
-        // Jangan lupa passing 'rekomendasi' ke view
         return view('kiosk.cart', compact('keranjang', 'subtotal', 'minBelanja', 'rekomendasi'));
     }
 
-    // Halaman Checkout
     public function checkoutPage()
     {
         if (!Auth::check()) return redirect()->route('login');
         $user = Auth::user();
-
         $keranjang = Keranjang::with('produk')->where('id_user', $user->id_user)->get();
         if ($keranjang->isEmpty()) return redirect()->route('kiosk.cart');
 
-        // GUNAKAN HELPER HITUNG MANUAL
         $subtotal = $this->hitungSubtotal($keranjang);
+        if ($subtotal < self::MIN_BELANJA) return redirect()->route('kiosk.cart')->with('error', 'Belanja kurang dari Rp ' . number_format(self::MIN_BELANJA));
 
-        // Validasi Min Belanja
-        if ($subtotal < self::MIN_BELANJA) {
-            return redirect()->route('kiosk.cart')->with('error', 'Belanja kurang dari Rp ' . number_format(self::MIN_BELANJA));
-        }
-
-        $daftarAlamat = DB::table('alamat_pengiriman')
-            ->where('id_user', $user->id_user)
-            ->orderBy('is_primary', 'desc')
-            ->orderBy('created_at', 'desc')
-            ->get();
-
+        $daftarAlamat = DB::table('alamat_pengiriman')->where('id_user', $user->id_user)->orderBy('is_primary', 'desc')->orderBy('created_at', 'desc')->get();
         $ongkirKurir = ($user->membership == 'Gold') ? 0 : self::ONGKIR_FLAT;
 
         return view('kiosk.checkout', compact('keranjang', 'subtotal', 'daftarAlamat', 'ongkirKurir', 'user'));
     }
-
-    // ========================================================================
-    // 3. LOGIKA KERANJANG (ADD/REMOVE)
-    // ========================================================================
 
     public function addToCart(Request $request, $id)
     {
@@ -278,7 +207,6 @@ class KioskController extends Controller
 
         $userId = Auth::id();
         $qty = $request->input('qty', 1);
-
         $currentCart = Keranjang::where('id_user', $userId)->where('id_produk', $id)->first();
         $currentQty = $currentCart ? $currentCart->jumlah : 0;
 
@@ -292,44 +220,38 @@ class KioskController extends Controller
         $cart->save();
 
         if ($request->type == 'now') return redirect()->route('kiosk.cart');
-
-        if ($request->ajax()) return response()->json([
-            'status' => 'success',
-            'message' => 'Berhasil masuk keranjang',
-            'total_cart' => Keranjang::where('id_user', $userId)->sum('jumlah')
-        ]);
+        if ($request->ajax()) return response()->json(['status' => 'success', 'message' => 'Berhasil masuk keranjang', 'total_cart' => Keranjang::where('id_user', $userId)->sum('jumlah')]);
 
         return back()->with('success', 'Masuk keranjang!');
     }
 
+    // ... (Fungsi emptyCart, increaseItem, decreaseItem, removeItem SAMA SEPERTI SEBELUMNYA) ...
     public function emptyCart()
     {
         Keranjang::where('id_user', Auth::id())->delete();
         return back();
     }
-
     public function increaseItem($id)
     {
         $item = Keranjang::where('id_user', Auth::id())->where('id_produk', $id)->first();
         if ($item && $item->produk->stok > $item->jumlah) $item->increment('jumlah');
         return back();
     }
-
     public function decreaseItem($id)
     {
         $item = Keranjang::where('id_user', Auth::id())->where('id_produk', $id)->first();
         if ($item) $item->jumlah > 1 ? $item->decrement('jumlah') : $item->delete();
         return back();
     }
-
     public function removeItem($id)
     {
         Keranjang::where('id_user', Auth::id())->where('id_produk', $id)->delete();
         return back();
     }
 
+
     // ========================================================================
-    // 4. PROSES PEMBAYARAN (PROCESS PAYMENT)
+    // 3. PEMBAYARAN & TRANSAKSI
     // ========================================================================
 
     public function processPayment(Request $request)
@@ -340,7 +262,6 @@ class KioskController extends Controller
         $keranjang = Keranjang::with('produk')->where('id_user', $user->id_user)->get();
         if ($keranjang->isEmpty()) return response()->json(['error' => 'Keranjang kosong'], 400);
 
-        // Hitung Manual & Validasi Stok
         $subtotal = 0;
         foreach ($keranjang as $item) {
             if ($item->produk->stok < $item->jumlah) return response()->json(['error' => "Stok {$item->produk->nama_produk} kurang."], 400);
@@ -351,7 +272,6 @@ class KioskController extends Controller
 
         if ($subtotal < self::MIN_BELANJA) return response()->json(['error' => 'Min belanja kurang'], 400);
 
-        // --- LOGIKA UTAMA PERBAIKAN ---
         $tipePengiriman = $request->input('tipe_pengiriman', 'delivery');
         $idAlamat = $request->id_alamat;
         $ongkir = 0;
@@ -360,7 +280,6 @@ class KioskController extends Controller
             if (empty($idAlamat)) return response()->json(['error' => 'Pilih alamat pengiriman.'], 400);
             $ongkir = ($user->membership == 'Gold') ? 0 : self::ONGKIR_FLAT;
         } else {
-            // JIKA PICKUP, PAKSA ALAMAT JADI NULL
             $ongkir = 0;
             $idAlamat = null;
         }
@@ -396,16 +315,8 @@ class KioskController extends Controller
         if ($keranjang->isEmpty()) return response()->json(['status' => 'success']);
 
         $subtotal = $this->hitungSubtotal($keranjang);
-
-        // Cek ID Alamat dari request JS. Jika null, berarti Pickup.
         $idAlamat = $request->id_alamat;
-
-        // Logika Ongkir: Jika alamat ada, cek member. Jika null, gratis.
-        $ongkir = 0;
-        if ($idAlamat) {
-            $ongkir = ($user->membership == 'Gold') ? 0 : self::ONGKIR_FLAT;
-        }
-
+        $ongkir = ($idAlamat && $user->membership != 'Gold') ? self::ONGKIR_FLAT : 0;
         $grandTotal = $subtotal + $ongkir;
 
         try {
@@ -415,44 +326,6 @@ class KioskController extends Controller
             return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
         }
     }
-
-    public function completeTransaction($id)
-    {
-        // Cari transaksi milik user
-        $trx = Transaksi::where('id_transaksi', $id)
-            ->where('id_user_pembeli', Auth::id())
-            ->firstOrFail();
-
-        // Update status
-        $trx->update([
-            'status' => 'selesai',
-            'updated_at' => now()
-        ]);
-
-        return back()->with('success', 'Terima kasih! Pesanan telah selesai.');
-    }
-
-    // public function midtransSuccess(Request $request)
-    // {
-    //     if (!Auth::check()) return response()->json(['error' => 'Unauthorized'], 401);
-    //     $user = Auth::user();
-    //     $keranjang = Keranjang::with('produk')->where('id_user', $user->id_user)->get();
-    //     if ($keranjang->isEmpty()) return response()->json(['status' => 'success']);
-
-    //     // Recalculate manual
-    //     $subtotal = $this->hitungSubtotal($keranjang);
-
-    //     $ongkir = ($user->membership == 'Gold') ? 0 : self::ONGKIR_FLAT;
-    //     $idAlamat = $request->id_alamat ?? DB::table('alamat_pengiriman')->where('id_user', $user->id_user)->value('id_alamat');
-    //     $grandTotal = $subtotal + $ongkir;
-
-    //     try {
-    //         $idTrx = $this->createTransaction($user->id_user, $idAlamat, $grandTotal, $ongkir, 'Midtrans', 'Dikemas', $keranjang);
-    //         return response()->json(['status' => 'success', 'id_transaksi' => $idTrx]);
-    //     } catch (\Exception $e) {
-    //         return response()->json(['status' => 'error', 'message' => $e->getMessage()], 500);
-    //     }
-    // }
 
     private function createTransaction($userId, $idAlamat, $total, $ongkir, $metode, $status, $keranjang)
     {
@@ -472,7 +345,6 @@ class KioskController extends Controller
             ]);
 
             foreach ($keranjang as $item) {
-                // Hitung ulang harga final per item untuk disimpan di history
                 $harga = $item->produk->harga_produk;
                 $diskon = $item->produk->persen_diskon ?? 0;
                 $hargaFinal = $harga - ($harga * ($diskon / 100));
@@ -496,38 +368,28 @@ class KioskController extends Controller
         }
     }
 
+    public function completeTransaction($id)
+    {
+        $trx = Transaksi::where('id_transaksi', $id)->where('id_user_pembeli', Auth::id())->firstOrFail();
+        $trx->update(['status' => 'selesai', 'updated_at' => now()]);
+        return back()->with('success', 'Terima kasih! Pesanan telah selesai.');
+    }
+
     // ========================================================================
-    // 5. HALAMAN PENDUKUNG LAINNYA
+    // 4. PROFIL & FITUR TAMBAHAN (REQUEST KARTU & DOWNLOAD)
     // ========================================================================
-
-    public function riwayatTransaksi(Request $request)
-    {
-        if (!Auth::check()) return redirect()->route('login');
-        $query = Transaksi::with(['detailTransaksi.produk'])->where('id_user_pembeli', Auth::id());
-        if ($request->filled('status')) $query->where('status', $request->status);
-        $riwayat = $query->orderBy('created_at', 'desc')->get();
-        return view('kiosk.riwayat', compact('riwayat'));
-    }
-
-    public function trackingPage($id)
-    {
-        $trx = Transaksi::with('detailTransaksi.produk')->findOrFail($id);
-        return view('kiosk.tracking', compact('trx'));
-    }
-
-    public function successPage($id)
-    {
-        $transaksi = DB::table('transaksi')->where('id_transaksi', $id)->first();
-        if (!$transaksi || (Auth::check() && $transaksi->id_user_pembeli != Auth::id())) return redirect()->route('kiosk.index');
-        $details = DB::table('detail_transaksi')->join('produk', 'detail_transaksi.id_produk', '=', 'produk.id_produk')->where('id_transaksi', $id)->get();
-        return view('kiosk.success', compact('transaksi', 'details'));
-    }
 
     public function profile()
     {
         $user = Auth::user();
         $alamat = DB::table('alamat_pengiriman')->where('id_user', $user->id_user)->orderBy('is_primary', 'desc')->get();
         return view('kiosk.profile', compact('user', 'alamat'));
+    }
+
+    public function viewMemberCard()
+    {
+        $user = Auth::user();
+        return view('kiosk.member-card', compact('user'));
     }
 
     public function updateProfile(Request $request)
@@ -549,12 +411,45 @@ class KioskController extends Controller
         return back()->with('success', 'Foto profil diperbarui!');
     }
 
-    // ALAMAT HELPERS
-    private function validateDistance($plusCodeInput)
+    // --- FITUR BARU: Request Cetak Kartu ---
+    // 1. Download PDF (Dipanggil saat tombol "Download PDF" di Modal ditekan)
+    public function downloadQr()
     {
-        // Simple bypass logic for now to avoid complexity errors
-        return ['valid' => true, 'bypass' => true, 'clean_code' => $plusCodeInput];
+        $user = auth()->user();
+
+        // Ukuran Kertas ID-1 (Standar Kartu ATM/KTP) dalam point
+        // 85.60mm x 53.98mm => 242.64pt x 153.01pt
+        $customPaper = [0, 0, 242.64, 153.01];
+
+        $pdf = Pdf::loadView('pdf.member-card', compact('user'));
+        $pdf->setPaper($customPaper, 'landscape');
+
+        return $pdf->download('MemberCard-' . $user->username . '.pdf');
     }
+
+    // 2. Request Cetak Fisik (Dipanggil dari Form di Modal)
+    public function requestCetakKartu()
+    {
+        $user = auth()->user();
+
+        // Cek status
+        if ($user->status_cetak_kartu == 'pending') {
+            return back()->with('error', 'Permintaan Anda sedang diproses oleh admin.');
+        }
+        if ($user->status_cetak_kartu == 'completed') {
+            // Jika sudah completed tapi request lagi (misal hilang), reset ke pending
+            $user->update(['status_cetak_kartu' => 'pending']);
+            return back()->with('success', 'Permintaan cetak ulang berhasil dikirim.');
+        }
+
+        $user->update(['status_cetak_kartu' => 'pending']);
+
+        return back()->with('success', 'Permintaan cetak kartu fisik berhasil dikirim!');
+    }
+
+    // ========================================================================
+    // 5. MANAJEMEN ALAMAT
+    // ========================================================================
 
     public function addAddress(Request $request)
     {
@@ -580,5 +475,31 @@ class KioskController extends Controller
         DB::table('alamat_pengiriman')->where('id_user', Auth::id())->update(['is_primary' => 0]);
         DB::table('alamat_pengiriman')->where('id_alamat', $id)->update(['is_primary' => 1]);
         return back();
+    }
+
+    // ========================================================================
+    // 6. HALAMAN LAIN (Riwayat, Tracking, Success)
+    // ========================================================================
+    public function riwayatTransaksi(Request $request)
+    {
+        if (!Auth::check()) return redirect()->route('login');
+        $query = Transaksi::with(['detailTransaksi.produk'])->where('id_user_pembeli', Auth::id());
+        if ($request->filled('status')) $query->where('status', $request->status);
+        $riwayat = $query->orderBy('created_at', 'desc')->get();
+        return view('kiosk.riwayat', compact('riwayat'));
+    }
+
+    public function trackingPage($id)
+    {
+        $trx = Transaksi::with('detailTransaksi.produk')->findOrFail($id);
+        return view('kiosk.tracking', compact('trx'));
+    }
+
+    public function successPage($id)
+    {
+        $transaksi = DB::table('transaksi')->where('id_transaksi', $id)->first();
+        if (!$transaksi || (Auth::check() && $transaksi->id_user_pembeli != Auth::id())) return redirect()->route('kiosk.index');
+        $details = DB::table('detail_transaksi')->join('produk', 'detail_transaksi.id_produk', '=', 'produk.id_produk')->where('id_transaksi', $id)->get();
+        return view('kiosk.success', compact('transaksi', 'details'));
     }
 }
