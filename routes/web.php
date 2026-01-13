@@ -42,7 +42,7 @@ Route::get('/kiosk/search', [KioskController::class, 'search'])->name('kiosk.sea
 Route::middleware(['auth'])->group(function () {
 
     // --- Keranjang & Checkout ---
-    Route::get('/add-to-cart/{id}', [KioskController::class, 'addToCart'])->name('kiosk.add');
+    Route::post('/add-to-cart/{id}', [KioskController::class, 'addToCart'])->name('kiosk.add');
     Route::get('/keranjang', [KioskController::class, 'cart'])->name('kiosk.cart');
     Route::get('/checkout', [KioskController::class, 'checkoutPage'])->name('kiosk.checkout');
 

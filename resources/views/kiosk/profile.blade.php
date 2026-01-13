@@ -623,34 +623,24 @@
         }
 
         // --- OTP LOGIC ---
-        function startOtpProcess() {
-            // Beri loading jika perlu
-            const btn = document.querySelector('button[onclick="startOtpProcess()"]');
-            if (btn) btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Mengirim...';
-
-            fetch("{{ route('phone.requestOtp') }}", {
-                    method: "POST",
-                    headers: {
-                        "X-CSRF-TOKEN": "{{ csrf_token() }}",
-                        "Content-Type": "application/json"
-                    }
-                })
-                .then(res => res.json()).then(data => {
-                    if (btn) btn.innerHTML = 'Kirim OTP'; // Kembalikan teks tombol
-
-                    if (data.status === 'success') {
-                        // Notifikasi sukses
-                        alert(data.message); // Akan muncul "OTP berhasil dikirim ke WhatsApp Anda!"
-                        document.getElementById('otpModal').classList.remove('hidden');
-                    } else {
-                        alert(data.message);
-                    }
-                })
-                .catch(err => {
-                    if (btn) btn.innerHTML = 'Kirim OTP';
-                    alert("Terjadi kesalahan sistem.");
-                });
-        }
+            function startOtpProcess() {
+                fetch("{{ route('phone.requestOtp') }}", {
+                        method: "POST",
+                        headers: {
+                            "X-CSRF-TOKEN": "{{ csrf_token() }}",
+                            "Content-Type": "application/json"
+                        }
+                    })
+                    .then(res => res.json()).then(data => {
+                        if (data.status === 'success') {
+                            alert("SIMULASI OTP: " + data.debug_otp);
+                            document.getElementById('otpModal').classList.remove('hidden');
+                        } else {
+                            alert(data.message);
+                        }
+                    })
+                    .catch(err => alert("Terjadi kesalahan sistem."));
+            }
 
         function submitOtp() {
             const code = document.getElementById('otpInput').value;

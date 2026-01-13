@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Foundation\Auth\EmailVerificationRequest; // Import ini
 
 class VerificationController extends Controller
@@ -44,58 +43,16 @@ class VerificationController extends Controller
             return response()->json(['status' => 'error', 'message' => 'Harap lengkapi nomor HP di profil dulu.']);
         }
 
-        // Generate OTP
         $otp = rand(100000, 999999);
         $key = 'otp_hp_' . $user->id_user;
         Cache::put($key, $otp, now()->addMinutes(5));
 
-        // LOGIKA KIRIM WHATSAPP (Contoh menggunakan Fonnte)
-        $token = "YOUR_FONNTE_TOKEN"; // Ganti dengan token API Anda
-        $message = "Halo {$user->nama},\n\nKode OTP verifikasi akun Épicerie Anda adalah: *{$otp}*.\n\nKode ini berlaku selama 5 menit. Jangan berikan kode ini kepada siapapun.";
-
-        $response = Http::withHeaders([
-            'Authorization' => $token,
-        ])->post('https://api.fonnte.com/send', [
-            'target' => $user->no_hp,
-            'message' => $message,
-            'countryCode' => '62', // Opsional
+        return response()->json([
+            'status' => 'success',
+            'message' => 'OTP Terkirim!',
+            'debug_otp' => $otp
         ]);
-
-        if ($response->successful()) {
-            return response()->json([
-                'status' => 'success',
-                'message' => 'OTP berhasil dikirim ke WhatsApp Anda!'
-            ]);
-        } else {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Gagal mengirim WhatsApp. Silakan coba lagi nanti.',
-                'detail' => $response->body() // Hanya untuk debug
-            ]);
-        }
     }
-    // public function requestOtp()
-    // {
-    //     $user = Auth::user();
-
-    //     if ($user->no_hp_verified_at) {
-    //         return response()->json(['status' => 'error', 'message' => 'Nomor HP sudah terverifikasi!']);
-    //     }
-
-    //     if (!$user->no_hp) {
-    //         return response()->json(['status' => 'error', 'message' => 'Harap lengkapi nomor HP di profil dulu.']);
-    //     }
-
-    //     $otp = rand(100000, 999999);
-    //     $key = 'otp_hp_' . $user->id_user;
-    //     Cache::put($key, $otp, now()->addMinutes(5));
-
-    //     return response()->json([
-    //         'status' => 'success',
-    //         'message' => 'OTP Terkirim!',
-    //         'debug_otp' => $otp
-    //     ]);
-    // }
 
     public function verifyOtp(Request $request)
     {
