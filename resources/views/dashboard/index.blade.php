@@ -27,6 +27,7 @@
 
 <div class="max-w-7xl mx-auto">
 
+    {{-- KARTU STATISTIK ATAS --}}
     <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div class="bg-white/80 backdrop-blur-sm p-5 rounded-2xl shadow-sm border border-white/60 flex flex-col justify-between hover:shadow-md transition">
             <div class="text-gray-400 text-xs font-bold uppercase tracking-wider mb-1">Total Produk</div>
@@ -63,6 +64,7 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
+        {{-- BAGIAN KIRI: CHART & TERLARIS --}}
         <div class="lg:col-span-2 space-y-6">
             <div class="bg-white rounded-[2rem] p-6 shadow-xl border border-white/40">
                 <div class="flex justify-between items-center mb-6">
@@ -114,6 +116,7 @@
             </div>
         </div>
 
+        {{-- BAGIAN KANAN: STOK MENIPIS & TRANSAKSI TERBARU --}}
         <div class="space-y-6">
 
             <div class="bg-white rounded-[2rem] p-6 shadow-xl border border-white/40 relative overflow-hidden">
@@ -152,6 +155,7 @@
                 <div class="space-y-3">
                     @forelse($transaksiTerbaru as $trx)
                     <div onclick="openDetailModal('{{ $trx->id_transaksi }}')" class="flex items-center gap-3 p-3 rounded-xl hover:bg-blue-50/50 border border-transparent hover:border-blue-100 transition cursor-pointer group">
+                        {{-- ICON STATUS --}}
                         <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 
                                 {{ $trx->status == 'Selesai' ? 'bg-green-100 text-green-600' : ($trx->status == 'Dikirim' ? 'bg-blue-100 text-blue-600' : 'bg-yellow-100 text-yellow-600') }}">
                             <i class="fa-solid {{ $trx->status == 'Selesai' ? 'fa-check' : ($trx->status == 'Dikirim' ? 'fa-truck' : 'fa-box') }}"></i>
@@ -166,7 +170,11 @@
                         </div>
                     </div>
 
+                    {{-- DATA HIDDEN UNTUK MODAL (Updated) --}}
                     <div id="data-trx-{{ $trx->id_transaksi }}" class="hidden">
+                        {{-- ROUTE UPDATE --}}
+                        <div class="json-route">{{ route('transaksi.update', $trx->id_transaksi) }}</div>
+
                         <div class="json-kode">{{ $trx->kode_transaksi }}</div>
                         <div class="json-tgl">{{ date('d F Y, H:i', strtotime($trx->created_at)) }}</div>
                         <div class="json-status">{{ $trx->status }}</div>
@@ -197,12 +205,14 @@
     </div>
 </div>
 
+{{-- MODAL DETAIL --}}
 <div id="modalDetail" class="fixed inset-0 z-[100] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity opacity-0" id="modalBackdrop"></div>
     <div class="fixed inset-0 z-10 overflow-y-auto">
         <div class="flex min-h-full items-end justify-center p-4 text-center sm:items-center sm:p-0">
             <div class="relative transform overflow-hidden rounded-2xl bg-white text-left shadow-2xl transition-all sm:my-8 sm:w-full sm:max-w-lg opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95" id="modalPanel">
 
+                {{-- HEADER MODAL --}}
                 <div class="bg-gradient-to-r from-blue-600 to-teal-500 px-6 py-4 flex justify-between items-center">
                     <h3 class="text-lg font-bold leading-6 text-white flex items-center gap-2">
                         <i class="fa-solid fa-receipt"></i> Detail Pesanan
@@ -212,6 +222,7 @@
                     </button>
                 </div>
 
+                {{-- ISI MODAL --}}
                 <div class="px-6 py-5 max-h-[70vh] overflow-y-auto custom-scrollbar">
 
                     <div class="flex justify-between items-start mb-6 pb-4 border-b border-gray-100">
@@ -253,15 +264,28 @@
                     <div class="space-y-3 mb-6" id="m-produk-list"></div>
                 </div>
 
-                <div class="bg-gray-50 px-6 py-4 flex justify-between items-center border-t border-gray-200">
-                    <div class="text-xs text-gray-500 font-bold">
-                        Ongkir: <span id="m-ongkir" class="text-gray-800">Rp0</span>
+                {{-- FOOTER MODAL & TOMBOL KIRIM --}}
+                <div class="bg-gray-50 px-6 py-4 border-t border-gray-200">
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="text-xs text-gray-500 font-bold">
+                            Ongkir: <span id="m-ongkir" class="text-gray-800">Rp0</span>
+                        </div>
+                        <div class="text-right">
+                            <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">Total Bayar</p>
+                            <p class="text-xl font-black text-blue-600" id="m-total">Rp0</p>
+                        </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-xs text-gray-400 font-bold uppercase tracking-wider mb-0.5">Total Bayar</p>
-                        <p class="text-xl font-black text-blue-600" id="m-total">Rp0</p>
-                    </div>
+
+                    {{-- FORM KIRIM PESANAN (MUNCUL JIKA DIPROSES) --}}
+                    <form id="formKirim" method="POST" class="hidden w-full">
+                        @csrf
+                        <input type="hidden" name="status" value="Dikirim"> 
+                        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-lg shadow-blue-200 transition flex justify-center items-center gap-2">
+                            <i class="fa-solid fa-paper-plane"></i> Kirim Pesanan Sekarang
+                        </button>
+                    </form>
                 </div>
+
             </div>
         </div>
     </div>
@@ -328,27 +352,53 @@
         }
     });
 
-    // --- 2. SCRIPT MODAL DETAIL (Reuse) ---
+    // --- 2. SCRIPT MODAL DETAIL ---
     function openDetailModal(id) {
         const container = document.getElementById('data-trx-' + id);
         if (!container) return;
 
+        // Populate Data Dasar
         document.getElementById('m-kode').innerText = container.querySelector('.json-kode').innerText;
         document.getElementById('m-tgl').innerText = container.querySelector('.json-tgl').innerText;
-        document.getElementById('m-status').innerText = container.querySelector('.json-status').innerText;
+        
+        const statusText = container.querySelector('.json-status').innerText;
+        document.getElementById('m-status').innerText = statusText;
+        
         document.getElementById('m-pembeli').innerText = container.querySelector('.json-pembeli').innerText;
         document.getElementById('m-hp').innerText = container.querySelector('.json-hp').innerText;
         document.getElementById('m-alamat').innerText = container.querySelector('.json-alamat').innerText;
         document.getElementById('m-total').innerText = container.querySelector('.json-total').innerText;
         document.getElementById('m-ongkir').innerText = container.querySelector('.json-ongkir').innerText;
 
-        const status = container.querySelector('.json-status').innerText;
+        // Set Warna Badge Status (Update: Handle 'Diproses' juga)
         const statusEl = document.getElementById('m-status');
         statusEl.className = 'px-3 py-1 rounded-full text-xs font-bold border ';
-        if (status === 'Dikemas') statusEl.classList.add('bg-yellow-100', 'text-yellow-700', 'border-yellow-200');
-        else if (status === 'Dikirim') statusEl.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-200');
-        else statusEl.classList.add('bg-green-100', 'text-green-700', 'border-green-200');
+        if (statusText === 'Diproses' || statusText === 'Dikemas') {
+            // Status Awal (Kuning)
+            statusEl.classList.add('bg-yellow-100', 'text-yellow-700', 'border-yellow-200');
+        } else if (statusText === 'Dikirim') {
+            // Status Dikirim (Biru)
+            statusEl.classList.add('bg-blue-100', 'text-blue-700', 'border-blue-200');
+        } else {
+            // Status Selesai (Hijau)
+            statusEl.classList.add('bg-green-100', 'text-green-700', 'border-green-200');
+        }
 
+        // --- LOGIKA TOMBOL KIRIM (UPDATED SIMPLE) ---
+        const formKirim = document.getElementById('formKirim');
+        const routeUrl = container.querySelector('.json-route').innerText;
+
+        // Jika status "Diproses" atau "Dikemas" -> MUNCULKAN TOMBOL
+        if (statusText === 'Diproses' || statusText === 'Dikemas') {
+            formKirim.classList.remove('hidden');
+            formKirim.action = routeUrl;
+        } else {
+            // Selain itu (Dikirim/Selesai) -> SEMBUNYIKAN TOMBOL
+            formKirim.classList.add('hidden');
+        }
+        // --------------------------------------------
+
+        // Render List Produk
         const listContainer = document.getElementById('m-produk-list');
         listContainer.innerHTML = '';
 
@@ -375,6 +425,7 @@
             listContainer.insertAdjacentHTML('beforeend', html);
         });
 
+        // Tampilkan Modal
         const modal = document.getElementById('modalDetail');
         const backdrop = document.getElementById('modalBackdrop');
         const panel = document.getElementById('modalPanel');

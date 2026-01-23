@@ -29,6 +29,18 @@
         -moz-appearance: none;
         appearance: none;
     }
+    
+    /* Animasi Radar GPS biar keliatan canggih */
+    @keyframes pulse-red {
+        0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+        70% { transform: scale(1); box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+        100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+    .gps-active-btn {
+        animation: pulse-red 2s infinite;
+        background-color: #ef4444 !important; /* Merah */
+        border-color: #ef4444 !important;
+    }
 </style>
 
 {{-- Wrapper Utama --}}
@@ -110,6 +122,8 @@
             <div class="flex-1">Item Preview</div>
             <div class="w-32">Total</div>
             <div class="w-32 text-center">Status</div>
+            {{-- KOLOM PENGIRIMAN BARU --}}
+            <div class="w-48 text-center">Pengiriman</div> 
             <div class="w-24 text-right">Aksi</div>
         </div>
 
@@ -119,11 +133,13 @@
             @forelse($transaksi as $trx)
             {{-- Logic Warna Garis Tepi berdasarkan Status --}}
             @php
+            // PERBAIKAN: Pakai strtolower biar 'Diproses' atau 'diproses' sama aja
             $statusLower = strtolower($trx->status);
+            
             $borderColor = 'bg-gray-500';
             if(str_contains($statusLower, 'selesai')) $borderColor = 'bg-green-500';
             elseif(str_contains($statusLower, 'kirim')) $borderColor = 'bg-blue-500';
-            elseif(str_contains($statusLower, 'kemas')) $borderColor = 'bg-yellow-500';
+            elseif(str_contains($statusLower, 'kemas') || str_contains($statusLower, 'proses')) $borderColor = 'bg-yellow-500';
             @endphp
 
             <div class="group flex flex-col md:flex-row md:items-center p-3 bg-white border border-gray-100 rounded-2xl hover:shadow-md hover:border-blue-200 hover:bg-blue-50/30 transition-all duration-300 relative overflow-hidden">
@@ -191,50 +207,58 @@
                     $badgeClass = 'bg-gray-50 text-gray-600 border-gray-100'; $icon = 'fa-circle-question';
                     }
                     @endphp
-                    <span class="text-[10px] font-bold px-3 py-1 rounded-full border {{ $badgeClass }} flex items-center gap-1.5 shadow-sm">
+                    <span id="badge-status-{{ $trx->id_transaksi }}" class="text-[10px] font-bold px-3 py-1 rounded-full border {{ $badgeClass }} flex items-center gap-1.5 shadow-sm">
                         <i class="fa-solid {{ $icon }}"></i> {{ strtoupper($trx->status) }}
                     </span>
                 </div>
 
-                {{-- Kolom 6: Aksi --}}
-                <div class="flex items-center justify-end w-full md:w-24 gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 transform md:translate-x-4 md:group-hover:translate-x-0">
-
-                    {{-- Tombol Logic berdasarkan Status --}}
-                    @if($trx->status == 'Dikemas')
-                    <form action="{{ route('transaksi.update', $trx->id_transaksi) }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="status" value="Dikirim">
-                        <button type="submit"
-                            class="bg-white text-blue-500 w-8 h-8 rounded-lg flex items-center justify-center shadow-sm border border-gray-200 hover:bg-blue-500 hover:text-white hover:border-blue-500 transition"
-                            title="Kirim Pesanan">
-                            <i class="fa-solid fa-paper-plane text-xs"></i>
+                {{-- KOLOM 6: PENGIRIMAN (LOGIKA JS TANPA REFRESH) --}}
+                <div class="w-full md:w-48 flex flex-col justify-center items-center mb-2 md:mb-0 gap-2 px-2" id="action-container-{{ $trx->id_transaksi }}">
+                    
+                    @if(in_array($statusLower, ['diproses', 'dikemas']))
+                        {{-- TOMBOL KIRIM --}}
+                        <button onclick="updateStatusTanpaReload('{{ $trx->id_transaksi }}', 'Dikirim', '{{ route('transaksi.update', $trx->id_transaksi) }}')" 
+                                class="bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-4 py-2 rounded-lg shadow-md transition flex items-center justify-center gap-2 w-full">
+                            <i class="fa-solid fa-paper-plane"></i> Kirim
                         </button>
-                    </form>
-                    @elseif($trx->status == 'Dikirim')
-                    <form action="{{ route('transaksi.update', $trx->id_transaksi) }}" method="POST">
-                        @csrf
-                        <input type="hidden" name="status" value="Selesai">
-                        <button type="submit"
-                            class="bg-white text-green-500 w-8 h-8 rounded-lg flex items-center justify-center shadow-sm border border-gray-200 hover:bg-green-500 hover:text-white hover:border-green-500 transition"
-                            title="Selesaikan Pesanan">
-                            <i class="fa-solid fa-check text-xs"></i>
-                        </button>
-                    </form>
+                    
+                    @elseif($statusLower == 'dikirim')
+                        {{-- TOMBOL GPS & SELESAI --}}
+                        <div class="flex gap-2 w-full">
+                            <button onclick="aktifkanGPS('{{ $trx->id_transaksi }}', this)" 
+                                    class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white text-[10px] font-bold px-2 py-2 rounded-lg shadow transition flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-location-crosshairs"></i> GPS
+                            </button>
+                            <button onclick="updateStatusTanpaReload('{{ $trx->id_transaksi }}', 'Selesai', '{{ route('transaksi.update', $trx->id_transaksi) }}')" 
+                                    class="flex-1 bg-green-500 hover:bg-green-600 text-white text-[10px] font-bold px-2 py-2 rounded-lg shadow transition flex items-center justify-center gap-1">
+                                <i class="fa-solid fa-check"></i> Selesai
+                            </button>
+                        </div>
+                    
                     @else
-                    {{-- Tombol Lihat Detail (Jika status sudah selesai/lainnya) --}}
+                        {{-- Jika Selesai --}}
+                        <span class="text-[10px] font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded border border-gray-200">
+                            <i class="fa-solid fa-check-double"></i> Terkirim
+                        </span>
+                    @endif
+                </div>
+
+                {{-- Kolom 7: Aksi (Detail) --}}
+                <div class="flex items-center justify-end w-full md:w-24 gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-all duration-300 transform md:translate-x-4 md:group-hover:translate-x-0">
                     <button onclick="openDetailModal('{{ $trx->id_transaksi }}')"
                         class="bg-white text-gray-500 w-8 h-8 rounded-lg flex items-center justify-center shadow-sm border border-gray-200 hover:bg-gray-700 hover:text-white hover:border-gray-700 transition"
                         title="Lihat Detail">
                         <i class="fa-regular fa-eye text-xs"></i>
                     </button>
-                    @endif
-
                 </div>
 
             </div>
 
             {{-- DATA HIDDEN UNTUK MODAL JS --}}
             <div id="data-trx-{{ $trx->id_transaksi }}" class="hidden">
+                {{-- Route --}}
+                <div class="json-route">{{ route('transaksi.update', $trx->id_transaksi) }}</div>
+                
                 <div class="json-kode">{{ $trx->kode_transaksi }}</div>
                 <div class="json-tgl">{{ date('d F Y, H:i', strtotime($trx->created_at)) }}</div>
                 <div class="json-status">{{ $trx->status }}</div>
@@ -285,7 +309,7 @@
 
 </div>
 
-{{-- MODAL DETAIL (Tetap menggunakan HTML yang lama, disesuaikan sedikit agar rapi) --}}
+{{-- MODAL DETAIL --}}
 <div id="modalDetail" class="fixed inset-0 z-[100] hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
     <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity opacity-0" id="modalBackdrop"></div>
     <div class="fixed inset-0 z-10 overflow-y-auto">
@@ -355,7 +379,7 @@
     </div>
 </div>
 
-{{-- SCRIPT JS (Tidak Berubah) --}}
+{{-- SCRIPT JS PENTING --}}
 <script>
     function openDetailModal(id) {
         const container = document.getElementById('data-trx-' + id);
@@ -436,6 +460,114 @@
         }, 300);
     }
     document.getElementById('modalBackdrop').addEventListener('click', closeDetailModal);
+
+    // --- FITUR UPDATE STATUS TANPA RELOAD (AJAX) ---
+    function updateStatusTanpaReload(id, statusBaru, url) {
+        if(!confirm('Ubah status jadi ' + statusBaru + '?')) return;
+
+        // Kirim request ke server (Update DB)
+        const formData = new FormData();
+        formData.append('status', statusBaru);
+        formData.append('_token', '{{ csrf_token() }}');
+
+        fetch(url, {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => {
+            // Kita abaikan responsenya, yang penting request terkirim
+            // Lanjut ubah tampilan secara paksa (DOM Manipulation)
+            manipulasiTampilan(id, statusBaru, url);
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Gagal update status. Cek koneksi.');
+        });
+    }
+
+    // Fungsi ini yang bikin "Magic" tombol berubah tanpa refresh
+    function manipulasiTampilan(id, status, url) {
+        const container = document.getElementById('action-container-' + id);
+        const badge = document.getElementById('badge-status-' + id);
+
+        if(status === 'Dikirim') {
+            // Ubah Badge jadi Biru
+            if(badge) {
+                badge.className = "text-[10px] font-bold px-3 py-1 rounded-full border bg-blue-50 text-blue-600 border-blue-100 flex items-center gap-1.5 shadow-sm";
+                badge.innerHTML = '<i class="fa-solid fa-truck-fast"></i> DIKIRIM';
+            }
+
+            // Ganti Tombol Kirim jadi Tombol GPS & Selesai
+            container.innerHTML = `
+                <div class="flex gap-2 w-full">
+                    <button onclick="aktifkanGPS('${id}', this)" class="flex-1 bg-indigo-500 hover:bg-indigo-600 text-white text-[10px] font-bold px-2 py-2 rounded-lg shadow transition flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-location-crosshairs"></i> GPS
+                    </button>
+                    <button onclick="updateStatusTanpaReload('${id}', 'Selesai', '${url}')" class="flex-1 bg-green-500 hover:bg-green-600 text-white text-[10px] font-bold px-2 py-2 rounded-lg shadow transition flex items-center justify-center gap-1">
+                        <i class="fa-solid fa-check"></i> Selesai
+                    </button>
+                </div>
+            `;
+        } else if (status === 'Selesai') {
+            // Ubah Badge jadi Hijau
+            if(badge) {
+                badge.className = "text-[10px] font-bold px-3 py-1 rounded-full border bg-green-50 text-green-600 border-green-100 flex items-center gap-1.5 shadow-sm";
+                badge.innerHTML = '<i class="fa-solid fa-circle-check"></i> SELESAI';
+            }
+            // Ubah Tombol jadi Teks Terkirim
+            container.innerHTML = `
+                <span class="text-[10px] font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded border border-gray-200">
+                    <i class="fa-solid fa-check-double"></i> Terkirim
+                </span>
+            `;
+        }
+    }
+
+    // --- SCRIPT GPS (DARI KURIR CONTROLLER) ---
+    let watchId = null;
+
+    function aktifkanGPS(trxId, btnElement) {
+        if (!navigator.geolocation) {
+            alert("Browser tidak support GPS!");
+            return;
+        }
+
+        // Ubah Tampilan Tombol jadi 'Aktif' (Merah Kedip-kedip)
+        btnElement.classList.remove('bg-indigo-500', 'hover:bg-indigo-600');
+        btnElement.classList.add('gps-active-btn');
+        btnElement.innerHTML = '<i class="fa-solid fa-circle-dot fa-beat"></i> GPS ON';
+
+        // Mulai Tracking Realtime
+        watchId = navigator.geolocation.watchPosition(
+            (position) => {
+                const lat = position.coords.latitude;
+                const long = position.coords.longitude;
+                
+                // Kirim ke Server (Route Kurir Update Lokasi)
+                fetch("{{ route('kurir.update_lokasi') }}", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-CSRF-TOKEN": "{{ csrf_token() }}"
+                    },
+                    body: JSON.stringify({
+                        id_transaksi: trxId,
+                        lat: lat,
+                        long: long
+                    })
+                })
+                .then(res => res.json())
+                .then(data => console.log("GPS Sent:", data))
+                .catch(err => console.error("GPS Fail:", err));
+            },
+            (error) => {
+                alert("Gagal ambil lokasi: " + error.message);
+                btnElement.classList.remove('gps-active-btn');
+                btnElement.classList.add('bg-indigo-500');
+            },
+            { enableHighAccuracy: true }
+        );
+    }
 </script>
 
 @endsection
