@@ -12,7 +12,7 @@ use App\Http\Controllers\KaryawanController;
 use App\Http\Controllers\KurirController;
 use App\Http\Middleware\AdminOnly;
 use App\Http\Controllers\VerificationController;
-use App\Http\Controllers\CardSettingController; // <--- Menambahkan Import
+use App\Http\Controllers\CardSettingController;
 
 // ====================================================
 // 1. ROUTE GUEST (Hanya yang BELUM Login)
@@ -53,16 +53,20 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/kiosk/empty-cart', [KioskController::class, 'emptyCart'])->name('kiosk.empty');
     Route::post('/kiosk/set-qty/{id}', [KioskController::class, 'setCartQuantity'])->name('kiosk.set.qty');
 
-    // --- Pembayaran ---
+    // --- Pembayaran & Transaksi ---
     Route::post('/pay', [KioskController::class, 'processPayment'])->name('kiosk.pay');
     Route::post('/midtrans-success', [KioskController::class, 'midtransSuccess'])->name('kiosk.midtrans.success');
     Route::get('/kiosk/success/{id}', [KioskController::class, 'successPage'])->name('kiosk.success');
     Route::post('/transaksi/{id}/selesai', [KioskController::class, 'completeTransaction'])->name('kiosk.complete');
 
+    // --- FITUR ULASAN (BARU DITAMBAHKAN) ---
+    Route::post('/review/store', [KioskController::class, 'storeReview'])->name('review.store');
+
     // --- User Dashboard & Profile ---
     Route::get('/profile', [KioskController::class, 'profile'])->name('kiosk.profile');
     Route::get('/riwayat', [KioskController::class, 'riwayatTransaksi'])->name('kiosk.riwayat');
     Route::get('/tracking/{id}', [KioskController::class, 'trackingPage'])->name('kiosk.tracking');
+    Route::get('/ulasan', [KioskController::class, 'ulasanPage'])->name('kiosk.ulasan');
 
     // --- FITUR UPDATE PROFIL ---
     Route::post('/profile/photo', [KioskController::class, 'updatePhoto'])->name('profile.photo');
@@ -152,7 +156,6 @@ Route::middleware(['auth', AdminOnly::class])->prefix('admin')->group(function (
     });
 
     // --- MANAJEMEN KARTU (FITUR BARU) ---
-    // Ditambahkan tanpa mengubah route lama agar tidak terjadi RouteNotFoundException
     Route::controller(CardSettingController::class)->prefix('member-card')->name('card.')->group(function () {
         Route::get('/', 'index')->name('index');
         Route::get('/settings', 'settings')->name('settings');

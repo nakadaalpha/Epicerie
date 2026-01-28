@@ -23,7 +23,12 @@ class Produk extends Model
 
     ];
 
-    // === TAMBAHAN BARU ===
+    public function detailTransaksi()
+    {
+        // Relasi ke tabel detail_transaksi untuk menghitung jumlah terjual
+        return $this->hasMany(DetailTransaksi::class, 'id_produk');
+    }
+    
     public function kategori()
     {
         // Produk 'milik' satu Kategori
@@ -63,5 +68,10 @@ class Produk extends Model
         }
 
         return $hargaAsli;
+    }
+
+    public function ulasan()
+    {
+        return $this->hasMany(Ulasan::class, 'id_produk');
     }
 }

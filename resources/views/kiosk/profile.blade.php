@@ -91,7 +91,7 @@
 
                 {{-- TOMBOL KARTU MEMBER (MEMBUKA MODAL) --}}
                 <div class="mb-6">
-                    <button onclick="openCardModal()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition text-sm flex items-center justify-center gap-2 shadow-lg shadow-blue-200">
+                    <button onclick="openCardModal()" class="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold py-3 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition text-sm flex items-center justify-center gap-2">
                         <i class="fa-solid fa-id-card"></i> Lihat Kartu Member
                     </button>
 
@@ -115,6 +115,9 @@
                         </a>
                         <a href="{{ route('kiosk.riwayat') }}" class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-medium rounded-xl transition">
                             <div class="w-6 text-center"><i class="fa-solid fa-clock-rotate-left"></i></div> Riwayat Transaksi
+                        </a>
+                        <a href="{{ route('kiosk.ulasan') }}" class="flex items-center gap-3 px-4 py-3 text-gray-500 hover:bg-gray-50 hover:text-gray-900 font-medium rounded-xl transition">
+                            <div class="w-6 text-center"><i class="fa-solid fa-star"></i></div> Ulasan Produk
                         </a>
                         <form action="{{ route('logout') }}" method="POST">
                             @csrf

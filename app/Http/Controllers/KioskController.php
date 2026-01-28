@@ -16,8 +16,9 @@ use App\Models\Transaksi;
 use App\Models\DetailTransaksi;
 use App\Models\User;
 use App\Models\Slider;
-use Barryvdh\DomPDF\Facade\Pdf; // Import PDF
-use SimpleSoftwareIO\QrCode\Facades\QrCode; // Import QR Code
+use App\Models\Ulasan; // Pastikan model Ulasan diimport
+use Barryvdh\DomPDF\Facade\Pdf;
+use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class KioskController extends Controller
 {
@@ -53,20 +54,27 @@ class KioskController extends Controller
 
     public function index()
     {
+        // 1. Slider
         try {
             $sliders = Slider::where('is_active', 1)->orderBy('urutan', 'asc')->get();
         } catch (\Exception $e) {
             $sliders = collect([]);
         }
-
         if ($sliders->isEmpty()) {
             $sliders = collect([
-                (object)['gambar' => 'https://placehold.co/1200x400/3b82f6/ffffff?text=Promo+Spesial', 'judul' => 'Promo 1', 'is_dummy' => true],
-                (object)['gambar' => 'https://placehold.co/1200x400/f97316/ffffff?text=Gratis+Ongkir', 'judul' => 'Promo 2', 'is_dummy' => true],
+                (object)['gambar' => 'https://placehold.co/1200x400/3b82f6/ffffff?text=Promo', 'judul' => 'Promo 1', 'is_dummy' => true],
             ]);
         }
 
-        $produkTerbaru = Produk::orderBy('created_at', 'desc')->limit(6)->get();
+        // 2. Produk Terbaru
+        $produkTerbaru = Produk::select('produk.*', DB::raw('COALESCE(SUM(detail_transaksi.jumlah), 0) as total_terjual'))
+            ->leftJoin('detail_transaksi', 'produk.id_produk', '=', 'detail_transaksi.id_produk')
+            ->groupBy('produk.id_produk')
+            ->orderBy('produk.created_at', 'desc')
+            ->limit(6)
+            ->get();
+
+        // 3. Produk Terlaris
         $produkTerlaris = Produk::select('produk.*', DB::raw('COALESCE(SUM(detail_transaksi.jumlah), 0) as total_terjual'))
             ->leftJoin('detail_transaksi', 'produk.id_produk', '=', 'detail_transaksi.id_produk')
             ->groupBy('produk.id_produk')
@@ -74,7 +82,13 @@ class KioskController extends Controller
             ->limit(6)
             ->get();
 
-        $produk = Produk::latest()->paginate(12);
+        // 4. Semua Produk
+        $produk = Produk::select('produk.*', DB::raw('COALESCE(SUM(detail_transaksi.jumlah), 0) as total_terjual'))
+            ->leftJoin('detail_transaksi', 'produk.id_produk', '=', 'detail_transaksi.id_produk')
+            ->groupBy('produk.id_produk')
+            ->orderBy('produk.created_at', 'desc')
+            ->paginate(12);
+
         $kategoriList = Kategori::all();
         $cartData = $this->getCartSummary();
 
@@ -127,38 +141,48 @@ class KioskController extends Controller
         return view('kiosk.search', compact('produk', 'allCategories', 'keyword', 'selectedKategori', 'minPrice', 'maxPrice', 'rekomendasi', 'sort'));
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $produk = Produk::with('kategori')->findOrFail($id);
-        $keywords = array_filter(explode(' ', $produk->nama_produk), fn($word) => strlen($word) > 2);
 
+        // 1. Hitung Statistik Rating (Semua Data)
+        $allReviews = Ulasan::where('id_produk', $id)->get();
+        $totalUlasan = $allReviews->count();
+        $avgRating = $totalUlasan > 0 ? $allReviews->avg('rating') : 0;
+
+        $starCounts = [1 => 0, 2 => 0, 3 => 0, 4 => 0, 5 => 0];
+        foreach ($allReviews as $u) {
+            $starCounts[$u->rating]++;
+        }
+
+        // 2. Ambil Data Ulasan Tampil (Bisa Difilter)
+        $query = Ulasan::with('user')->where('id_produk', $id);
+        if ($request->has('rating') && in_array($request->rating, [1, 2, 3, 4, 5])) {
+            $query->where('rating', $request->rating);
+        }
+        $ulasan = $query->latest()->get();
+
+        // 3. Data Lainnya
         $totalTerjual = DB::table('detail_transaksi')->where('id_produk', $id)->sum('jumlah');
 
-        $produkLain = Produk::where('id_produk', '!=', $id)
-            ->where(function ($query) use ($produk, $keywords) {
-                $query->where('id_kategori', $produk->id_kategori)
-                    ->orWhere(function ($subQuery) use ($keywords) {
-                        foreach ($keywords as $word) $subQuery->orWhere('nama_produk', 'like', '%' . $word . '%');
-                    });
-            })
-            ->orderByRaw("CASE WHEN id_kategori = ? THEN 1 ELSE 2 END", [$produk->id_kategori])
-            ->orderBy('created_at', 'desc')
+        $produkLain = Produk::select('produk.*', DB::raw('COALESCE(SUM(detail_transaksi.jumlah), 0) as total_terjual'))
+            ->leftJoin('detail_transaksi', 'produk.id_produk', '=', 'detail_transaksi.id_produk')
+            ->where('produk.id_produk', '!=', $id)
+            ->where('produk.id_kategori', $produk->id_kategori)
+            ->groupBy('produk.id_produk')
+            ->orderBy('total_terjual', 'desc')
             ->limit(6)
             ->get();
 
-        if ($produkLain->count() < 6) {
-            $excludeIds = $produkLain->pluck('id_produk')->push($id);
-            $tambahan = Produk::select('produk.*', DB::raw('COALESCE(SUM(detail_transaksi.jumlah), 0) as total_terjual'))
-                ->leftJoin('detail_transaksi', 'produk.id_produk', '=', 'detail_transaksi.id_produk')
-                ->whereNotIn('produk.id_produk', $excludeIds)
-                ->groupBy('produk.id_produk')
-                ->orderBy('total_terjual', 'desc')
-                ->limit(6 - $produkLain->count())
-                ->get();
-            $produkLain = $produkLain->merge($tambahan);
-        }
-
-        return view('kiosk.show', compact('produk', 'produkLain', 'totalTerjual'));
+        return view('kiosk.show', compact(
+            'produk',
+            'produkLain',
+            'totalTerjual',
+            'ulasan',
+            'avgRating',
+            'totalUlasan',
+            'starCounts'
+        ));
     }
 
     // ========================================================================
@@ -225,7 +249,6 @@ class KioskController extends Controller
         return back()->with('success', 'Masuk keranjang!');
     }
 
-    // ... (Fungsi emptyCart, increaseItem, decreaseItem, removeItem SAMA SEPERTI SEBELUMNYA) ...
     public function emptyCart()
     {
         Keranjang::where('id_user', Auth::id())->delete();
@@ -379,11 +402,39 @@ class KioskController extends Controller
     // 4. PROFIL & FITUR TAMBAHAN (REQUEST KARTU & DOWNLOAD)
     // ========================================================================
 
+    // --- UPDATE: Menambahkan logic ambil ulasan ---
     public function profile()
     {
         $user = Auth::user();
-        $alamat = DB::table('alamat_pengiriman')->where('id_user', $user->id_user)->orderBy('is_primary', 'desc')->get();
-        return view('kiosk.profile', compact('user', 'alamat'));
+        $userId = $user->id_user;
+
+        // 1. Ambil Alamat
+        $alamat = DB::table('alamat_pengiriman')->where('id_user', $userId)->orderBy('is_primary', 'desc')->get();
+
+        // 2. Ambil Riwayat Ulasan (History)
+        $riwayatUlasan = Ulasan::with('produk')
+            ->where('id_user', $userId)
+            ->latest()
+            ->get();
+
+        // 3. Ambil Produk Menunggu Diulas (Pending)
+        // Logic: Ambil produk dari transaksi 'selesai', yang ID produknya TIDAK ADA di tabel ulasan user ini
+        $menungguUlasan = DB::table('detail_transaksi')
+            ->join('transaksi', 'detail_transaksi.id_transaksi', '=', 'transaksi.id_transaksi')
+            ->join('produk', 'detail_transaksi.id_produk', '=', 'produk.id_produk')
+            ->where('transaksi.id_user_pembeli', $userId)
+            ->where('transaksi.status', 'selesai')
+            ->whereNotExists(function ($query) use ($userId) {
+                $query->select(DB::raw(1))
+                    ->from('ulasan')
+                    ->whereRaw('ulasan.id_produk = detail_transaksi.id_produk')
+                    ->where('ulasan.id_user', $userId);
+            })
+            ->select('produk.*', 'transaksi.created_at as tgl_beli')
+            ->distinct() // Agar produk yang sama tidak muncul berkali-kali jika beli multiple qty
+            ->get();
+
+        return view('kiosk.profile', compact('user', 'alamat', 'riwayatUlasan', 'menungguUlasan'));
     }
 
     public function viewMemberCard()
@@ -412,39 +463,65 @@ class KioskController extends Controller
     }
 
     // --- FITUR BARU: Request Cetak Kartu ---
-    // 1. Download PDF (Dipanggil saat tombol "Download PDF" di Modal ditekan)
     public function downloadQr()
     {
         $user = auth()->user();
-
-        // Ukuran Kertas ID-1 (Standar Kartu ATM/KTP) dalam point
-        // 85.60mm x 53.98mm => 242.64pt x 153.01pt
         $customPaper = [0, 0, 242.64, 153.01];
-
         $pdf = Pdf::loadView('pdf.member-card', compact('user'));
         $pdf->setPaper($customPaper, 'landscape');
-
         return $pdf->download('MemberCard-' . $user->username . '.pdf');
     }
 
-    // 2. Request Cetak Fisik (Dipanggil dari Form di Modal)
     public function requestCetakKartu()
     {
         $user = auth()->user();
-
-        // Cek status
-        if ($user->status_cetak_kartu == 'pending') {
-            return back()->with('error', 'Permintaan Anda sedang diproses oleh admin.');
-        }
+        if ($user->status_cetak_kartu == 'pending') return back()->with('error', 'Permintaan Anda sedang diproses oleh admin.');
         if ($user->status_cetak_kartu == 'completed') {
-            // Jika sudah completed tapi request lagi (misal hilang), reset ke pending
             $user->update(['status_cetak_kartu' => 'pending']);
             return back()->with('success', 'Permintaan cetak ulang berhasil dikirim.');
         }
-
         $user->update(['status_cetak_kartu' => 'pending']);
-
         return back()->with('success', 'Permintaan cetak kartu fisik berhasil dikirim!');
+    }
+
+    public function ulasanPage(Request $request)
+    {
+        $user = Auth::user();
+        $tab = $request->get('tab', 'menunggu');
+
+        $menungguUlasan = [];
+        $riwayatUlasan = [];
+
+        if ($tab == 'menunggu') {
+            // Logic: Group by Produk ID agar tidak duplikat
+            $menungguUlasan = DB::table('detail_transaksi')
+                ->join('transaksi', 'detail_transaksi.id_transaksi', '=', 'transaksi.id_transaksi')
+                ->join('produk', 'detail_transaksi.id_produk', '=', 'produk.id_produk')
+                ->where('transaksi.id_user_pembeli', $user->id_user)
+                ->where('transaksi.status', 'selesai')
+                ->whereNotExists(function ($query) use ($user) {
+                    $query->select(DB::raw(1))
+                        ->from('ulasan')
+                        ->whereRaw('ulasan.id_produk = detail_transaksi.id_produk')
+                        ->where('ulasan.id_user', $user->id_user);
+                })
+                ->select(
+                    'produk.id_produk',
+                    'produk.nama_produk',
+                    'produk.gambar',
+                    // Ambil tanggal pembelian TERAKHIR
+                    DB::raw('MAX(transaksi.created_at) as tgl_beli')
+                )
+                ->groupBy('produk.id_produk', 'produk.nama_produk', 'produk.gambar')
+                ->get();
+        } else {
+            $riwayatUlasan = \App\Models\Ulasan::with('produk')
+                ->where('id_user', $user->id_user)
+                ->latest()
+                ->get();
+        }
+
+        return view('kiosk.ulasan', compact('menungguUlasan', 'riwayatUlasan', 'tab'));
     }
 
     // ========================================================================
@@ -498,8 +575,60 @@ class KioskController extends Controller
     public function successPage($id)
     {
         $transaksi = DB::table('transaksi')->where('id_transaksi', $id)->first();
-        if (!$transaksi || (Auth::check() && $transaksi->id_user_pembeli != Auth::id())) return redirect()->route('kiosk.index');
-        $details = DB::table('detail_transaksi')->join('produk', 'detail_transaksi.id_produk', '=', 'produk.id_produk')->where('id_transaksi', $id)->get();
-        return view('kiosk.success', compact('transaksi', 'details'));
+
+        if (!$transaksi || (Auth::check() && $transaksi->id_user_pembeli != Auth::id())) {
+            return redirect()->route('kiosk.index');
+        }
+
+        $details = DB::table('detail_transaksi')
+            ->join('produk', 'detail_transaksi.id_produk', '=', 'produk.id_produk')
+            ->where('id_transaksi', $id)
+            ->select('detail_transaksi.*', 'produk.nama_produk', 'produk.gambar', 'produk.id_produk')
+            ->get();
+
+        $reviewedProductIds = [];
+        if (Auth::check()) {
+            $reviewedProductIds = Ulasan::where('id_user', Auth::id())
+                ->whereIn('id_produk', $details->pluck('id_produk'))
+                ->pluck('id_produk')
+                ->toArray();
+        }
+
+        return view('kiosk.success', compact('transaksi', 'details', 'reviewedProductIds'));
+    }
+
+    public function storeReview(Request $request)
+    {
+        if (!Auth::check()) return redirect()->route('login');
+
+        $request->validate([
+            'id_produk' => 'required|exists:produk,id_produk',
+            'rating' => 'required|integer|min:1|max:5',
+            'komentar' => 'required|string|max:500',
+        ]);
+
+        $userId = Auth::id();
+        $produkId = $request->id_produk;
+
+        $hasPurchased = DB::table('detail_transaksi')
+            ->join('transaksi', 'detail_transaksi.id_transaksi', '=', 'transaksi.id_transaksi')
+            ->where('transaksi.id_user_pembeli', $userId)
+            ->where('detail_transaksi.id_produk', $produkId)
+            ->where('transaksi.status', 'selesai')
+            ->exists();
+
+        if (!$hasPurchased) return back()->with('error', 'Anda harus membeli produk ini dan menyelesaikan pesanan sebelum memberi ulasan.');
+
+        $existingReview = Ulasan::where('id_user', $userId)->where('id_produk', $produkId)->exists();
+        if ($existingReview) return back()->with('error', 'Anda sudah memberikan ulasan untuk produk ini.');
+
+        Ulasan::create([
+            'id_user' => $userId,
+            'id_produk' => $produkId,
+            'rating' => $request->rating,
+            'komentar' => $request->komentar
+        ]);
+
+        return back()->with('success', 'Terima kasih atas ulasan Anda!');
     }
 }
