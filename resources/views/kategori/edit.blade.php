@@ -21,7 +21,7 @@
                     <div class="md:col-span-1">
                         <label class="block text-gray-700 font-bold mb-2 text-sm ml-1">Ikon Kategori</label>
                         <div class="relative w-full aspect-square border-2 border-dashed border-gray-300 rounded-2xl bg-gray-50 flex flex-col items-center justify-center overflow-hidden transition hover:border-blue-400">
-                            <img id="preview-img" src="{{ $kategori->gambar ? asset('storage/' . $kategori->gambar) : '' }}" class="absolute inset-0 w-full h-full object-cover z-10 {{ $kategori->gambar ? '' : 'hidden' }}" />
+                            <img id="preview-img" src="{{ $kategori->gambar ? (str_starts_with($kategori->gambar ?? '', 'http') ? $kategori->gambar : asset('storage/' . $kategori->gambar)) : '' }}" class="absolute inset-0 w-full h-full object-cover z-10 {{ $kategori->gambar ? '' : 'hidden' }}" />
                             <div class="text-center text-gray-400 pointer-events-none z-0">
                                 <i class="fa-solid fa-cloud-arrow-up text-4xl mb-2"></i>
                                 <p class="text-xs font-bold">Ganti Gambar</p>

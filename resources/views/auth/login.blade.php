@@ -84,6 +84,17 @@
                     <a href="{{ route('password.forgot') }}" class="hover:text-[#3b4bbd] transition font-bold">Lupa Password?</a>
                 </div>
 
+                <div class="relative flex items-center py-2">
+                    <div class="flex-grow border-t border-gray-200"></div>
+                    <span class="flex-shrink-0 mx-4 text-gray-400 text-sm font-semibold">ATAU</span>
+                    <div class="flex-grow border-t border-gray-200"></div>
+                </div>
+
+                <a href="{{ route('google.login') }}" class="w-full bg-white border border-gray-300 text-gray-700 font-bold py-3.5 rounded-2xl shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-300 flex justify-center items-center">
+                    <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-5 h-5 mr-3" alt="Google">
+                    <span>Masuk dengan Google</span>
+                </a>
+
                 <div class="mt-6 text-center border-t border-gray-100 pt-4">
                     <p class="text-gray-500 text-sm">Belum terdaftar?</p>
                     <a href="{{ route('register') }}" class="text-[#3b4bbd] font-bold hover:underline transition">

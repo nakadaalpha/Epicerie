@@ -30,16 +30,28 @@
 
     <div class="max-w-[1280px] mx-auto px-4 py-8 flex flex-col lg:flex-row gap-8">
 
-        <aside class="w-full lg:w-[280px] shrink-0">
-            <form id="filterForm" action="{{ route('kiosk.search') }}" method="GET">
+        {{-- BACKDROP MOBILE FILTER --}}
+        <div id="mobileFilterBackdrop" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] hidden lg:hidden transition-opacity opacity-0" onclick="toggleMobileFilter()"></div>
+
+        <aside id="filterSidebar" class="fixed inset-y-0 left-0 w-[280px] bg-white z-[110] transform -translate-x-full transition-transform duration-300 lg:relative lg:translate-x-0 lg:z-auto lg:w-[280px] shrink-0 h-full lg:h-auto overflow-y-auto lg:overflow-visible shadow-2xl lg:shadow-none">
+            
+            {{-- HEADER MOBILE FILTER --}}
+            <div class="lg:hidden flex justify-between items-center p-4 border-b border-gray-200 bg-white sticky top-0 z-10">
+                <h2 class="font-extrabold text-lg text-gray-800">Filter Produk</h2>
+                <button onclick="toggleMobileFilter()" class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-gray-100 text-gray-500">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <form id="filterForm" action="{{ route('kiosk.search') }}" method="GET" class="p-4 lg:p-0">
                 <input type="hidden" name="search" value="{{ $keyword }}">
 
                 <input type="hidden" name="sort" id="hiddenSortInput" value="{{ request('sort') }}">
 
-                <div class="bg-white border border-gray-200 rounded-xl p-5 shadow-sm sticky top-24">
+                <div class="bg-white lg:border lg:border-gray-200 lg:rounded-xl lg:p-5 lg:shadow-sm lg:sticky lg:top-24">
                     <div class="flex justify-between items-center mb-4">
-                        <h2 class="font-extrabold text-lg text-gray-800">Filter</h2>
-                        <a href="{{ route('kiosk.search') }}" class="text-xs text-blue-600 font-bold hover:underline">Reset</a>
+                        <h2 class="font-extrabold text-lg text-gray-800 hidden lg:block">Filter</h2>
+                        <a href="{{ route('kiosk.search') }}" class="text-xs text-blue-600 font-bold hover:underline">Reset Filter</a>
                     </div>
 
                     <div class="border-b border-gray-100 py-4">
@@ -119,8 +131,11 @@
                         <p class="text-sm text-gray-400 mt-2">Menampilkan <strong>{{ count($produk) }}</strong> produk</p>
                     </div>
 
-                    <div class="w-full md:w-auto">
-                        <div class="relative">
+                    <div class="w-full md:w-auto flex items-center gap-2">
+                        <button onclick="toggleMobileFilter()" class="lg:hidden flex-1 md:flex-none appearance-none bg-white border border-gray-300 text-gray-700 py-2 px-4 rounded-lg font-bold flex items-center justify-center gap-2 shadow-sm hover:bg-gray-50 focus:outline-none focus:border-blue-500 text-sm">
+                            <i class="fa-solid fa-filter text-blue-600"></i> Filter
+                        </button>
+                        <div class="relative flex-1 md:flex-none">
                             <select onchange="applySort(this.value)" class="appearance-none w-full md:w-48 bg-white border border-gray-300 text-gray-700 py-2 pl-4 pr-8 rounded-lg leading-tight focus:outline-none focus:bg-white focus:border-blue-500 text-sm font-bold cursor-pointer shadow-sm">
                                 <option value="paling_sesuai" {{ request('sort') == 'paling_sesuai' ? 'selected' : '' }}>Paling Sesuai</option>
                                 <option value="terbaru" {{ request('sort') == 'terbaru' ? 'selected' : '' }}>Terbaru</option>
@@ -169,7 +184,7 @@
                     <a href="{{ route('produk.show', $p->id_produk) }}" class="flex-1 flex flex-col">
                         <div class="aspect-square rounded-xl mb-3 flex items-center justify-center overflow-hidden relative">
                             @if($p->gambar)
-                            <img src="{{ asset('storage/' . $p->gambar) }}" class="w-full h-full object-contain p-4 group-hover:scale-110 transition duration-300">
+                            <img src="{{ (str_starts_with($p->gambar ?? '', 'http') ? $p->gambar : asset('storage/' . $p->gambar)) }}" class="w-full h-full object-contain p-4 group-hover:scale-110 transition duration-300">
                             @else
                             <i class="fa-solid fa-box text-gray-300 text-3xl"></i>
                             @endif
@@ -234,7 +249,7 @@
                         <a href="{{ route('produk.show', $p->id_produk) }}" class="flex-1 flex flex-col">
                             <div class="aspect-square rounded-xl mb-3 flex items-center justify-center overflow-hidden relative">
                                 @if($p->gambar)
-                                <img src="{{ asset('storage/' . $p->gambar) }}" class="w-full h-full object-contain p-4 group-hover:scale-110 transition duration-300">
+                                <img src="{{ (str_starts_with($p->gambar ?? '', 'http') ? $p->gambar : asset('storage/' . $p->gambar)) }}" class="w-full h-full object-contain p-4 group-hover:scale-110 transition duration-300">
                                 @else
                                 <i class="fa-solid fa-box text-gray-300 text-3xl"></i>
                                 @endif
@@ -270,6 +285,29 @@
             document.getElementById('hiddenSortInput').value = value;
             // Submit form sidebar
             document.getElementById('filterForm').submit();
+        }
+
+        function toggleMobileFilter() {
+            const sidebar = document.getElementById('filterSidebar');
+            const backdrop = document.getElementById('mobileFilterBackdrop');
+            
+            if (sidebar.classList.contains('-translate-x-full')) {
+                // Open
+                backdrop.classList.remove('hidden');
+                setTimeout(() => {
+                    backdrop.classList.remove('opacity-0');
+                    sidebar.classList.remove('-translate-x-full');
+                }, 10);
+                document.body.style.overflow = 'hidden';
+            } else {
+                // Close
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('opacity-0');
+                setTimeout(() => {
+                    backdrop.classList.add('hidden');
+                    document.body.style.overflow = 'auto';
+                }, 300);
+            }
         }
     </script>
 

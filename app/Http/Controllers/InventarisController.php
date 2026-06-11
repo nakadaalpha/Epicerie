@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use App\Models\Produk;
 use App\Models\Kategori;
 use Illuminate\Support\Facades\Storage; // WAJIB: Import ini untuk hapus file
@@ -84,7 +85,7 @@ class InventarisController extends Controller
         // Upload Gambar
         if ($request->hasFile('gambar')) {
             // Simpan ke folder: storage/app/public/produk
-            $path = $request->file('gambar')->store('produk', 'public');
+            $path = Cloudinary::upload($request->file('gambar')->getRealPath(), ['folder' => 'produk'])->getSecurePath();
             $validatedData['gambar'] = $path;
         }
 
@@ -122,7 +123,7 @@ class InventarisController extends Controller
                 Storage::disk('public')->delete($produk->gambar);
             }
             // Simpan gambar baru
-            $path = $request->file('gambar')->store('produk', 'public');
+            $path = Cloudinary::upload($request->file('gambar')->getRealPath(), ['folder' => 'produk'])->getSecurePath();
             $validatedData['gambar'] = $path;
         }
 

@@ -27,7 +27,7 @@
                     <div id="drop-zone" class="relative w-full aspect-square border-2 border-dashed border-gray-300 rounded-2xl bg-gray-50 flex flex-col items-center justify-center overflow-hidden transition-all duration-300 group cursor-pointer hover:border-blue-400 hover:bg-blue-50">
 
                         <img id="preview-img"
-                            src="{{ $produk->gambar ? asset('storage/' . $produk->gambar) : '' }}"
+                            src="{{ $produk->gambar ? (str_starts_with($produk->gambar ?? '', 'http') ? $produk->gambar : asset('storage/' . $produk->gambar)) : '' }}"
                             class="absolute inset-0 w-full h-full object-cover z-10 {{ $produk->gambar ? '' : 'hidden' }}" />
 
                         <div id="placeholder-icon" class="flex flex-col items-center text-gray-400 group-hover:text-blue-500 transition z-0 pointer-events-none px-4 text-center {{ $produk->gambar ? 'hidden' : '' }}">

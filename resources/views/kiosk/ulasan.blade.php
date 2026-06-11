@@ -27,7 +27,7 @@
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition flex flex-col sm:flex-row items-center p-5 gap-5">
         {{-- Gambar --}}
         <div class="w-20 h-20 bg-white rounded-xl flex items-center justify-center shrink-0 border border-gray-200 p-2">
-            @if($item->gambar) <img src="{{ asset('storage/' . $item->gambar) }}" class="w-full h-full object-contain">
+            @if($item->gambar) <img src="{{ (str_starts_with($item->gambar ?? '', 'http') ? $item->gambar : asset('storage/' . $item->gambar)) }}" class="w-full h-full object-contain">
             @else <i class="fa-solid fa-box text-gray-300 text-2xl"></i> @endif
         </div>
 
@@ -40,7 +40,7 @@
         </div>
 
         {{-- Tombol --}}
-        <button onclick="openReviewModal('{{ $item->id_produk }}', '{{ $item->nama_produk }}', '{{ $item->gambar ? asset('storage/' . $item->gambar) : '' }}')"
+        <button onclick="openReviewModal('{{ $item->id_produk }}', '{{ $item->nama_produk }}', '{{ $item->gambar ? (str_starts_with($item->gambar ?? '', 'http') ? $item->gambar : asset('storage/' . $item->gambar)) : '' }}')"
             class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-xl text-sm transition shadow-lg shadow-blue-600/20 w-full sm:w-auto">
             Tulis Ulasan
         </button>

@@ -67,7 +67,7 @@
                 <div class="flex gap-3 items-center border-b border-gray-50 last:border-0 pb-3 last:pb-0">
                     <div class="w-12 h-12 bg-gray-50 rounded-md flex items-center justify-center shrink-0 border border-gray-100">
                         @if($item->gambar)
-                        <img src="{{ asset('storage/' . $item->gambar) }}" class="w-full h-full object-contain p-0.5">
+                        <img src="{{ (str_starts_with($item->gambar ?? '', 'http') ? $item->gambar : asset('storage/' . $item->gambar)) }}" class="w-full h-full object-contain p-0.5">
                         @else
                         <i class="fa-solid fa-box text-gray-300"></i>
                         @endif

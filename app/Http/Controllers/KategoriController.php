@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use App\Models\Kategori;
 use Illuminate\Support\Facades\Storage; // Penting untuk hapus file
 
@@ -42,7 +43,7 @@ class KategoriController extends Controller
         $data = $request->all();
 
         if ($request->hasFile('gambar')) {
-            $data['gambar'] = $request->file('gambar')->store('kategori', 'public');
+            $data['gambar'] = Cloudinary::upload($request->file('gambar')->getRealPath(), ['folder' => 'kategori'])->getSecurePath();
         }
 
         Kategori::create($data);
@@ -74,7 +75,7 @@ class KategoriController extends Controller
             if ($kategori->gambar) {
                 Storage::disk('public')->delete($kategori->gambar);
             }
-            $data['gambar'] = $request->file('gambar')->store('kategori', 'public');
+            $data['gambar'] = Cloudinary::upload($request->file('gambar')->getRealPath(), ['folder' => 'kategori'])->getSecurePath();
         }
 
         $kategori->update($data);

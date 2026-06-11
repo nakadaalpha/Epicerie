@@ -165,15 +165,28 @@
                         <span class="font-extrabold text-2xl text-blue-600" id="total-tagihan">Rp{{ number_format($subtotal + $ongkirKurir, 0, ',', '.') }}</span>
                     </div>
 
-                    <button id="pay-button" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-blue-700 transition active:scale-95 flex justify-center items-center gap-2">
-                        <span>Bayar Sekarang</span>
-                        <i class="fa-solid fa-arrow-right"></i>
-                    </button>
+                    <div class="hidden lg:block">
+                        <button id="pay-button-desktop" class="w-full bg-blue-600 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-blue-700 transition active:scale-95 flex justify-center items-center gap-2">
+                            <span>Bayar Sekarang</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
+        {{-- FLOATING BOTTOM BAR (MOBILE) --}}
+        <div class="lg:hidden fixed bottom-[60px] left-0 w-full bg-white border-t border-gray-200 p-3 z-50 shadow-[0_-5px_15px_-10px_rgba(0,0,0,0.1)] flex justify-between items-center gap-4">
+            <div>
+                <span class="block text-xs text-gray-500">Total Tagihan</span>
+                <span class="font-extrabold text-lg text-blue-600" id="total-tagihan-mobile">Rp{{ number_format($subtotal + $ongkirKurir, 0, ',', '.') }}</span>
+            </div>
+            <button id="pay-button-mobile" class="w-1/2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-center transition active:scale-95 text-sm flex justify-center items-center gap-2">
+                <span>Bayar Sekarang</span>
+            </button>
+        </div>
+        
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             
@@ -275,6 +288,7 @@
                 // Update Total
                 ongkirDisplayFinal.innerText = (ongkirSaatIni === 0) ? 'Gratis' : formatRupiah(ongkirSaatIni);
                 totalTagihanEl.innerText = formatRupiah(subtotal + ongkirSaatIni);
+                if(document.getElementById('total-tagihan-mobile')) document.getElementById('total-tagihan-mobile').innerText = formatRupiah(subtotal + ongkirSaatIni);
             }
 
             // --- EVENT LISTENERS ---
@@ -295,9 +309,12 @@
             if(addressBtn) addressBtn.addEventListener('click', () => setTimeout(renderAddressUI, 500));
 
             // --- LOGIKA TOMBOL BAYAR ---
-            if(payButton) {
-                payButton.addEventListener('click', async function(e) {
+            const payButtonDesktop = document.getElementById('pay-button-desktop');
+            const payButtonMobile = document.getElementById('pay-button-mobile');
+
+            async function processPayment(e) {
                     e.preventDefault();
+                    const buttonClicked = this;
 
                     const tipePengirimanEl = document.querySelector('input[name="tipe_pengiriman"]:checked');
                     const metodePembayaranEl = document.querySelector('input[name="metode_pembayaran"]:checked');
@@ -318,9 +335,9 @@
                         idAlamatFinal = null;
                     }
 
-                    const originalText = payButton.innerHTML;
-                    payButton.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
-                    payButton.disabled = true;
+                    const originalText = this.innerHTML;
+                    buttonClicked.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Memproses...';
+                    buttonClicked.disabled = true;
 
                     try {
                         const response = await fetch("{{ route('kiosk.pay') }}", {
@@ -352,14 +369,14 @@
                                 },
                                 onPending: () => { showToast("Menunggu pembayaran...", "success"); setTimeout(() => window.location.reload(), 2000); },
                                 onError: () => { showToast("Pembayaran Gagal!", "error"); setTimeout(() => window.location.reload(), 2000); },
-                                onClose: () => { payButton.innerHTML = originalText; payButton.disabled = false; }
+                                onClose: () => { buttonClicked.innerHTML = originalText; buttonClicked.disabled = false; }
                             });
                         }
                     } catch (err) {
                         console.error(err);
                         showToast(err.message, "error");
-                        payButton.innerHTML = originalText;
-                        payButton.disabled = false;
+                        buttonClicked.innerHTML = originalText;
+                        buttonClicked.disabled = false;
                     }
                 });
             }

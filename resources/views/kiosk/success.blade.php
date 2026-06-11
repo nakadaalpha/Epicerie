@@ -112,7 +112,7 @@
                         @foreach($details as $item)
                         <div class="flex gap-4 mb-6 last:mb-0 items-start">
                             <div class="w-20 h-20 bg-white border border-gray-200 rounded-lg flex items-center justify-center shrink-0 p-1">
-                                @if($item->gambar) <img src="{{ asset('storage/' . $item->gambar) }}" class="w-full h-full object-contain">
+                                @if($item->gambar) <img src="{{ (str_starts_with($item->gambar ?? '', 'http') ? $item->gambar : asset('storage/' . $item->gambar)) }}" class="w-full h-full object-contain">
                                 @else <i class="fa-solid fa-box text-gray-300 text-2xl"></i> @endif
                             </div>
 
@@ -126,7 +126,7 @@
                                     <i class="fa-solid fa-check"></i> Sudah Diulas
                                 </span>
                                 @else
-                                <button onclick="openReviewModal('{{ $item->id_produk }}', '{{ $item->nama_produk }}', '{{ $item->gambar ? asset('storage/' . $item->gambar) : '' }}')"
+                                <button onclick="openReviewModal('{{ $item->id_produk }}', '{{ $item->nama_produk }}', '{{ $item->gambar ? (str_starts_with($item->gambar ?? '', 'http') ? $item->gambar : asset('storage/' . $item->gambar)) : '' }}')"
                                     class="text-xs font-bold text-blue-600 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-lg border border-blue-200 transition flex items-center gap-1 w-fit">
                                     <i class="fa-regular fa-star"></i> Beri Ulasan
                                 </button>

@@ -58,7 +58,7 @@
             <div id="slider-track" class="flex h-full w-full">
                 @foreach($sliders as $s)
                 <div class="slider-item min-w-full h-full relative">
-                    <img src="{{ isset($s->is_dummy) ? $s->gambar : asset('storage/' . $s->gambar) }}" class="w-full h-full object-cover" alt="{{ $s->judul }}">
+                    <img src="{{ isset($s->is_dummy) ? $s->gambar : (str_starts_with($s->gambar ?? '', 'http') ? $s->gambar : asset('storage/' . $s->gambar)) }}" class="w-full h-full object-cover" alt="{{ $s->judul }}">
                 </div>
                 @endforeach
             </div>
@@ -114,7 +114,7 @@
 
                         <a href="{{ route('produk.show', $p->id_produk) }}" class="block aspect-square rounded-lg overflow-hidden">
                             @if($p->gambar)
-                            <img src="{{ asset('storage/' . $p->gambar) }}" class="w-full h-full object-contain p-3 group-hover:scale-105 transition duration-300">
+                            <img src="{{ (str_starts_with($p->gambar ?? '', 'http') ? $p->gambar : asset('storage/' . $p->gambar)) }}" class="w-full h-full object-contain p-3 group-hover:scale-105 transition duration-300">
                             @else
                             <div class="w-full h-full flex items-center justify-center text-3xl text-gray-300"><i class="fa-solid fa-image"></i></div>
                             @endif
@@ -153,11 +153,11 @@
                     {{-- Tombol --}}
                     <div class="mt-2">
                         @if($p->stok > 0)
-                        <a href="{{ route('kiosk.add', $p->id_produk) }}" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-1.5 rounded-lg text-center transition shadow-sm active:scale-95">
+                        <a href="{{ route('kiosk.add', $p->id_produk) }}" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 md:py-1.5 rounded-lg text-center transition shadow-sm active:scale-95">
                             + Keranjang
                         </a>
                         @else
-                        <button disabled class="block w-full bg-gray-100 text-gray-400 font-bold text-xs py-1.5 rounded-lg text-center cursor-not-allowed">
+                        <button disabled class="block w-full bg-gray-100 text-gray-400 font-bold text-xs py-2 md:py-1.5 rounded-lg text-center cursor-not-allowed">
                             Habis
                         </button>
                         @endif
@@ -201,7 +201,7 @@
 
                         <a href="{{ route('produk.show', $p->id_produk) }}" class="block aspect-square/50 rounded-lg overflow-hidden">
                             @if($p->gambar)
-                            <img src="{{ asset('storage/' . $p->gambar) }}" class="w-full h-full object-contain p-3 group-hover:scale-105 transition duration-300 mix-blend-multiply">
+                            <img src="{{ (str_starts_with($p->gambar ?? '', 'http') ? $p->gambar : asset('storage/' . $p->gambar)) }}" class="w-full h-full object-contain p-3 group-hover:scale-105 transition duration-300 mix-blend-multiply">
                             @else
                             <div class="w-full h-full flex items-center justify-center text-3xl text-gray-300"><i class="fa-solid fa-image"></i></div>
                             @endif
@@ -242,11 +242,11 @@
                     {{-- Tombol --}}
                     <div class="mt-2 z-10">
                         @if($p->stok > 0)
-                        <a href="{{ route('kiosk.add', $p->id_produk) }}" class="block w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs py-1.5 rounded-lg text-center transition shadow-sm active:scale-95">
+                        <a href="{{ route('kiosk.add', $p->id_produk) }}" class="block w-full bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs py-2 md:py-1.5 rounded-lg text-center transition shadow-sm active:scale-95">
                             + Keranjang
                         </a>
                         @else
-                        <button disabled class="block w-full bg-gray-100 text-gray-400 font-bold text-xs py-1.5 rounded-lg text-center cursor-not-allowed">
+                        <button disabled class="block w-full bg-gray-100 text-gray-400 font-bold text-xs py-2 md:py-1.5 rounded-lg text-center cursor-not-allowed">
                             Habis
                         </button>
                         @endif
@@ -285,7 +285,7 @@
 
                     <a href="{{ route('produk.show', $p->id_produk) }}" class="block aspect-square rounded-lg overflow-hidden">
                         @if($p->gambar)
-                        <img src="{{ asset('storage/' . $p->gambar) }}" class="w-full h-full object-contain p-3 group-hover:scale-105 transition duration-300">
+                        <img src="{{ (str_starts_with($p->gambar ?? '', 'http') ? $p->gambar : asset('storage/' . $p->gambar)) }}" class="w-full h-full object-contain p-3 group-hover:scale-105 transition duration-300">
                         @else
                         <div class="w-full h-full flex items-center justify-center text-3xl text-gray-300"><i class="fa-solid fa-image"></i></div>
                         @endif
@@ -320,11 +320,11 @@
 
                 <div class="mt-2">
                     @if($p->stok > 0)
-                    <a href="{{ route('kiosk.add', $p->id_produk) }}" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-1.5 rounded-lg text-center transition shadow-sm active:scale-95">
+                    <a href="{{ route('kiosk.add', $p->id_produk) }}" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs py-2 md:py-1.5 rounded-lg text-center transition shadow-sm active:scale-95">
                         + Keranjang
                     </a>
                     @else
-                    <button disabled class="block w-full bg-gray-100 text-gray-400 font-bold text-xs py-1.5 rounded-lg text-center cursor-not-allowed">
+                    <button disabled class="block w-full bg-gray-100 text-gray-400 font-bold text-xs py-2 md:py-1.5 rounded-lg text-center cursor-not-allowed">
                         Habis
                     </button>
                     @endif

@@ -1,18 +1,22 @@
 <?php
 
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\CardSettingController;
+use App\Http\Controllers\CartController;
+use App\Http\Controllers\CheckoutController;
 use App\Http\Controllers\Dashboard;
-use App\Http\Controllers\TransaksiController;
-use App\Http\Controllers\KioskController;
-use App\Http\Controllers\KategoriController;
-use App\Http\Controllers\SliderController;
 use App\Http\Controllers\InventarisController;
 use App\Http\Controllers\KaryawanController;
+use App\Http\Controllers\KategoriController;
+use App\Http\Controllers\KioskController;
 use App\Http\Controllers\KurirController;
-use App\Http\Middleware\AdminOnly;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReviewController;
+use App\Http\Controllers\SliderController;
+use App\Http\Controllers\TransaksiController;
 use App\Http\Controllers\VerificationController;
-use App\Http\Controllers\CardSettingController;
+use App\Http\Middleware\AdminOnly;
+use Illuminate\Support\Facades\Route;
 
 // ====================================================
 // 1. ROUTE GUEST (Hanya yang BELUM Login)
@@ -25,6 +29,10 @@ Route::middleware(['guest'])->group(function () {
     Route::get('/forgot-password', [AuthController::class, 'showForgotPasswordForm'])->name('password.forgot');
     Route::post('/forgot-password', [AuthController::class, 'verifyUser'])->name('password.verify');
     Route::post('/reset-password', [AuthController::class, 'processResetPassword'])->name('password.reset.process');
+    
+    // Google OAuth Routes
+    Route::get('/auth/google', [\App\Http\Controllers\GoogleAuthController::class, 'redirectToGoogle'])->name('google.login');
+    Route::get('/auth/google/callback', [\App\Http\Controllers\GoogleAuthController::class, 'handleGoogleCallback'])->name('google.callback');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
@@ -42,37 +50,36 @@ Route::get('/kiosk/search', [KioskController::class, 'search'])->name('kiosk.sea
 Route::middleware(['auth'])->group(function () {
 
     // --- Keranjang & Checkout ---
-    Route::post('/add-to-cart/{id}', [KioskController::class, 'addToCart'])->name('kiosk.add');
-    Route::get('/keranjang', [KioskController::class, 'cart'])->name('kiosk.cart');
-    Route::get('/checkout', [KioskController::class, 'checkoutPage'])->name('kiosk.checkout');
+    Route::post('/add-to-cart/{id}', [CartController::class, 'addToCart'])->name('kiosk.add');
+    Route::get('/keranjang', [CartController::class, 'cart'])->name('kiosk.cart');
+    Route::get('/checkout', [CheckoutController::class, 'checkoutPage'])->name('kiosk.checkout');
 
     // --- Manajemen Item ---
-    Route::get('/kiosk/remove/{id}', [KioskController::class, 'removeItem'])->name('kiosk.remove');
-    Route::get('/kiosk/increase/{id}', [KioskController::class, 'increaseItem'])->name('kiosk.increase');
-    Route::get('/kiosk/decrease/{id}', [KioskController::class, 'decreaseItem'])->name('kiosk.decrease');
-    Route::get('/kiosk/empty-cart', [KioskController::class, 'emptyCart'])->name('kiosk.empty');
-    Route::post('/kiosk/set-qty/{id}', [KioskController::class, 'setCartQuantity'])->name('kiosk.set.qty');
+    Route::get('/kiosk/remove/{id}', [CartController::class, 'removeItem'])->name('kiosk.remove');
+    Route::get('/kiosk/increase/{id}', [CartController::class, 'increaseItem'])->name('kiosk.increase');
+    Route::get('/kiosk/decrease/{id}', [CartController::class, 'decreaseItem'])->name('kiosk.decrease');
+    Route::get('/kiosk/empty-cart', [CartController::class, 'emptyCart'])->name('kiosk.empty');
 
     // --- Pembayaran & Transaksi ---
-    Route::post('/pay', [KioskController::class, 'processPayment'])->name('kiosk.pay');
-    Route::post('/midtrans-success', [KioskController::class, 'midtransSuccess'])->name('kiosk.midtrans.success');
-    Route::get('/kiosk/success/{id}', [KioskController::class, 'successPage'])->name('kiosk.success');
-    Route::post('/transaksi/{id}/selesai', [KioskController::class, 'completeTransaction'])->name('kiosk.complete');
+    Route::post('/pay', [CheckoutController::class, 'processPayment'])->name('kiosk.pay');
+    Route::post('/midtrans-success', [CheckoutController::class, 'midtransSuccess'])->name('kiosk.midtrans.success');
+    Route::get('/kiosk/success/{id}', [CheckoutController::class, 'successPage'])->name('kiosk.success');
+    Route::post('/transaksi/{id}/selesai', [CheckoutController::class, 'completeTransaction'])->name('kiosk.complete');
 
-    // --- FITUR ULASAN (BARU DITAMBAHKAN) ---
-    Route::post('/review/store', [KioskController::class, 'storeReview'])->name('review.store');
+    // --- FITUR ULASAN ---
+    Route::post('/review/store', [ReviewController::class, 'storeReview'])->name('review.store');
 
     // --- User Dashboard & Profile ---
-    Route::get('/profile', [KioskController::class, 'profile'])->name('kiosk.profile');
-    Route::get('/riwayat', [KioskController::class, 'riwayatTransaksi'])->name('kiosk.riwayat');
-    Route::get('/tracking/{id}', [KioskController::class, 'trackingPage'])->name('kiosk.tracking');
-    Route::get('/ulasan', [KioskController::class, 'ulasanPage'])->name('kiosk.ulasan');
+    Route::get('/profile', [ProfileController::class, 'profile'])->name('kiosk.profile');
+    Route::get('/riwayat', [ProfileController::class, 'riwayatTransaksi'])->name('kiosk.riwayat');
+    Route::get('/tracking/{id}', [ProfileController::class, 'trackingPage'])->name('kiosk.tracking');
+    Route::get('/ulasan', [ProfileController::class, 'ulasanPage'])->name('kiosk.ulasan');
 
     // --- FITUR UPDATE PROFIL ---
-    Route::post('/profile/photo', [KioskController::class, 'updatePhoto'])->name('profile.photo');
-    Route::post('/profile/update', [KioskController::class, 'updateProfile'])->name('profile.update');
-    Route::get('/profile/download-qr', [KioskController::class, 'downloadQr'])->name('profile.download-qr');
-    Route::post('/profile/request-card', [KioskController::class, 'requestCetakKartu'])->name('profile.request.card');
+    Route::post('/profile/photo', [ProfileController::class, 'updatePhoto'])->name('profile.photo');
+    Route::post('/profile/update', [ProfileController::class, 'updateProfile'])->name('profile.update');
+    Route::get('/profile/download-qr', [ProfileController::class, 'downloadQr'])->name('profile.download-qr');
+    Route::post('/profile/request-card', [ProfileController::class, 'requestCetakKartu'])->name('profile.request.card');
 
     // --- FITUR VERIFIKASI (EMAIL & OTP) ---
     Route::post('/email/verify-manual', [VerificationController::class, 'sendEmailVerification'])->name('verifikasi.manual');
@@ -83,10 +90,10 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/phone/verify-otp', [VerificationController::class, 'verifyOtp'])->name('phone.verifyOtp');
 
     // --- FITUR ALAMAT ---
-    Route::post('/profile/address', [KioskController::class, 'addAddress'])->name('profile.address.add');
-    Route::post('/profile/address/update/{id}', [KioskController::class, 'updateAddress'])->name('profile.address.update');
-    Route::get('/profile/address/delete/{id}', [KioskController::class, 'deleteAddress'])->name('profile.address.delete');
-    Route::post('/profile/address/set-primary/{id}', [KioskController::class, 'setPrimaryAddress'])->name('address.setPrimary');
+    Route::post('/profile/address', [ProfileController::class, 'addAddress'])->name('profile.address.add');
+    Route::post('/profile/address/update/{id}', [ProfileController::class, 'updateAddress'])->name('profile.address.update');
+    Route::get('/profile/address/delete/{id}', [ProfileController::class, 'deleteAddress'])->name('profile.address.delete');
+    Route::post('/profile/address/set-primary/{id}', [ProfileController::class, 'setPrimaryAddress'])->name('address.setPrimary');
 
     // --- ROUTE KHUSUS KURIR ---
     Route::get('/kurir/dashboard', [KurirController::class, 'index'])->name('kurir.index');
@@ -114,24 +121,16 @@ Route::middleware(['auth', AdminOnly::class])->prefix('admin')->group(function (
     });
 
     // --- KATEGORI ---
-    Route::prefix('kategori')->name('kategori.')->group(function () {
-        Route::get('/', [KategoriController::class, 'index'])->name('index');
-        Route::get('/create', [KategoriController::class, 'create'])->name('create');
-        Route::post('/store', [KategoriController::class, 'store'])->name('store');
-        Route::get('/edit/{id}', [KategoriController::class, 'edit'])->name('edit');
-        Route::put('/update/{id}', [KategoriController::class, 'update'])->name('update');
-        Route::delete('/delete/{id}', [KategoriController::class, 'destroy'])->name('destroy');
-    });
+    // Menggunakan parameter kustom agar sesuai dengan controller lama yang memakai {id}
+    Route::resource('kategori', KategoriController::class)->parameters([
+        'kategori' => 'id',
+    ])->except(['show']);
 
     // --- SLIDER ---
-    Route::prefix('slider')->name('slider.')->group(function () {
-        Route::get('/', [SliderController::class, 'index'])->name('index');
-        Route::get('/create', [SliderController::class, 'create'])->name('create');
-        Route::post('/store', [SliderController::class, 'store'])->name('store');
-        Route::get('/edit/{id}', [SliderController::class, 'edit'])->name('edit');
-        Route::put('/update/{id}', [SliderController::class, 'update'])->name('update');
-        Route::delete('/delete/{id}', [SliderController::class, 'destroy'])->name('destroy');
-    });
+    // Menggunakan parameter kustom agar sesuai dengan controller lama
+    Route::resource('slider', SliderController::class)->parameters([
+        'slider' => 'id',
+    ])->except(['show']);
 
     // --- KARYAWAN ---
     Route::prefix('karyawan')->name('karyawan.')->group(function () {

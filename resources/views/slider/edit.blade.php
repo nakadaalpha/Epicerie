@@ -29,7 +29,7 @@
                     <div id="drop-zone" class="relative w-full h-64 border-2 border-dashed border-gray-300 rounded-3xl bg-gray-50 flex flex-col items-center justify-center overflow-hidden transition-all duration-300 group cursor-pointer hover:border-blue-400 hover:bg-blue-50">
 
                         <img id="preview-img"
-                            src="{{ asset('storage/' . $slider->gambar) }}"
+                            src="{{ (str_starts_with($slider->gambar ?? '', 'http') ? $slider->gambar : asset('storage/' . $slider->gambar)) }}"
                             class="absolute inset-0 w-full h-full object-cover z-10 transition-opacity duration-300" />
 
                         <div id="placeholder-icon" class="flex flex-col items-center text-gray-500 bg-white/80 backdrop-blur-sm p-4 rounded-xl shadow-sm opacity-0 group-hover:opacity-100 z-20 transition-all duration-300 absolute">

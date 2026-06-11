@@ -87,7 +87,7 @@
                 <div class="flex items-center w-full md:w-20 mb-3 md:mb-0">
                     <div class="relative flex-shrink-0">
                         @if($k->gambar)
-                        <img src="{{ asset('storage/' . $k->gambar) }}" class="w-12 h-12 rounded-xl object-cover shadow-sm border border-gray-200 bg-white">
+                        <img src="{{ (str_starts_with($k->gambar ?? '', 'http') ? $k->gambar : asset('storage/' . $k->gambar)) }}" class="w-12 h-12 rounded-xl object-cover shadow-sm border border-gray-200 bg-white">
                         @else
                         <div class="w-12 h-12 bg-gradient-to-br from-blue-100 to-blue-50 text-blue-600 rounded-xl flex items-center justify-center font-bold text-lg border border-blue-200 shadow-sm">
                             {{ substr(strtoupper($k->nama_kategori), 0, 1) }}
@@ -121,7 +121,7 @@
                         onclick="openEditModal(this)"
                         data-id="{{ $k->id_kategori }}"
                         data-nama="{{ $k->nama_kategori }}"
-                        data-gambar="{{ $k->gambar ? asset('storage/' . $k->gambar) : '' }}"
+                        data-gambar="{{ $k->gambar ? (str_starts_with($k->gambar ?? '', 'http') ? $k->gambar : asset('storage/' . $k->gambar)) : '' }}"
                         class="bg-white text-yellow-500 w-9 h-9 rounded-xl flex items-center justify-center shadow-sm border border-gray-200 hover:bg-yellow-400 hover:text-white hover:border-yellow-400 transition"
                         title="Edit">
                         <i class="fa-solid fa-pen text-xs"></i>

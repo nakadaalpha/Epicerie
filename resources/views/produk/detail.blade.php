@@ -105,7 +105,7 @@
           <div class="min-w-[160px] bg-white rounded-xl shadow p-3 flex-shrink-0 hover:shadow-md transition">
             <a href="{{ route('produk.show', $item->id_produk) }}">
               <img
-                src="{{ asset('storage/' . $item->gambar) }}"
+                src="{{ (str_starts_with($item->gambar ?? '', 'http') ? $item->gambar : asset('storage/' . $item->gambar)) }}"
                 alt="{{ $item->nama_produk }}"
                 class="w-full h-24 object-cover rounded-lg mb-2"
               >

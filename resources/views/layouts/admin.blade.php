@@ -92,7 +92,7 @@
         <div class="border-t border-gray-100 p-4 shrink-0 relative bg-white z-50">
             <button onclick="toggleUserMenu()" class="flex items-center gap-3 w-full px-2 py-2 rounded-xl hover:bg-gray-50/50 hover:shadow-sm hover:border-gray-200 border border-transparent transition-all text-left group">
                 @if(Auth::check() && Auth::user()->foto_profil)
-                <img src="{{ asset('storage/' . Auth::user()->foto_profil) }}" class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm">
+                <img src="{{ (str_starts_with(Auth::user()->foto_profil ?? '', 'http') ? Auth::user()->foto_profil : asset('storage/' . Auth::user()->foto_profil)) }}" class="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm">
                 @else
                 <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm border-2 border-white shadow-sm">
                     {{ substr(Auth::user()->nama ?? 'U', 0, 1) }}

@@ -57,7 +57,7 @@
     @stack('styles') {{-- Tempat untuk CSS tambahan per halaman --}}
 </head>
 
-<body class="bg-gray-50 text-gray-700 pb-20 font-sans">
+<body class="bg-gray-50 text-gray-700 pb-24 md:pb-20 font-sans">
 
     @include('partials.navbar-kiosk')
 
@@ -86,7 +86,7 @@
                 {{-- FOTO PROFIL --}}
                 <div class="aspect-square bg-gray-50 rounded-2xl overflow-hidden mb-5 flex items-center justify-center relative group border border-gray-100">
                     @if(Auth::user()->foto_profil)
-                    <img src="{{ asset('storage/' . Auth::user()->foto_profil) }}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
+                    <img src="{{ (str_starts_with(Auth::user()->foto_profil ?? '', 'http') ? Auth::user()->foto_profil : asset('storage/' . Auth::user()->foto_profil)) }}" class="w-full h-full object-cover transition duration-500 group-hover:scale-110">
                     @else
                     <div class="w-full h-full flex items-center justify-center bg-gray-100 text-gray-300 font-bold text-7xl">{{ substr(Auth::user()->nama, 0, 1) }}</div>
                     @endif

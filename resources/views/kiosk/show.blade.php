@@ -74,12 +74,12 @@
             {{-- Foto Produk --}}
             <div class="lg:col-span-4">
                 <div class="sticky top-24">
-                    <div class="aspect-square bg-white rounded-xl overflow-hidden border border-gray-200 mb-4 cursor-zoom-in relative group shadow-sm">
+                    <div class="aspect-square bg-white md:rounded-xl overflow-hidden md:border border-gray-200 mb-4 cursor-zoom-in relative group shadow-sm -mx-4 md:mx-0 mt-[-24px] md:mt-0">
                         @if($produk->persen_diskon > 0)
                         <div class="absolute top-3 left-3 z-10 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md flex items-center gap-1"><i class="fa-solid fa-tags"></i> Hemat {{ $produk->persen_diskon }}%</div>
                         @endif
                         @if($produk->gambar)
-                        <img src="{{ asset('storage/' . $produk->gambar) }}" class="w-full h-full object-contain p-4 transition duration-500 group-hover:scale-105">
+                        <img src="{{ (str_starts_with($produk->gambar ?? '', 'http') ? $produk->gambar : asset('storage/' . $produk->gambar)) }}" class="w-full h-full object-contain p-4 transition duration-500 group-hover:scale-105">
                         @else
                         <div class="w-full h-full flex items-center justify-center text-blue-100"><i class="fa-solid fa-image text-6xl"></i></div>
                         @endif
@@ -143,14 +143,16 @@
                             <span class="font-extrabold text-xl text-gray-900" id="subtotalDisplay">Rp{{ number_format($produk->harga_final, 0, ',', '.') }}</span>
                         </div>
                     </div>
-                    @if($produk->stok > 0)
-                    <div class="flex flex-col gap-3">
-                        <button id="btn-keranjang" onclick="submitCart('cart')" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg text-center transition"><i class="fa-solid fa-plus mr-2"></i> Keranjang</button>
-                        <button onclick="submitCart('now')" class="block w-full border border-blue-600 text-blue-600 hover:bg-blue-50 font-bold py-3 rounded-lg transition">Beli Langsung</button>
+                    <div class="hidden lg:block">
+                        @if($produk->stok > 0)
+                        <div class="flex flex-col gap-3">
+                            <button id="btn-keranjang" onclick="submitCart('cart')" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg text-center transition"><i class="fa-solid fa-plus mr-2"></i> Keranjang</button>
+                            <button onclick="submitCart('now')" class="block w-full border border-blue-600 text-blue-600 hover:bg-blue-50 font-bold py-3 rounded-lg transition">Beli Langsung</button>
+                        </div>
+                        @else
+                        <button disabled class="w-full bg-gray-200 text-gray-400 font-bold py-3 rounded-lg cursor-not-allowed">Stok Habis</button>
+                        @endif
                     </div>
-                    @else
-                    <button disabled class="w-full bg-gray-200 text-gray-400 font-bold py-3 rounded-lg cursor-not-allowed">Stok Habis</button>
-                    @endif
                 </div>
             </div>
         </div>
@@ -271,7 +273,7 @@
                     <div class="relative mb-2">
                         @if($hasDiskonRek) <div class="absolute top-0 left-0 z-20 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-br-lg rounded-tl-lg shadow-sm">-{{ $rek->persen_diskon }}%</div> @endif
                         <a href="{{ route('produk.show', $rek->id_produk) }}" class="block aspect-square rounded-lg overflow-hidden">
-                            @if($rek->gambar) <img src="{{ asset('storage/' . $rek->gambar) }}" class="w-full h-full object-contain p-3 group-hover:scale-105 transition duration-300">
+                            @if($rek->gambar) <img src="{{ (str_starts_with($rek->gambar ?? '', 'http') ? $rek->gambar : asset('storage/' . $rek->gambar)) }}" class="w-full h-full object-contain p-3 group-hover:scale-105 transition duration-300">
                             @else <div class="w-full h-full flex items-center justify-center text-3xl text-gray-300"><i class="fa-solid fa-image"></i></div> @endif
                         </a>
                     </div>
@@ -304,6 +306,21 @@
         @endif
 
     </main>
+
+        {{-- SECTION 4: FLOATING ACTION BAR (MOBILE ONLY) --}}
+        <div class="lg:hidden fixed bottom-[60px] left-0 w-full bg-white border-t border-gray-200 p-3 z-50 shadow-[0_-5px_15px_-10px_rgba(0,0,0,0.1)] flex gap-2">
+            @if($produk->stok > 0)
+            <button id="btn-keranjang-mobile" onclick="submitCart('cart')" class="flex-1 border border-blue-600 text-blue-600 hover:bg-blue-50 font-bold py-2 rounded-xl transition text-sm flex items-center justify-center gap-2">
+                <i class="fa-solid fa-cart-plus"></i> Keranjang
+            </button>
+            <button onclick="submitCart('now')" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 rounded-xl transition text-sm">
+                Beli Langsung
+            </button>
+            @else
+            <button disabled class="w-full bg-gray-200 text-gray-400 font-bold py-2 rounded-xl cursor-not-allowed text-sm">Stok Habis</button>
+            @endif
+        </div>
+
 
     @include('partials.footer-kiosk')
 

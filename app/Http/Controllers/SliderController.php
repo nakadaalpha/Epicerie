@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use CloudinaryLabs\CloudinaryLaravel\Facades\Cloudinary;
 use App\Models\Slider;
 use Illuminate\Support\Facades\Storage;
 
@@ -36,7 +37,7 @@ class SliderController extends Controller
         $data['is_active'] = $request->has('is_active') ? 1 : 0;
 
         if ($request->hasFile('gambar')) {
-            $data['gambar'] = $request->file('gambar')->store('sliders', 'public');
+            $data['gambar'] = Cloudinary::upload($request->file('gambar')->getRealPath(), ['folder' => 'sliders'])->getSecurePath();
         }
 
         Slider::create($data);
@@ -70,7 +71,7 @@ class SliderController extends Controller
             if ($slider->gambar) {
                 Storage::disk('public')->delete($slider->gambar);
             }
-            $data['gambar'] = $request->file('gambar')->store('sliders', 'public');
+            $data['gambar'] = Cloudinary::upload($request->file('gambar')->getRealPath(), ['folder' => 'sliders'])->getSecurePath();
         }
 
         $slider->update($data);

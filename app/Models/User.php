@@ -2,19 +2,44 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class User extends Authenticatable
 {
     use HasFactory, Notifiable;
 
     protected $table = 'user';
+
     protected $primaryKey = 'id_user';
 
+    public $incrementing = false;
+
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::creating(function ($model) {
+            if (empty($model->{$model->getKeyName()})) {
+                // Generate a proper 12-digit numeric Member ID
+                // Format: DDMMYY + 6 random digits (e.g., 110626123456)
+                $date = date('dmy');
+                $newId = (int) ($date.random_int(100000, 999999));
+
+                // Pastikan unik
+                while (static::where($model->getKeyName(), $newId)->exists()) {
+                    $newId = (int) ($date.random_int(100000, 999999));
+                }
+
+                $model->{$model->getKeyName()} = $newId;
+            }
+        });
+    }
+
     protected $fillable = [
+        'google_id',
         'nama',
         'username',
         'password',
@@ -23,7 +48,7 @@ class User extends Authenticatable
         'email_verified_at',
         'no_hp',
         'no_hp_verified_at',
-        'foto_profil'
+        'foto_profil',
     ];
 
     protected $hidden = [
@@ -43,14 +68,14 @@ class User extends Authenticatable
     protected function username(): Attribute
     {
         return Attribute::make(
-            set: fn(string $value) => strtolower(trim($value)),
+            set: fn (string $value) => strtolower(trim($value)),
         );
     }
 
     protected function nama(): Attribute
     {
         return Attribute::make(
-            set: fn(string $value) => ucwords(strtolower($value)),
+            set: fn (string $value) => ucwords(strtolower($value)),
         );
     }
 
@@ -74,7 +99,7 @@ class User extends Authenticatable
         $history = $this->transaksi()->where('status', 'selesai');
 
         $totalNominal = $history->sum('total_bayar');
-        $frekuensi    = $history->count();
+        $frekuensi = $history->count();
 
         // 2. Cek Logika
         // UBAH DARI '&&' (DAN) MENJADI '||' (ATAU)

@@ -14,9 +14,16 @@ return new class extends Migration
         Schema::create('user', function (Blueprint $table) {
             $table->id('id_user'); // Sesuai ERD
             $table->string('nama');
-            $table->string('username')->unique();
-            $table->string('password');
-            $table->enum('role', ['Pemilik', 'Karyawan', 'Pelanggan']);
+            $table->string('username')->unique()->nullable();
+            $table->string('password')->nullable();
+            $table->string('email')->unique()->nullable();
+            $table->timestamp('email_verified_at')->nullable();
+            $table->string('no_hp')->nullable();
+            $table->timestamp('no_hp_verified_at')->nullable();
+            $table->string('foto_profil')->nullable();
+            $table->string('status_cetak_kartu')->nullable();
+            $table->string('pin_keamanan')->nullable();
+            $table->string('role')->default('kiosk');
             $table->timestamps();
         });
 

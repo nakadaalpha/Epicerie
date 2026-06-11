@@ -51,7 +51,7 @@
     </div>
     @endif
 
-    <div class="max-w-[1150px] mx-auto px-4 py-8">
+    <div class="max-w-[1150px] mx-auto px-4 pt-8 pb-32 lg:pb-8">
         <h1 class="font-bold text-2xl mb-6 text-gray-800">Keranjang</h1>
 
         @if($keranjang->isEmpty())
@@ -79,7 +79,7 @@
                         <div class="bg-white p-3 rounded-2xl shadow-sm border border-gray-100 flex flex-col justify-between transition-all hover:shadow-md hover:border-blue-200 relative group overflow-hidden">
                             <a href="{{ route('produk.show', $p->id_produk) }}" class="block flex-1 cursor-pointer">
                                 <div class="aspect-square rounded-xl mb-3 flex items-center justify-center overflow-hidden relative">
-                                    @if($p->gambar) <img src="{{ asset('storage/' . $p->gambar) }}" class="w-full h-full object-contain"> @else <span class="text-4xl">📦</span> @endif
+                                    @if($p->gambar) <img src="{{ (str_starts_with($p->gambar ?? '', 'http') ? $p->gambar : asset('storage/' . $p->gambar)) }}" class="w-full h-full object-contain"> @else <span class="text-4xl">📦</span> @endif
                                 </div>
                                 <h3 class="font-bold text-gray-800 text-sm leading-tight mb-1 truncate">{{ $p->nama_produk }}</h3>
                                 <span class="text-blue-600 font-extrabold text-sm mb-1 block">Rp{{ number_format($hargaFinal, 0, ',', '.') }}</span>
@@ -149,7 +149,7 @@
                                             </div>
                                         </div>
 
-                                        <div class="flex flex-row sm:flex-col items-end justify-between w-full sm:w-auto gap-4 sm:gap-6 mt-2 sm:mt-0">
+                                        <div class="flex flex-row sm:flex-col items-center sm:items-end justify-end w-full sm:w-auto gap-4 sm:gap-6 mt-2 sm:mt-0">
                                             <div class="flex items-center border border-gray-300 rounded-lg h-8 bg-white shadow-sm w-24 order-1 sm:order-1">
                                                 <a href="{{ route('kiosk.decrease', $item->id_produk) }}" class="w-8 h-full flex items-center justify-center text-gray-500 hover:text-blue-600 hover:bg-gray-50 rounded-l-lg transition {{ $item->jumlah <= 1 ? 'pointer-events-none opacity-50' : '' }}">
                                                     <i class="fa-solid fa-minus text-xs"></i>
@@ -174,7 +174,7 @@
                     </div>
                 </div>
 
-                <div class="lg:col-span-4">
+                <div class="hidden lg:block lg:col-span-4">
                     <div class="bg-white p-5 rounded-xl shadow-[0_1px_6px_rgba(0,0,0,0.1)] border border-gray-100 sticky top-28">
                         <h3 class="font-bold text-gray-800 text-lg mb-4">Ringkasan belanja</h3>
 
@@ -190,14 +190,28 @@
                             <span class="font-extrabold text-xl text-blue-600" id="total-display">Rp{{ number_format($subtotal, 0, ',', '.') }}</span>
                         </div>
 
-                        <button type="submit" id="btn-beli" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg text-center transition active:scale-95 text-sm shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed">
-                            Beli (<span id="btn-count">{{ count($keranjang) }}</span>)
+                    <div class="hidden lg:block">
+                        <button type="submit" id="btn-beli-desktop" class="block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg text-center transition active:scale-95 text-sm shadow-lg shadow-blue-200 disabled:opacity-50 disabled:cursor-not-allowed">
+                            Beli (<span id="btn-count-desktop">{{ count($keranjang) }}</span>)
                         </button>
+                    </div>
                     </div>
                 </div>
 
             </div>
         </form>
+
+        {{-- FLOATING BOTTOM BAR (MOBILE) --}}
+        <div class="lg:hidden fixed bottom-[60px] left-0 w-full bg-white border-t border-gray-200 p-3 z-50 shadow-[0_-5px_15px_-10px_rgba(0,0,0,0.1)] flex justify-between items-center gap-4">
+            <div>
+                <span class="block text-xs text-gray-500">Total Harga</span>
+                <span class="font-extrabold text-lg text-blue-600" id="total-display-mobile">Rp{{ number_format($subtotal, 0, ',', '.') }}</span>
+            </div>
+            <button type="submit" id="btn-beli-mobile" class="w-1/2 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl text-center transition active:scale-95 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                Beli (<span id="btn-count-mobile">{{ count($keranjang) }}</span>)
+            </button>
+        </div>
+        
         @endif
     </div>
 
@@ -239,19 +253,37 @@
             // Update Tampilan
             document.getElementById('subtotal-display').innerText = formattedTotal;
             document.getElementById('total-display').innerText = formattedTotal;
+            if(document.getElementById('total-display-mobile')) document.getElementById('total-display-mobile').innerText = formattedTotal;
             document.getElementById('total-selected-count').innerText = count;
-            document.getElementById('btn-count').innerText = count;
+            
+            if(document.getElementById('btn-count-desktop')) document.getElementById('btn-count-desktop').innerText = count;
+            if(document.getElementById('btn-count-mobile')) document.getElementById('btn-count-mobile').innerText = count;
 
             // Disable tombol beli jika tidak ada yang dipilih
-            const btnBeli = document.getElementById('btn-beli');
+            const btnBeliDesktop = document.getElementById('btn-beli-desktop');
+            const btnBeliMobile = document.getElementById('btn-beli-mobile');
             if(count === 0) {
-                btnBeli.disabled = true;
-                btnBeli.classList.add('bg-gray-400');
-                btnBeli.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                if(btnBeliDesktop) {
+                    btnBeliDesktop.disabled = true;
+                    btnBeliDesktop.classList.add('bg-gray-400');
+                    btnBeliDesktop.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                }
+                if(btnBeliMobile) {
+                    btnBeliMobile.disabled = true;
+                    btnBeliMobile.classList.add('bg-gray-400');
+                    btnBeliMobile.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+                }
             } else {
-                btnBeli.disabled = false;
-                btnBeli.classList.remove('bg-gray-400');
-                btnBeli.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                if(btnBeliDesktop) {
+                    btnBeliDesktop.disabled = false;
+                    btnBeliDesktop.classList.remove('bg-gray-400');
+                    btnBeliDesktop.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                }
+                if(btnBeliMobile) {
+                    btnBeliMobile.disabled = false;
+                    btnBeliMobile.classList.remove('bg-gray-400');
+                    btnBeliMobile.classList.add('bg-blue-600', 'hover:bg-blue-700');
+                }
             }
         }
 

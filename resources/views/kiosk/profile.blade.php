@@ -13,8 +13,18 @@
             <div class="relative z-10 flex flex-col md:flex-row items-center md:items-start justify-between gap-4">
                 <div class="flex items-center gap-4">
                     <div>
-                        <p class="text-blue-100 text-xs font-bold uppercase tracking-wider mb-1">Status Keanggotaan</p>
-                        <h2 class="text-2xl font-bold tracking-tight">Halo, {{ explode(' ', Auth::user()->nama)[0] }}!</h2>
+                        <p class="text-blue-100 text-xs font-bold uppercase tracking-wider mb-1 flex items-center justify-between">
+                            Status Keanggotaan
+                            <button onclick="openCardModal()" class="md:hidden bg-white/20 hover:bg-white/30 px-3 py-1 rounded text-[10px] text-white backdrop-blur-sm transition shadow-sm border border-white/20 ml-4 whitespace-nowrap">
+                                <i class="fa-solid fa-qrcode"></i> Tampilkan Kartu
+                            </button>
+                        </p>
+                        <h2 class="text-2xl font-bold tracking-tight flex items-center gap-3">
+                            Halo, {{ explode(' ', Auth::user()->nama)[0] }}!
+                            <button onclick="openCardModal()" class="hidden md:flex bg-white/20 hover:bg-white/30 px-3 py-1 rounded text-[10px] text-white backdrop-blur-sm transition shadow-sm border border-white/20 items-center gap-1">
+                                <i class="fa-solid fa-qrcode"></i> Tampilkan Kartu
+                            </button>
+                        </h2>
                         <div class="flex items-center gap-2 mt-2">
                             <span class="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-white text-blue-600 shadow-sm flex items-center gap-1.5">
                                 @if(Auth::user()->membership == 'Gold') <i class="fa-solid fa-crown text-yellow-500"></i>
@@ -366,71 +376,7 @@
 </div>
 </div>
 
-{{-- MODAL KARTU MEMBER (SINKRON DENGAN BACKGROUND ADMIN) --}}
-<div id="cardModalDisplay" class="fixed inset-0 z-[9999] hidden flex items-center justify-center bg-gray-900/90 backdrop-blur-md p-4 transition-opacity duration-300">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md relative transform scale-100 transition-transform duration-300 overflow-hidden">
 
-        {{-- Header Modal --}}
-        <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gradient-to-r from-blue-600 to-indigo-600">
-            <div>
-                <h3 class="font-extrabold text-white text-lg">Kartu Member Digital</h3>
-            </div>
-            <button onclick="closeCardModal()" class="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-white hover:bg-white hover:text-indigo-600 transition"><i class="fa-solid fa-xmark"></i></button>
-        </div>
-
-        {{-- Body: Tampilan Kartu --}}
-        <div class="p-8 bg-gray-50 flex justify-center items-center">
-            {{-- KARTU UTAMA: 342px x 216px --}}
-            <div class="relative w-[342px] h-[216px] rounded-xl shadow-2xl overflow-hidden shrink-0 select-none bg-[#050505] text-white transition-transform hover:scale-[1.02] duration-500">
-
-                {{-- LAYER 1: BACKGROUND GAMBAR DARI ADMIN --}}
-                {{-- Jika admin upload di public/images/card_bg.png --}}
-                <img src="{{ asset('images/card_bg.png') }}"
-                    class="absolute inset-0 w-full h-full object-cover z-0"
-                    onerror="this.style.display='none'; document.getElementById('fallback-confetti').style.display='block';">
-
-                {{-- LAYER 2: FALLBACK CONFETTI (Hanya muncul jika gambar admin tidak ada) --}}
-                <div id="fallback-confetti" class="hidden absolute inset-0 z-0">
-                    <div class="absolute top-[40px] left-[15px] w-[22px] h-[6px] bg-[#0d9488]"></div>
-                    <div class="absolute top-[35px] left-[40px] w-[22px] h-[12px] bg-[#1e293b] opacity-90"></div>
-                    <div class="absolute top-[25px] left-[115px] w-[40px] h-[85px] bg-[#1e293b] opacity-80"></div>
-                    <div class="absolute top-[18px] left-[138px] w-[12px] h-[12px] bg-[#7c2d12]"></div>
-                    <div class="absolute top-[100px] left-[108px] w-[20px] h-[6px] bg-[#1e3a8a]"></div>
-                    <div class="absolute top-[100px] left-[150px] w-[10px] h-[10px] bg-[#b45309]"></div>
-                    <div class="absolute top-[110px] right-[30px] w-[30px] h-[35px] bg-[#1e293b] opacity-80"></div>
-                    <div class="absolute top-[90px] right-[20px] w-[12px] h-[12px] bg-[#15803d]"></div>
-                    <div class="absolute top-[135px] right-[65px] w-[12px] h-[6px] bg-[#c2410c]"></div>
-                </div>
-
-                {{-- LAYER 3: KONTEN TEKS & QR --}}
-                <div class="relative z-10 w-full h-full">
-                    <div class="absolute top-[10%] left-[7%]">
-                        <h1 class="font-extrabold text-2xl tracking-widest uppercase text-white drop-shadow-md">ÉPICERIE</h1>
-                    </div>
-
-                    <div class="absolute top-[10%] right-[7%]">
-                        <div class="border border-[#2dd4bf] bg-black/40 backdrop-blur-sm rounded px-2 py-1">
-                            <p class="text-[8px] font-bold text-[#2dd4bf] tracking-widest uppercase">{{ Auth::user()->membership }} MEMBER</p>
-                        </div>
-                    </div>
-
-                    <div class="absolute bottom-[10%] left-[7%]">
-                        <p class="font-bold text-lg uppercase leading-tight text-white drop-shadow-md">{{ Str::limit(Auth::user()->nama, 18) }}</p>
-                        <p class="text-[9px] text-[#94a3b8] font-mono tracking-widest">{{ Auth::user()->username }}</p>
-                    </div>
-
-                    <div class="absolute bottom-[10%] right-[7%]">
-                        <div class="p-1 rounded shadow-lg bg-black/20 backdrop-blur-sm">
-                            <div class="w-[45px] h-[45px] flex items-center justify-center">
-                                {!! SimpleSoftwareIO\QrCode\Facades\QrCode::size(45)
-                                ->margin(0)
-                                ->color(255, 255, 255)
-                                ->backgroundColor(0, 0, 0, 0) // Membuat background QR transparan
-                                ->generate(Auth::user()->id_user) !!}
-                            </div>
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
     </div>
@@ -546,26 +492,5 @@
         document.getElementById('otpModal').classList.add('hidden');
     }
 
-    // --- MODAL KARTU ---
-    function openCardModal() {
-        const modal = document.getElementById('cardModalDisplay');
-        modal.classList.remove('hidden');
-        setTimeout(() => {
-            modal.children[0].classList.remove('scale-95', 'opacity-0');
-            modal.children[0].classList.add('scale-100', 'opacity-100');
-        }, 10);
-    }
-
-    function closeCardModal() {
-        const modal = document.getElementById('cardModalDisplay');
-        modal.children[0].classList.remove('scale-100', 'opacity-100');
-        modal.children[0].classList.add('scale-95', 'opacity-0');
-        setTimeout(() => {
-            modal.classList.add('hidden');
-        }, 200);
-    }
-    document.getElementById('cardModalDisplay').addEventListener('click', function(e) {
-        if (e.target === this) closeCardModal();
-    });
-</script>
+    </script>
 @endpush

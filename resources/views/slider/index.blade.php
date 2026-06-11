@@ -72,7 +72,7 @@
                 {{-- Kolom 1: Gambar --}}
                 <div class="flex items-center w-full md:w-32 mb-3 md:mb-0">
                     <div class="relative flex-shrink-0 w-full md:w-28 h-16 rounded-lg overflow-hidden border border-gray-200 shadow-sm group-hover:shadow-md transition">
-                        <img src="{{ asset('storage/' . $s->gambar) }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <img src="{{ (str_starts_with($s->gambar ?? '', 'http') ? $s->gambar : asset('storage/' . $s->gambar)) }}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
                     </div>
                 </div>
 
@@ -117,7 +117,7 @@
                         data-deskripsi="{{ $s->deskripsi }}"
                         data-urutan="{{ $s->urutan }}"
                         data-active="{{ $s->is_active }}"
-                        data-gambar="{{ asset('storage/' . $s->gambar) }}"
+                        data-gambar="{{ (str_starts_with($s->gambar ?? '', 'http') ? $s->gambar : asset('storage/' . $s->gambar)) }}"
                         class="bg-white text-yellow-500 w-9 h-9 rounded-xl flex items-center justify-center shadow-sm border border-gray-200 hover:bg-yellow-400 hover:text-white hover:border-yellow-400 transition"
                         title="Edit">
                         <i class="fa-solid fa-pen text-xs"></i>

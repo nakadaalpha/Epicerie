@@ -65,6 +65,17 @@
                 Daftar Sekarang
             </button>
 
+            <div class="relative flex items-center py-2">
+                <div class="flex-grow border-t border-gray-200"></div>
+                <span class="flex-shrink-0 mx-4 text-gray-400 text-xs font-semibold">ATAU</span>
+                <div class="flex-grow border-t border-gray-200"></div>
+            </div>
+
+            <a href="{{ route('google.login') }}" class="w-full bg-white border border-gray-300 text-gray-700 font-bold py-3 rounded-xl shadow-sm hover:bg-gray-50 hover:shadow-md transition-all duration-300 flex justify-center items-center">
+                <img src="https://www.svgrepo.com/show/475656/google-color.svg" class="w-4 h-4 mr-2" alt="Google">
+                <span class="text-sm">Daftar dengan Google</span>
+            </a>
+
             <div class="text-center mt-4">
                 <p class="text-gray-400 text-xs">Sudah punya akun?</p>
                 <a href="{{ route('login') }}" class="text-[#3b4bbd] font-bold text-sm hover:underline">Login disini</a>

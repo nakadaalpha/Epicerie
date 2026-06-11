@@ -45,14 +45,14 @@
                     data-id="{{ $p->id_produk }}"
                     data-name="{{ $p->nama_produk }}"
                     data-price="{{ $p->harga_produk }}"
-                    data-image="{{ $p->gambar ? asset('storage/'.$p->gambar) : '' }}"
+                    data-image="{{ $p->gambar ? (str_starts_with($p->gambar ?? '', 'http') ? $p->gambar : asset('storage/' . $p->gambar)) : '' }}"
                     data-stock="{{ $p->stok }}"
                     data-category="{{ $p->id_kategori }}"
                     onclick="addToCart(this)">
 
                     <div class="relative w-full aspect-square bg-gray-50 rounded-xl mb-3 overflow-hidden flex items-center justify-center">
                         @if($p->gambar)
-                        <img src="{{ asset('storage/'.$p->gambar) }}" class="object-cover w-full h-full group-hover:scale-110 transition duration-500">
+                        <img src="{{ (str_starts_with($p->gambar ?? '', 'http') ? $p->gambar : asset('storage/' . $p->gambar)) }}" class="object-cover w-full h-full group-hover:scale-110 transition duration-500">
                         @else
                         <i class="fa-solid fa-box-open text-3xl text-gray-300"></i>
                         @endif

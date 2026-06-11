@@ -50,7 +50,7 @@
                 <a href="{{ route('produk.show', $p->id_produk) }}" class="block">
                     <div class="aspect-square rounded-xl mb-3 flex items-center justify-center overflow-hidden bg-gray-50">
                         @if($p->gambar)
-                        <img src="{{ asset('storage/' . $p->gambar) }}" class="w-full h-full object-contain p-3">
+                        <img src="{{ (str_starts_with($p->gambar ?? '', 'http') ? $p->gambar : asset('storage/' . $p->gambar)) }}" class="w-full h-full object-contain p-3">
                         @else
                         <span class="text-2xl">📦</span>
                         @endif

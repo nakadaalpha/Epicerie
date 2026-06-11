@@ -48,7 +48,7 @@
             <div>
                 <button type="button" onclick="toggleDropdown()" class="flex items-center max-w-xs bg-white/10 hover:bg-white/20 rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-blue-600 focus:ring-white p-1 pr-3 transition group backdrop-blur-sm border border-white/20" id="user-menu-button" aria-expanded="false" aria-haspopup="true">
                     @if(Auth::user()->foto_profil && file_exists(public_path('storage/' . Auth::user()->foto_profil)))
-                    <img class="h-8 w-8 rounded-full object-cover mr-2 border border-white/50" src="{{ asset('storage/' . Auth::user()->foto_profil) }}" alt="Foto Profil">
+                    <img class="h-8 w-8 rounded-full object-cover mr-2 border border-white/50" src="{{ (str_starts_with(Auth::user()->foto_profil ?? '', 'http') ? Auth::user()->foto_profil : asset('storage/' . Auth::user()->foto_profil)) }}" alt="Foto Profil">
                     @else
                     <div class="h-8 w-8 rounded-full bg-white text-blue-600 flex items-center justify-center font-bold text-xs mr-2 shadow-sm">
                         {{ substr(strtoupper(Auth::user()->nama ?? Auth::user()->username), 0, 1) }}

@@ -116,7 +116,7 @@
                 <div class="flex items-center w-full md:w-20 mb-3 md:mb-0">
                     <div class="relative flex-shrink-0">
                         @if($p->gambar)
-                        <img src="{{ asset('storage/' . $p->gambar) }}" class="w-12 h-12 rounded-lg object-cover shadow-sm border border-gray-200">
+                        <img src="{{ (str_starts_with($p->gambar ?? '', 'http') ? $p->gambar : asset('storage/' . $p->gambar)) }}" class="w-12 h-12 rounded-lg object-cover shadow-sm border border-gray-200">
                         @else
                         <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-lg flex items-center justify-center font-bold shadow-sm border border-blue-100">
                             <i class="fa-solid fa-box-open"></i>
@@ -166,7 +166,7 @@
                     data-stok="{{ $p->stok }}"
                     data-harga="{{ $p->harga_produk }}"
                     data-deskripsi="{{ $p->deskripsi_produk }}"
-                    data-gambar="{{ $p->gambar ? asset('storage/' . $p->gambar) : '' }}"
+                    data-gambar="{{ $p->gambar ? (str_starts_with($p->gambar ?? '', 'http') ? $p->gambar : asset('storage/' . $p->gambar)) : '' }}"
                     class="bg-white text-yellow-500 w-8 h-8 rounded-lg flex items-center justify-center shadow-sm border border-gray-200 hover:bg-yellow-400 hover:text-white hover:border-yellow-400 transition"
                     title="Edit">
                     <i class="fa-solid fa-pen text-xs"></i>

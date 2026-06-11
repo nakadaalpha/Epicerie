@@ -19,6 +19,8 @@ class AlamatPengiriman extends Model
         'label',
         'penerima',        // Sesuaikan dengan SQL (sebelumnya mungkin 'nama_penerima')
         'no_hp_penerima',  // Sesuaikan dengan SQL
-        'detail_alamat'
+        'detail_alamat',
+        'is_primary',
+        'plus_code',
     ];
 }
