@@ -39,10 +39,6 @@ try {
     putenv("APP_EVENTS_CACHE={$storagePath}/bootstrap/cache/events.php");
     $_ENV['APP_EVENTS_CACHE'] = "{$storagePath}/bootstrap/cache/events.php";
     
-    // Force debug mode to see the error
-    putenv("APP_DEBUG=true");
-    $_ENV['APP_DEBUG'] = true;
-    
     // Create required storage directories on Vercel
     $directories = [
         $storagePath . '/framework/cache/data',
