@@ -1,6 +1,5 @@
 {
     "version": 2,
-    "framework": "laravel",
     "builds": [
         {
             "src": "api/index.php",
