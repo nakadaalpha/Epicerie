@@ -1,0 +1,497 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Épicerie API Documentation",
+    "version": "1.0.0",
+    "description": "Dokumentasi API Resmi untuk Platform Épicerie (Smart Grocery, Point of Sale, Delivery, dan Sistem Membership). 100% selaras dengan struktur backend PostgreSQL Supabase.",
+    "contact": {
+      "name": "Épicerie Engineering Team",
+      "email": "epiceriekiosk@gmail.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "Local Development Server"
+    }
+  ],
+  "tags": [
+    { "name": "Auth & Pengguna", "description": "Autentikasi Multi-Role, registrasi dengan PIN 6-digit, dan session profil" },
+    { "name": "Produk & Inventaris", "description": "Katalog produk, pencarian, detail, dan manajemen stok/harga" },
+    { "name": "Kategori", "description": "Pengelompokan kategori produk" },
+    { "name": "Slider Promo", "description": "Banner promosi beranda toko" },
+    { "name": "Transaksi & Kasir POS", "description": "Manajemen transaksi kasir, diskon membership, dan checkout belanja" },
+    { "name": "Kurir & Pelacakan GPS", "description": "Pengantaran pesanan, update lokasi kurir secara realtime, dan tracking Leaflet/Pusher" },
+    { "name": "Ulasan & Rating", "description": "Penilaian 1-5 bintang untuk produk yang telah selesai dibeli" },
+    { "name": "Alamat Pengiriman", "description": "Manajemen multi-alamat pelanggan dan Google Plus Code" },
+    { "name": "Kartu Member Digital", "description": "ID 12-digit, QR Code, dan antrean permohonan cetak kartu fisik" },
+    { "name": "Wishlist & Favorit", "description": "Daftar produk yang disimpan oleh pelanggan" },
+    { "name": "Pembayaran & Gateway Midtrans", "description": "Integrasi pembayaran online Snap Midtrans dan webhook notification" }
+  ],
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Auth & Pengguna"],
+        "summary": "Login Pengguna Multi-Role",
+        "description": "Mendukung login menggunakan Username atau Nomor HP, dengan validasi sandi Bcrypt.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["identifier", "password"],
+                "properties": {
+                  "identifier": { "type": "string", "example": "adminz", "description": "Username, Email, atau No. HP" },
+                  "password": { "type": "string", "format": "password", "example": "password123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Login berhasil dan cookie session HTTP-only disimpan." },
+          "401": { "description": "Kredensial salah atau pengguna tidak ditemukan." }
+        }
+      }
+    },
+    "/api/auth/register": {
+      "post": {
+        "tags": ["Auth & Pengguna"],
+        "summary": "Registrasi Akun Member Baru",
+        "description": "Mendaftarkan member pelanggan baru dengan PIN keamanan 6 digit dan otomatis menghasilkan Nomor Member 12 digit.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["nama", "username", "no_hp", "pin_keamanan", "password", "password_confirmation"],
+                "properties": {
+                  "nama": { "type": "string", "example": "Budi Santoso" },
+                  "username": { "type": "string", "example": "budisantoso" },
+                  "no_hp": { "type": "string", "example": "08123456789" },
+                  "pin_keamanan": { "type": "string", "example": "123456", "description": "6 digit angka rahasia" },
+                  "password": { "type": "string", "example": "password123" },
+                  "password_confirmation": { "type": "string", "example": "password123" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Registrasi member berhasil dibuat." },
+          "400": { "description": "Validasi gagal (username/no_hp sudah terdaftar atau PIN bukan 6 digit)." }
+        }
+      }
+    },
+    "/api/auth/me": {
+      "get": {
+        "tags": ["Auth & Pengguna"],
+        "summary": "Ambil Profil Pengguna & Status Membership Aktif",
+        "description": "Mengembalikan data pengguna saat ini beserta tingkatan membership (Gold/Silver/Bronze/Classic) dan total belanja.",
+        "responses": {
+          "200": { "description": "Profil pengguna berhasil didapatkan." },
+          "401": { "description": "Pengguna belum login." }
+        }
+      }
+    },
+    "/api/products": {
+      "get": {
+        "tags": ["Produk & Inventaris"],
+        "summary": "Dapatkan Daftar Produk",
+        "description": "Mengambil katalog produk dari tabel `produk` dengan dukungan filter kategori dan pencarian.",
+        "parameters": [
+          { "name": "category_id", "in": "query", "schema": { "type": "integer" }, "description": "Filter berdasarkan ID Kategori" },
+          { "name": "search", "in": "query", "schema": { "type": "string" }, "description": "Pencarian nama atau deskripsi produk" },
+          { "name": "sort", "in": "query", "schema": { "type": "string", "enum": ["terbaru", "terlaris", "termurah", "termahal"] } }
+        ],
+        "responses": {
+          "200": {
+            "description": "Daftar produk berhasil diambil.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Produk" }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Produk & Inventaris"],
+        "summary": "Tambah Produk Baru (Admin)",
+        "description": "Menambahkan produk baru ke database dan mengunggah gambar ke Cloudinary.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProdukInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Produk berhasil ditambahkan." }
+        }
+      }
+    },
+    "/api/products/{id}": {
+      "get": {
+        "tags": ["Produk & Inventaris"],
+        "summary": "Dapatkan Detail Produk & Ulasan",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Detail produk beserta ulasan pelanggan." },
+          "404": { "description": "Produk tidak ditemukan." }
+        }
+      },
+      "put": {
+        "tags": ["Produk & Inventaris"],
+        "summary": "Perbarui Data Produk (Admin)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/ProdukInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Produk berhasil diperbarui." }
+        }
+      },
+      "delete": {
+        "tags": ["Produk & Inventaris"],
+        "summary": "Hapus Produk (Admin)",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Produk berhasil dihapus." }
+        }
+      }
+    },
+    "/api/categories": {
+      "get": {
+        "tags": ["Kategori"],
+        "summary": "Dapatkan Semua Kategori",
+        "responses": {
+          "200": {
+            "description": "Daftar kategori produk.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": { "$ref": "#/components/schemas/Kategori" }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sliders": {
+      "get": {
+        "tags": ["Slider Promo"],
+        "summary": "Dapatkan Banner Promo Beranda",
+        "description": "Mengambil slider banner yang aktif (`is_active = 1`) diurutkan berdasarkan `urutan`.",
+        "responses": {
+          "200": { "description": "Daftar slider promo berhasil didapatkan." }
+        }
+      }
+    },
+    "/api/transactions": {
+      "get": {
+        "tags": ["Transaksi & Kasir POS"],
+        "summary": "Riwayat Transaksi",
+        "parameters": [
+          { "name": "status", "in": "query", "schema": { "type": "string", "enum": ["pending", "diproses", "dikemas", "dikirim", "selesai", "batal"] } },
+          { "name": "limit", "in": "query", "schema": { "type": "integer", "default": 15 } }
+        ],
+        "responses": {
+          "200": { "description": "Riwayat transaksi berhasil diambil." }
+        }
+      },
+      "post": {
+        "tags": ["Transaksi & Kasir POS"],
+        "summary": "Buat Transaksi Baru (Kasir / E-Commerce)",
+        "description": "Menyimpan transaksi ke tabel `transaksi`, mencatat barang ke `detail_transaksi` dengan harga riil (`harga_produk_saat_beli`), serta memotong stok produk secara otomatis.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/CreateTransactionInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Transaksi berhasil disimpan." },
+          "400": { "description": "Keranjang kosong atau stok tidak mencukupi." }
+        }
+      }
+    },
+    "/api/transactions/{id}/complete": {
+      "post": {
+        "tags": ["Transaksi & Kasir POS"],
+        "summary": "Tandai Transaksi Selesai",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Status transaksi berhasil diubah menjadi 'selesai'." }
+        }
+      }
+    },
+    "/api/kurir/tasks": {
+      "get": {
+        "tags": ["Kurir & Pelacakan GPS"],
+        "summary": "Daftar Tugas Pengantaran Kurir",
+        "description": "Mengambil pesanan yang siap diantar (status 'dikemas' atau 'diproses').",
+        "responses": {
+          "200": { "description": "Daftar antrean pengiriman berhasil diambil." }
+        }
+      }
+    },
+    "/api/kurir/start/{id}": {
+      "post": {
+        "tags": ["Kurir & Pelacakan GPS"],
+        "summary": "Mulai Antar Pesanan",
+        "description": "Mengubah status transaksi menjadi 'dikirim' dan mencatat ID kurir pengantar.",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Status pengiriman diubah menjadi 'dikirim'." }
+        }
+      }
+    },
+    "/api/kurir/location": {
+      "post": {
+        "tags": ["Kurir & Pelacakan GPS"],
+        "summary": "Kirim Pembaruan Lokasi GPS Kurir",
+        "description": "Menyimpan koordinat Latitude & Longitude ke tabel `transaksi` dan menyiarkan sinyal Pusher `lokasi-update` ke channel `tracking.{id_transaksi}`.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id_transaksi", "lat", "long"],
+                "properties": {
+                  "id_transaksi": { "type": "integer", "example": 105 },
+                  "lat": { "type": "number", "format": "double", "example": -7.733260 },
+                  "long": { "type": "number", "format": "double", "example": 110.331213 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Koordinat lokasi tersimpan dan broadcast disiarkan." }
+        }
+      }
+    },
+    "/api/reviews": {
+      "post": {
+        "tags": ["Ulasan & Rating"],
+        "summary": "Kirim Ulasan Produk",
+        "description": "Mengirimkan penilaian 1-5 bintang. Hanya dapat dilakukan oleh pembeli yang telah membeli produk tersebut dalam transaksi berstatus 'selesai'.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id_produk", "rating", "komentar"],
+                "properties": {
+                  "id_produk": { "type": "integer", "example": 24 },
+                  "rating": { "type": "integer", "minimum": 1, "maximum": 5, "example": 5 },
+                  "komentar": { "type": "string", "example": "Barang fresh dan pengiriman cepat sekali!" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Ulasan berhasil diterbitkan." },
+          "400": { "description": "Pengguna belum pernah membeli produk ini atau sudah pernah memberikan ulasan sebelumnya." }
+        }
+      }
+    },
+    "/api/addresses": {
+      "get": {
+        "tags": ["Alamat Pengiriman"],
+        "summary": "Daftar Alamat Pengiriman Pelanggan",
+        "responses": {
+          "200": { "description": "Daftar alamat tersimpan pelanggan." }
+        }
+      },
+      "post": {
+        "tags": ["Alamat Pengiriman"],
+        "summary": "Tambah Alamat Pengiriman Baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["label", "penerima", "no_hp_penerima", "detail_alamat"],
+                "properties": {
+                  "label": { "type": "string", "example": "Rumah" },
+                  "penerima": { "type": "string", "example": "Budi" },
+                  "no_hp_penerima": { "type": "string", "example": "08123456789" },
+                  "detail_alamat": { "type": "string", "example": "Jl. Kaliurang KM 12 No. 45" },
+                  "plus_code": { "type": "string", "example": "6P5R+2F Yogyakarta" },
+                  "is_primary": { "type": "integer", "enum": [0, 1], "default": 0 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Alamat berhasil disimpan." }
+        }
+      }
+    },
+    "/api/member-card/request": {
+      "post": {
+        "tags": ["Kartu Member Digital"],
+        "summary": "Pengajuan Cetak Kartu Fisik Member",
+        "description": "Mengubah status cetak kartu akun pelanggan menjadi 'pending' untuk diproses cetak oleh admin.",
+        "responses": {
+          "200": { "description": "Permintaan cetak kartu fisik berhasil diajukan." }
+        }
+      }
+    },
+    "/api/wishlist": {
+      "get": {
+        "tags": ["Wishlist & Favorit"],
+        "summary": "Ambil Daftar Produk Favorit",
+        "description": "Mengambil daftar produk yang disimpan ke wishlist oleh pengguna yang sedang login.",
+        "responses": {
+          "200": { "description": "Daftar wishlist berhasil diambil." },
+          "401": { "description": "Pengguna belum login." }
+        }
+      },
+      "post": {
+        "tags": ["Wishlist & Favorit"],
+        "summary": "Toggle Tambah / Hapus Wishlist",
+        "description": "Jika produk belum ada di wishlist maka ditambahkan; jika sudah ada maka dihapus.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["id_produk"],
+                "properties": {
+                  "id_produk": { "type": "integer", "example": 24 }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Status wishlist berhasil diubah." }
+        }
+      }
+    },
+    "/api/payment/midtrans-webhook": {
+      "post": {
+        "tags": ["Pembayaran & Gateway Midtrans"],
+        "summary": "Midtrans HTTP Notification Webhook",
+        "description": "Menerima notifikasi status pembayaran dari Midtrans (settlement, pending, expire, deny, cancel) dan memperbarui status transaksi di database secara otomatis.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["order_id", "transaction_status", "gross_amount"],
+                "properties": {
+                  "order_id": { "type": "string", "example": "TRX-105-1718000" },
+                  "transaction_status": { "type": "string", "example": "settlement" },
+                  "gross_amount": { "type": "string", "example": "75000.00" },
+                  "payment_type": { "type": "string", "example": "qris" },
+                  "signature_key": { "type": "string", "example": "a3b9c..." }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Status transaksi berhasil diperbarui oleh webhook." }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Produk": {
+        "type": "object",
+        "properties": {
+          "id_produk": { "type": "integer", "example": 24 },
+          "id_kategori": { "type": "integer", "example": 2 },
+          "nama_produk": { "type": "string", "example": "Apel Fuji Segar" },
+          "harga_produk": { "type": "number", "example": 35000 },
+          "stok": { "type": "integer", "example": 50 },
+          "deskripsi_produk": { "type": "string", "example": "Apel manis renyah kualitas impor premium." },
+          "gambar": { "type": "string", "example": "https://res.cloudinary.com/dewicilmm/image/upload/v1/produk/apel.jpg" },
+          "nama_kategori": { "type": "string", "example": "Buah & Sayur" },
+          "total_terjual": { "type": "integer", "example": 14 }
+        }
+      },
+      "ProdukInput": {
+        "type": "object",
+        "required": ["id_kategori", "nama_produk", "harga_produk", "stok"],
+        "properties": {
+          "id_kategori": { "type": "integer", "example": 2 },
+          "nama_produk": { "type": "string", "example": "Mangga Harum Manis" },
+          "harga_produk": { "type": "number", "example": 28000 },
+          "stok": { "type": "integer", "example": 30 },
+          "deskripsi_produk": { "type": "string", "example": "Mangga matang pohon manis alami." },
+          "gambar": { "type": "string", "example": "https://res.cloudinary.com/dewicilmm/image/upload/mangga.jpg" }
+        }
+      },
+      "Kategori": {
+        "type": "object",
+        "properties": {
+          "id_kategori": { "type": "integer", "example": 1 },
+          "nama_kategori": { "type": "string", "example": "Sayuran Hijau" },
+          "gambar": { "type": "string", "example": "https://res.cloudinary.com/dewicilmm/image/upload/sayur.png" }
+        }
+      },
+      "CreateTransactionInput": {
+        "type": "object",
+        "required": ["items", "total_bayar", "metode_pembayaran"],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": ["id_produk", "jumlah", "harga"],
+              "properties": {
+                "id_produk": { "type": "integer", "example": 24 },
+                "jumlah": { "type": "integer", "example": 2 },
+                "harga": { "type": "number", "example": 35000 }
+              }
+            }
+          },
+          "total_bayar": { "type": "number", "example": 70000 },
+          "metode_pembayaran": { "type": "string", "enum": ["Tunai", "QRIS", "Midtrans", "Transfer"], "example": "Tunai" },
+          "id_user_pembeli": { "type": "integer", "nullable": true },
+          "id_alamat": { "type": "integer", "nullable": true },
+          "ongkir": { "type": "number", "default": 0 },
+          "nama_pelanggan_hold": { "type": "string", "example": "Meja 3" }
+        }
+      }
+    }
+  }
+}

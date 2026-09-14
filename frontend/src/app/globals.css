@@ -1,0 +1,34 @@
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+@import "tailwindcss";
+
+:root {
+  --background: #f9fafb;
+  --foreground: #1f2937;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Nunito', -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Print thermal receipt styling */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #printable-receipt, #printable-receipt * {
+    visibility: visible;
+  }
+  #printable-receipt {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 80mm;
+    margin: 0;
+    padding: 10px;
+    background: white;
+    color: black;
+  }
+}

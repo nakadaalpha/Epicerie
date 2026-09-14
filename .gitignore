@@ -1,34 +1,50 @@
-/vendor
-/node_modules
-/public/build
-/public/hot
-/public/storage
-/storage/*.key
-/storage/debugbar
+# Dependencies
+node_modules/
+**/node_modules/
+vendor/
+legacy/vendor/
+
+# Build & Output Artifacts
+dist/
+**/dist/
+build/
+**/build/
+out/
+.next/
+frontend/.next/
+*.tsbuildinfo
+**/*.tsbuildinfo
+
+# Environment & Sensitive Files
 .env
-.env.backup
-.env.production
+.env.*
+*.env
+**/.env
+**/.env.*
+!**/.env.example
+
+# Scratch & Temporary Scripts
+scratch/
+**/scratch/
+
+# Logs & Debugging
+*.log
+**/*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Laravel Legacy Storage & Cache
+legacy/storage/*.key
+legacy/storage/framework/cache/*
+legacy/storage/framework/sessions/*
+legacy/storage/framework/views/*
+legacy/storage/logs/*
 .phpunit.result.cache
-.turbolinkscache
 
-# Homestead / Valet / Docker
-Homestead.json
-Homestead.yaml
-auth.json
-npm-debug.log
-yarn-error.log
-docker-compose.override.yml
-
-# IDE & Editor Config
-/.ideal
-/.vscode
-/.fleet
-*.swp
-*.swo
+# Operating System & IDE Files
 .DS_Store
+**/.DS_Store
 Thumbs.db
-
-# Test & Coverage
-/coverage
-.phpunit.result.cache
-node_modules
+.vscode/
+.idea/

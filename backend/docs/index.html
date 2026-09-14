@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Épicerie API Documentation - Swagger UI</title>
+  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css" />
+  <link rel="icon" type="image/png" href="https://res.cloudinary.com/dewicilmm/image/upload/v1/favicon.png" />
+  <style>
+    html {
+      box-sizing: border-box;
+      overflow: -moz-scrollbars-vertical;
+      overflow-y: scroll;
+    }
+    *, *:before, *:after {
+      box-sizing: inherit;
+    }
+    body {
+      margin: 0;
+      background: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+    .topbar-epicerie {
+      background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #0f172a 100%);
+      color: #ffffff;
+      padding: 18px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .topbar-epicerie .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .topbar-epicerie .logo-badge {
+      width: 38px;
+      height: 38px;
+      background: #059669;
+      color: #ffffff;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .topbar-epicerie h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .topbar-epicerie p {
+      margin: 2px 0 0;
+      font-size: 12px;
+      color: #a7f3d0;
+    }
+    .topbar-epicerie .tags {
+      display: flex;
+      gap: 8px;
+    }
+    .badge {
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #ffffff;
+    }
+    .swagger-ui .topbar {
+      display: none !important;
+    }
+    .swagger-ui .wrapper {
+      max-width: 1280px;
+      padding: 24px;
+    }
+    .swagger-ui .scheme-container {
+      background: #ffffff;
+      border-radius: 12px;
+      margin: 20px 0;
+      padding: 16px 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar-epicerie">
+    <div class="brand">
+      <div class="logo-badge">É</div>
+      <div>
+        <h1>Épicerie Backend API Documentation</h1>
+        <p>Spesifikasi OpenAPI 3.0 &bull; Selaras 100% dengan Supabase PostgreSQL (11 Tabel Legacy)</p>
+      </div>
+    </div>
+    <div class="tags">
+      <span class="badge">OpenAPI 3.0</span>
+      <span class="badge" style="background: rgba(16, 185, 129, 0.3); border-color: #10b981;">Backend Directory</span>
+    </div>
+  </div>
+
+  <div id="swagger-ui"></div>
+
+  <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js"></script>
+  <script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-standalone-preset.js"></script>
+  <script>
+    window.onload = function() {
+      window.ui = SwaggerUIBundle({
+        url: "./openapi.json",
+        dom_id: '#swagger-ui',
+        deepLinking: true,
+        presets: [
+          SwaggerUIBundle.presets.apis,
+          SwaggerUIStandalonePreset
+        ],
+        plugins: [
+          SwaggerUIBundle.plugins.DownloadUrl
+        ],
+        layout: "StandaloneLayout",
+        docExpansion: "list",
+        filter: true,
+        tryItOutEnabled: true,
+        displayRequestDuration: true
+      });
+    };
+  </script>
+</body>
+</html>
