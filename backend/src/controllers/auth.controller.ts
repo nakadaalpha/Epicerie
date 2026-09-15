@@ -4,6 +4,8 @@ import jwt from 'jsonwebtoken';
 import { query } from '../config/db';
 import { ENV } from '../config/env';
 import { AuthenticatedRequest } from '../middlewares/auth';
+import { normalizeRole, getRolePermissions } from '../config/permissions';
+import { logActivity } from '../services/audit.service';
 
 function verifyPassword(password: string, hash?: string): boolean {
   if (!hash) return false;
@@ -49,11 +51,16 @@ export async function login(req: Request, res: Response) {
       return res.status(401).json({ success: false, error: 'Kata sandi salah. Silakan coba lagi.' });
     }
 
+    const normalizedRole = normalizeRole(user.role);
+    const permissions = getRolePermissions(user.role);
+
     const payload = {
       id_user: Number(user.id_user),
       nama: user.nama,
       username: user.username,
       role: user.role,
+      normalizedRole,
+      permissions,
       no_hp: user.no_hp,
       foto_profil: user.foto_profil,
     };
@@ -67,6 +74,8 @@ export async function login(req: Request, res: Response) {
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+
+    await logActivity(payload.id_user, `Login berhasil (${user.username}, peran: ${user.role})`);
 
     res.status(200).json({
       success: true,
@@ -130,11 +139,16 @@ export async function register(req: Request, res: Response) {
       [idUser, String(nama).trim(), cleanUsername, hashedPassword, cleanPhone, pin_keamanan, now, now]
     );
 
+    const normalizedRole = normalizeRole('pelanggan');
+    const permissions = getRolePermissions('pelanggan');
+
     const payload = {
       id_user: idUser,
       nama: String(nama).trim(),
       username: cleanUsername,
       role: 'pelanggan',
+      normalizedRole,
+      permissions,
       no_hp: cleanPhone,
       foto_profil: null,
     };
@@ -147,6 +161,8 @@ export async function register(req: Request, res: Response) {
       sameSite: 'lax',
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
+
+    await logActivity(idUser, `Registrasi akun baru (Pelanggan: ${cleanUsername})`);
 
     res.status(201).json({
       success: true,
@@ -208,6 +224,9 @@ export async function getMe(req: AuthenticatedRequest, res: Response) {
       }
     }
 
+    const normalizedRole = normalizeRole(user.role);
+    const permissions = getRolePermissions(user.role);
+
     res.status(200).json({
       success: true,
       user: {
@@ -217,6 +236,8 @@ export async function getMe(req: AuthenticatedRequest, res: Response) {
         email: user.email,
         no_hp: user.no_hp,
         role: user.role,
+        normalizedRole,
+        permissions,
         foto_profil: user.foto_profil,
         status_cetak_kartu: user.status_cetak_kartu,
         membership,
@@ -279,6 +300,8 @@ export async function resetPassword(req: Request, res: Response) {
       `UPDATE "user" SET password = $1, updated_at = $2 WHERE id_user = $3`,
       [hashedPassword, now, id_user]
     );
+
+    await logActivity(Number(id_user), 'Kata sandi pengguna berhasil direset');
 
     res.status(200).json({ success: true, message: 'Password berhasil diubah. Silakan login kembali.' });
   } catch (error: any) {

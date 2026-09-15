@@ -1,9 +1,12 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
+import { Role, Permission } from './permissions';
 
 const SECRET_KEY = new TextEncoder().encode(
-  process.env.SESSION_SECRET || 'epicerie_secure_jwt_secret_key_2026_super_safe_random'
+  process.env.JWT_SECRET ||
+    process.env.SESSION_SECRET ||
+    'epicerie-super-secret-jwt-key-2026-production'
 );
 
 const COOKIE_NAME = 'epicerie_session';
@@ -13,6 +16,8 @@ export interface SessionPayload {
   nama: string;
   username: string;
   role: string;
+  normalizedRole?: Role;
+  permissions?: Permission[];
   no_hp?: string | null;
   foto_profil?: string | null;
 }

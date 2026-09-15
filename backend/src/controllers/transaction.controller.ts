@@ -1,16 +1,19 @@
 import { Request, Response } from 'express';
 import { query } from '../config/db';
 import { AuthenticatedRequest } from '../middlewares/auth';
+import { hasPermission } from '../config/permissions';
+import { logActivity } from '../services/audit.service';
 
 export async function getTransactions(req: AuthenticatedRequest, res: Response) {
   try {
-    const { status, limit = 20 } = req.query;
+    const { status, search, sort, limit = 100 } = req.query;
 
     let sql = `
       SELECT 
         t.*,
         u.nama as nama_pembeli,
         u.no_hp as no_hp_pembeli,
+        COALESCE(t.ongkos_kirim, t.ongkir, 0) as ongkos_kirim,
         COUNT(dt.id_detail_transaksi) as total_items
       FROM transaksi t
       LEFT JOIN "user" u ON t.id_user_pembeli = u.id_user
@@ -19,29 +22,92 @@ export async function getTransactions(req: AuthenticatedRequest, res: Response) 
     `;
     const params: any[] = [];
 
-    // If customer, filter to only their own orders
-    if (req.user && req.user.role === 'pelanggan') {
+    // RBAC: If caller does not have storewide 'orders:read_all' permission, filter strictly to their own orders
+    if (!hasPermission(req.user?.role, 'orders:read_all')) {
+      if (!req.user?.id_user) {
+        return res.status(401).json({ success: false, error: 'Silakan login terlebih dahulu.' });
+      }
       params.push(req.user.id_user);
       sql += ` AND t.id_user_pembeli = $${params.length}`;
     }
 
-    if (status) {
-      params.push(status);
-      sql += ` AND t.status = $${params.length}`;
+    if (status && String(status).trim() !== '') {
+      params.push(String(status).trim());
+      sql += ` AND LOWER(t.status) = LOWER($${params.length})`;
     }
 
-    sql += ` GROUP BY t.id_transaksi, u.nama, u.no_hp ORDER BY t.id_transaksi DESC LIMIT $${params.length + 1}`;
+    if (search && String(search).trim() !== '') {
+      params.push(`%${String(search).trim().toLowerCase()}%`);
+      sql += ` AND (LOWER(t.kode_transaksi) LIKE $${params.length} OR LOWER(COALESCE(u.nama, '')) LIKE $${params.length} OR LOWER(COALESCE(t.nama_pelanggan_hold, '')) LIKE $${params.length})`;
+    }
+
+    sql += ` GROUP BY t.id_transaksi, u.nama, u.no_hp `;
+
+    if (sort === 'terlama') {
+      sql += ` ORDER BY t.created_at ASC, t.id_transaksi ASC`;
+    } else if (sort === 'terbesar') {
+      sql += ` ORDER BY t.total_bayar DESC`;
+    } else if (sort === 'terkecil') {
+      sql += ` ORDER BY t.total_bayar ASC`;
+    } else {
+      sql += ` ORDER BY t.created_at DESC, t.id_transaksi DESC`;
+    }
+
     params.push(Number(limit));
+    sql += ` LIMIT $${params.length}`;
 
     const rows = await query<any>(sql, params);
-    res.status(200).json({ success: true, data: rows });
+
+    // Fetch items for all retrieved transactions
+    const trxIds = rows.map((r) => r.id_transaksi);
+    let itemsMap: Record<number, any[]> = {};
+
+    if (trxIds.length > 0) {
+      const items = await query<any>(
+        `SELECT 
+           dt.id_transaksi,
+           dt.id_detail_transaksi,
+           dt.id_produk,
+           dt.jumlah,
+           dt.harga_produk_saat_beli,
+           p.nama_produk,
+           p.gambar
+         FROM detail_transaksi dt
+         JOIN produk p ON dt.id_produk = p.id_produk
+         WHERE dt.id_transaksi = ANY($1)`,
+        [trxIds]
+      ).catch(() => []);
+
+      for (const item of items) {
+        if (!itemsMap[item.id_transaksi]) {
+          itemsMap[item.id_transaksi] = [];
+        }
+        itemsMap[item.id_transaksi].push({
+          id_detail_transaksi: item.id_detail_transaksi,
+          id_produk: item.id_produk,
+          nama_produk: item.nama_produk,
+          gambar: item.gambar,
+          jumlah: Number(item.jumlah),
+          harga_produk_saat_beli: Number(item.harga_produk_saat_beli),
+        });
+      }
+    }
+
+    const formatted = rows.map((trx) => ({
+      ...trx,
+      total_bayar: Number(trx.total_bayar),
+      ongkos_kirim: Number(trx.ongkos_kirim || 0),
+      items: itemsMap[trx.id_transaksi] || [],
+    }));
+
+    res.status(200).json({ success: true, data: formatted });
   } catch (error: any) {
     console.error('Failed to get transactions:', error);
     res.status(500).json({ success: false, error: error.message });
   }
 }
 
-export async function getTransactionById(req: Request, res: Response) {
+export async function getTransactionById(req: AuthenticatedRequest, res: Response) {
   try {
     const id = Number(req.params.id);
     const trxRows = await query<any>(
@@ -146,6 +212,10 @@ export async function createTransaction(req: AuthenticatedRequest, res: Response
       );
     }
 
+    if (userId) {
+      await logActivity(userId, `Membuat pesanan ${kodeTransaksi} total Rp ${Number(total_bayar).toLocaleString('id-ID')}`);
+    }
+
     res.status(201).json({
       success: true,
       message: 'Transaksi berhasil disimpan.',
@@ -160,7 +230,7 @@ export async function createTransaction(req: AuthenticatedRequest, res: Response
   }
 }
 
-export async function updateTransactionStatus(req: Request, res: Response) {
+export async function updateTransactionStatus(req: AuthenticatedRequest, res: Response) {
   try {
     const id = Number(req.params.id);
     const { status } = req.body;
@@ -175,6 +245,8 @@ export async function updateTransactionStatus(req: Request, res: Response) {
       'UPDATE transaksi SET status = $1, updated_at = $2 WHERE id_transaksi = $3',
       [status, now, id]
     );
+
+    await logActivity(req.user?.id_user, `Mengubah status pesanan #${id} menjadi "${status}"`);
 
     res.status(200).json({ success: true, message: `Status transaksi berhasil diubah menjadi '${status}'.` });
   } catch (error: any) {

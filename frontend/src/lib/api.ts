@@ -21,10 +21,25 @@ export async function apiFetch<T = any>(
 ): Promise<ApiResponse<T>> {
   const url = `${API_BASE_URL}${endpoint.startsWith('/') ? '' : '/'}${endpoint}`;
 
-  const headers: HeadersInit = {
+  const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...(options.headers || {}),
+    ...((options.headers as Record<string, string>) || {}),
   };
+
+  // If executing on the Next.js server side (SSR / Server Action), forward session token
+  if (typeof window === 'undefined') {
+    try {
+      const { cookies } = await import('next/headers');
+      const cookieStore = await cookies();
+      const token = cookieStore.get('epicerie_session')?.value;
+      if (token && !headers['Authorization'] && !headers['authorization']) {
+        headers['Authorization'] = `Bearer ${token}`;
+        headers['Cookie'] = `session=${token}`;
+      }
+    } catch (e) {
+      // Cookies not accessible outside of request scope
+    }
+  }
 
   try {
     const res = await fetch(url, {

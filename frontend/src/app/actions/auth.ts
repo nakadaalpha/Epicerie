@@ -7,6 +7,7 @@ import {
   getSession,
   SessionPayload,
 } from '@/lib/auth';
+import { hasPermission, isStaff } from '@/lib/permissions';
 import { revalidatePath } from 'next/cache';
 import { redirect } from 'next/navigation';
 
@@ -29,20 +30,21 @@ export async function loginAction(formData: {
       nama: res.user.nama,
       username: res.user.username,
       role: res.user.role,
+      normalizedRole: res.user.normalizedRole,
+      permissions: res.user.permissions,
       no_hp: res.user.no_hp,
       foto_profil: res.user.foto_profil,
     };
 
     await setSessionCookie(sessionPayload);
 
-    // Determine redirect destination
+    // Determine redirect destination based on permissions
     let redirectTo = '/';
-    const roleLower = (res.user.role || '').toLowerCase();
-    if (roleLower === 'pemilik' || roleLower === 'admin') {
+    if (hasPermission(res.user.role, 'reports:daily') || isStaff(res.user.role)) {
       redirectTo = '/admin';
-    } else if (roleLower === 'karyawan' || roleLower === 'kasir') {
+    } else if (hasPermission(res.user.role, 'pos:access')) {
       redirectTo = '/kiosk';
-    } else if (roleLower === 'kurir') {
+    } else if (hasPermission(res.user.role, 'deliveries:read_assigned')) {
       redirectTo = '/kurir';
     }
 

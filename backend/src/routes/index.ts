@@ -6,6 +6,7 @@ import categoryRoutes from './category.routes';
 import sliderRoutes from './slider.routes';
 import transactionRoutes from './transaction.routes';
 import reviewRoutes from './review.routes';
+import reportRoutes from './report.routes';
 
 const router = Router();
 
@@ -16,5 +17,6 @@ router.use('/categories', categoryRoutes);
 router.use('/sliders', sliderRoutes);
 router.use('/transactions', transactionRoutes);
 router.use('/reviews', reviewRoutes);
+router.use('/reports', reportRoutes);
 
 export default router;

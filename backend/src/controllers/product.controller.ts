@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
 import { query } from '../config/db';
 import { Produk } from '../types';
+import { AuthenticatedRequest } from '../middlewares/auth';
+import { logActivity } from '../services/audit.service';
 
 export async function getProducts(req: Request, res: Response) {
   try {
@@ -44,6 +46,14 @@ export async function getProducts(req: Request, res: Response) {
       sql += ` ORDER BY p.harga_produk DESC`;
     } else if (sort === 'terlaris') {
       sql += ` ORDER BY total_terjual DESC, p.id_produk DESC`;
+    } else if (sort === 'nama_asc') {
+      sql += ` ORDER BY p.nama_produk ASC`;
+    } else if (sort === 'nama_desc') {
+      sql += ` ORDER BY p.nama_produk DESC`;
+    } else if (sort === 'stok_sedikit') {
+      sql += ` ORDER BY p.stok ASC`;
+    } else if (sort === 'stok_banyak') {
+      sql += ` ORDER BY p.stok DESC`;
     } else {
       sql += ` ORDER BY p.id_produk DESC`;
     }
@@ -138,7 +148,7 @@ export async function getProductById(req: Request, res: Response) {
   }
 }
 
-export async function createProduct(req: Request, res: Response) {
+export async function createProduct(req: AuthenticatedRequest, res: Response) {
   try {
     const { id_kategori, nama_produk, harga_produk, stok, deskripsi_produk, gambar } = req.body;
 
@@ -154,10 +164,13 @@ export async function createProduct(req: Request, res: Response) {
       [id_kategori, nama_produk, harga_produk, stok, deskripsi_produk || null, gambar || null, now, now]
     );
 
+    const newId = result[0]?.id_produk;
+    await logActivity(req.user?.id_user, `Menambahkan produk baru "${nama_produk}" (ID: ${newId})`);
+
     res.status(201).json({
       success: true,
       message: 'Produk berhasil ditambahkan.',
-      id_produk: result[0]?.id_produk,
+      id_produk: newId,
     });
   } catch (error: any) {
     console.error('Failed to create product:', error);
@@ -165,7 +178,7 @@ export async function createProduct(req: Request, res: Response) {
   }
 }
 
-export async function updateProduct(req: Request, res: Response) {
+export async function updateProduct(req: AuthenticatedRequest, res: Response) {
   try {
     const id = Number(req.params.id);
     const { id_kategori, nama_produk, harga_produk, stok, deskripsi_produk, gambar } = req.body;
@@ -184,6 +197,8 @@ export async function updateProduct(req: Request, res: Response) {
       [id_kategori, nama_produk, harga_produk, stok, deskripsi_produk, gambar, now, id]
     );
 
+    await logActivity(req.user?.id_user, `Memperbarui data produk ID ${id} (${nama_produk || 'update'})`);
+
     res.status(200).json({ success: true, message: 'Produk berhasil diperbarui.' });
   } catch (error: any) {
     console.error('Failed to update product:', error);
@@ -191,10 +206,11 @@ export async function updateProduct(req: Request, res: Response) {
   }
 }
 
-export async function deleteProduct(req: Request, res: Response) {
+export async function deleteProduct(req: AuthenticatedRequest, res: Response) {
   try {
     const id = Number(req.params.id);
     await query('DELETE FROM produk WHERE id_produk = $1', [id]);
+    await logActivity(req.user?.id_user, `Menghapus produk (ID: ${id})`);
     res.status(200).json({ success: true, message: 'Produk berhasil dihapus.' });
   } catch (error: any) {
     console.error('Failed to delete product:', error);

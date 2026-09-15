@@ -24,6 +24,7 @@ import { CategoryModal } from './CategoryModal';
 import { AddressModal } from './AddressModal';
 import { MemberCardModal } from './MemberCardModal';
 import { Kategori } from '@/types';
+import { hasPermission, isStaff, Permission } from '@/lib/permissions';
 
 interface NavbarProps {
   currentUser?: {
@@ -31,6 +32,7 @@ interface NavbarProps {
     nama: string;
     username: string;
     role: string;
+    permissions?: Permission[];
     membership?: string;
     discountPercent?: number;
     badgeColor?: string;
@@ -61,9 +63,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false);
   const [selectedAddressLabel, setSelectedAddressLabel] = useState<string>('Alamat Utama (Rumah)');
 
-  const role = (currentUser?.role || '').toLowerCase();
-  const isStaffOrAdmin =
-    role === 'pemilik' || role === 'admin' || role === 'karyawan' || role === 'kasir';
+  const canAccessPos = hasPermission(currentUser, 'pos:access');
+  const canAccessAdmin = isStaff(currentUser) || hasPermission(currentUser, 'reports:daily');
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,8 +125,8 @@ export const Navbar: React.FC<NavbarProps> = ({
           {/* C. ICON GROUP & AUTH */}
           <div className="flex items-center gap-1.5 shrink-0">
             <div className="flex items-center gap-1 text-gray-500 pr-1 md:pr-3 md:border-r border-gray-200">
-              {/* Menu Kasir POS (Staff/Admin) */}
-              {isStaffOrAdmin && (
+              {/* Menu Kasir POS (Requires pos:access permission) */}
+              {canAccessPos && (
                 <Link
                   href="/kiosk"
                   className="relative h-9 w-9 md:h-10 md:w-10 flex items-center justify-center rounded-lg hover:bg-gray-50 hover:text-blue-600 transition"
@@ -135,8 +136,8 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </Link>
               )}
 
-              {/* Admin Dashboard (Staff/Admin) */}
-              {isStaffOrAdmin && (
+              {/* Admin Dashboard (Requires staff / reports permission) */}
+              {canAccessAdmin && (
                 <Link
                   href="/admin"
                   className="relative h-9 w-9 md:h-10 md:w-10 flex items-center justify-center rounded-lg hover:bg-gray-50 hover:text-blue-600 transition hidden sm:flex"

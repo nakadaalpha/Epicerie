@@ -4,26 +4,29 @@ import { getSession } from '@/lib/auth';
 import { hasPermission, isStaff } from '@/lib/permissions';
 import { getDashboardStats } from '@/app/actions/shop';
 import { getCurrentUser } from '@/app/actions/auth';
-import { AdminDashboardClient } from '@/components/admin/AdminDashboardClient';
+import { CardSettingsClient } from '@/components/admin/CardSettingsClient';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminPage() {
+export default async function AdminCardSettingsPage() {
   const session = await getSession();
   if (!session) {
-    redirect('/login?callbackUrl=/admin');
+    redirect('/login?callbackUrl=/admin/card/settings');
   }
 
-  // Enforce staff/reports permission
   if (!isStaff(session.role) && !hasPermission(session.role, 'reports:daily')) {
     redirect('/');
   }
 
-  // Fetch stats and user concurrently
   const [stats, currentUser] = await Promise.all([
     getDashboardStats(),
     getCurrentUser(),
   ]);
 
-  return <AdminDashboardClient initialStats={stats} currentUser={currentUser} />;
+  return (
+    <CardSettingsClient
+      currentUser={currentUser}
+      pendingCardCount={stats.pendingCardCount}
+    />
+  );
 }
