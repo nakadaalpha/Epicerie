@@ -54,6 +54,14 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
 
+    // POS Cashier Kiosk guard inside admin
+    if (pathname.startsWith('/admin/kiosk')) {
+      if (!hasPermission(session.role, 'pos:access') && !isStaff(session.role)) {
+        return NextResponse.redirect(new URL('/', request.url));
+      }
+      return NextResponse.next();
+    }
+
     if (!isStaff(session.role)) {
       // Regular customer cannot access admin panel
       return NextResponse.redirect(new URL('/', request.url));
@@ -62,20 +70,10 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // 3. Guard for POS Cashier Kiosk: /kiosk
+  // 3. Redirect legacy /kiosk to /admin/kiosk
   if (pathname.startsWith('/kiosk')) {
-    if (!session) {
-      const loginUrl = new URL('/login', request.url);
-      loginUrl.searchParams.set('callbackUrl', pathname);
-      return NextResponse.redirect(loginUrl);
-    }
-
-    if (!hasPermission(session.role, 'pos:access')) {
-      // If logged in as customer without POS access, redirect to storefront
-      return NextResponse.redirect(new URL('/', request.url));
-    }
-
-    return NextResponse.next();
+    const target = pathname.replace(/^\/kiosk/, '/admin/kiosk');
+    return NextResponse.redirect(new URL(target || '/admin/kiosk', request.url));
   }
 
   // 4. Guard for Product Reviews: /ulasan

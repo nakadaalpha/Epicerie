@@ -43,7 +43,7 @@ export async function loginAction(formData: {
     if (hasPermission(res.user.role, 'reports:daily') || isStaff(res.user.role)) {
       redirectTo = '/admin';
     } else if (hasPermission(res.user.role, 'pos:access')) {
-      redirectTo = '/kiosk';
+      redirectTo = '/admin/kiosk';
     } else if (hasPermission(res.user.role, 'deliveries:read_assigned')) {
       redirectTo = '/kurir';
     }

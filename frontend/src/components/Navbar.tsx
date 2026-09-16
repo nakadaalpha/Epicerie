@@ -128,7 +128,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Menu Kasir POS (Requires pos:access permission) */}
               {canAccessPos && (
                 <Link
-                  href="/kiosk"
+                  href="/admin/kiosk"
                   className="relative h-9 w-9 md:h-10 md:w-10 flex items-center justify-center rounded-lg hover:bg-gray-50 hover:text-blue-600 transition"
                   title="Menu Kasir POS"
                 >

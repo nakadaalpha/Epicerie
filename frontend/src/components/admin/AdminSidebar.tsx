@@ -19,6 +19,7 @@ import {
   LogOut,
   ChevronDown,
   User as UserIcon,
+  Users,
 } from 'lucide-react';
 import { logoutAction } from '@/app/actions/auth';
 
@@ -93,7 +94,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         <nav className="flex-1 overflow-y-auto p-4 space-y-1.5 scrollbar-thin">
           {/* Tombol Aksi Utama: Pesanan Baru */}
           <Link
-            href="/kiosk"
+            href="/admin/kiosk"
             className="flex items-center justify-center gap-2 w-full px-4 py-3 mb-6 text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-500 hover:from-blue-700 hover:to-blue-600 rounded-xl shadow-lg shadow-blue-200 transition-all group transform hover:scale-[1.02]"
           >
             <Plus className="w-4 h-4 transition-transform group-hover:rotate-90" />
@@ -119,6 +120,22 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
               }`}
             />
             <span>Dashboard</span>
+          </Link>
+
+          <Link
+            href="/admin/kiosk"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+              pathname === '/admin/kiosk'
+                ? 'bg-blue-50 text-blue-600 shadow-xs'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600'
+            }`}
+          >
+            <Tablet
+              className={`w-5 h-5 text-center ${
+                pathname === '/admin/kiosk' ? 'text-blue-600' : 'text-gray-400'
+              }`}
+            />
+            <span>Kasir (POS)</span>
           </Link>
 
           <Link
@@ -167,6 +184,22 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
               }`}
             />
             <span>Kategori</span>
+          </Link>
+
+          <Link
+            href="/admin/karyawan"
+            className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all ${
+              pathname === '/admin/karyawan'
+                ? 'bg-blue-50 text-blue-600 shadow-xs'
+                : 'text-gray-600 hover:bg-gray-50 hover:text-blue-600'
+            }`}
+          >
+            <Users
+              className={`w-5 h-5 text-center ${
+                pathname === '/admin/karyawan' ? 'text-blue-600' : 'text-gray-400'
+              }`}
+            />
+            <span>Karyawan</span>
           </Link>
 
           {/* MEMBERSHIP */}
@@ -293,7 +326,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 <span>Lihat Toko</span>
               </Link>
               <Link
-                href="/kiosk"
+                href="/admin/kiosk"
                 onClick={() => setIsUserMenuOpen(false)}
                 className="flex items-center gap-3 px-5 py-3 text-sm font-bold text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition"
               >

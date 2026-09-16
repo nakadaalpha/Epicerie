@@ -4,6 +4,8 @@ import {
   getTransactionById,
   createTransaction,
   updateTransactionStatus,
+  createSnapToken,
+  handleMidtransNotification,
 } from '../controllers/transaction.controller';
 import {
   verifyAuth,
@@ -13,6 +15,10 @@ import {
 import { query } from '../config/db';
 
 const router = Router();
+
+// Midtrans Snap token generator & webhook notification
+router.post('/snap-token', createSnapToken);
+router.post('/notification', handleMidtransNotification);
 
 // 1. List transactions: Staff with orders:read_all sees all; Customer sees their own orders
 router.get(

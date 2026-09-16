@@ -1,7 +1,7 @@
 'use server';
 
 import { apiFetch } from '@/lib/api';
-import { Produk, Kategori, Slider, Transaksi } from '@/types';
+import { Produk, Kategori, Slider, Transaksi, AlamatPengiriman } from '@/types';
 import { revalidatePath } from 'next/cache';
 
 export async function getCategories(): Promise<Kategori[]> {
@@ -74,6 +74,7 @@ export async function createTransaction(data: {
     }
 
     revalidatePath('/');
+    revalidatePath('/admin/kiosk');
     revalidatePath('/kiosk');
     revalidatePath('/admin');
 
@@ -468,6 +469,108 @@ export async function getFinancialReportAction(range: string = 'hari_ini') {
       chartData: [],
       dailyData: [],
     };
+  }
+}
+
+// 7. Address Management Actions
+export async function getUserAddressesAction(): Promise<AlamatPengiriman[]> {
+  try {
+    const res = await apiFetch<AlamatPengiriman[]>('/api/addresses');
+    return res.success && res.data ? res.data : [];
+  } catch (error) {
+    console.error('Failed to get user addresses:', error);
+    return [];
+  }
+}
+
+export async function createAddressAction(formData: {
+  label: string;
+  penerima: string;
+  no_hp_penerima: string;
+  detail_alamat: string;
+  plus_code?: string;
+  is_primary?: boolean;
+}): Promise<{ success: boolean; data?: AlamatPengiriman; error?: string }> {
+  try {
+    const res = await apiFetch<AlamatPengiriman>('/api/addresses', {
+      method: 'POST',
+      body: JSON.stringify(formData),
+    });
+    revalidatePath('/');
+    return res;
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Gagal menambahkan alamat.' };
+  }
+}
+
+export async function updateAddressAction(
+  id: number,
+  formData: {
+    label?: string;
+    penerima?: string;
+    no_hp_penerima?: string;
+    detail_alamat?: string;
+    plus_code?: string;
+    is_primary?: boolean;
+  }
+): Promise<{ success: boolean; data?: AlamatPengiriman; error?: string }> {
+  try {
+    const res = await apiFetch<AlamatPengiriman>(`/api/addresses/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(formData),
+    });
+    revalidatePath('/');
+    return res;
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Gagal memperbarui alamat.' };
+  }
+}
+
+export async function deleteAddressAction(id: number) {
+  try {
+    const res = await apiFetch(`/api/addresses/${id}`, {
+      method: 'DELETE',
+    });
+    revalidatePath('/');
+    return res;
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Gagal menghapus alamat.' };
+  }
+}
+
+export async function setPrimaryAddressAction(id: number) {
+  try {
+    const res = await apiFetch(`/api/addresses/${id}/primary`, {
+      method: 'POST',
+    });
+    revalidatePath('/');
+    return res;
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Gagal mengatur alamat utama.' };
+  }
+}
+
+// 8. Midtrans Payment Gateway Action
+export async function getMidtransSnapTokenAction(payload: {
+  total_bayar: number;
+  order_id?: string;
+  customer_details?: {
+    nama?: string;
+    email?: string;
+    no_hp?: string;
+  };
+}) {
+  try {
+    const res = await apiFetch<{ token: string; redirect_url: string; order_id: string }>(
+      '/api/transactions/snap-token',
+      {
+        method: 'POST',
+        body: JSON.stringify(payload),
+      }
+    );
+    return res;
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Gagal membuat Snap token.' };
   }
 }
 

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Produk, Kategori } from '@/types';
 import { Navbar } from '@/components/Navbar';
 import { CategoryPills } from '@/components/CategoryPills';
@@ -8,7 +9,7 @@ import { ProductCard } from '@/components/ProductCard';
 import { KioskCart } from '@/components/KioskCart';
 import { CheckoutModal } from '@/components/CheckoutModal';
 import { ReceiptModal } from '@/components/ReceiptModal';
-import { Search, Tablet } from 'lucide-react';
+import { Search, Tablet, LayoutDashboard } from 'lucide-react';
 
 interface KioskClientProps {
   products: Produk[];
@@ -37,7 +38,6 @@ export const KioskClient: React.FC<KioskClientProps> = ({
 
   return (
     <div className="h-screen bg-gray-100/70 flex flex-col overflow-hidden select-none">
-      <Navbar currentUser={currentUser} />
 
       {/* Main Split Screen Area */}
       <div className="flex-1 flex overflow-hidden p-3 sm:p-4 gap-4 max-w-[1600px] w-full mx-auto">
@@ -46,11 +46,21 @@ export const KioskClient: React.FC<KioskClientProps> = ({
           {/* Header Controls: Search + Categories */}
           <div className="space-y-3 pb-3 border-b border-gray-100 shrink-0">
             <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-blue-600">
-                <Tablet className="w-5 h-5" />
-                <h1 className="font-black text-base tracking-tight text-gray-900">
-                  Mode Kasir Cepat (POS)
-                </h1>
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 text-blue-600">
+                  <Tablet className="w-5 h-5" />
+                  <h1 className="font-black text-base tracking-tight text-gray-900">
+                    Mode Kasir Cepat (POS)
+                  </h1>
+                </div>
+                <Link
+                  href="/admin"
+                  className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-blue-50 text-gray-600 hover:text-blue-600 rounded-xl text-xs font-bold transition border border-gray-200/60"
+                  title="Kembali ke Dashboard Admin"
+                >
+                  <LayoutDashboard className="w-3.5 h-3.5" />
+                  <span>Dashboard Admin</span>
+                </Link>
               </div>
 
               {/* Tablet Search Input */}
