@@ -55,6 +55,8 @@ export interface Transaksi {
   status: 'pending' | 'diproses' | 'dikemas' | 'dikirim' | 'selesai' | 'batal';
   nama_pelanggan_hold?: string | null;
   nama_pelanggan?: string | null;
+  nama_pembeli?: string | null;
+  no_hp_pembeli?: string | null;
   metode_pembayaran?: string | null;
   tanggal_transaksi?: string;
   ongkir?: number;

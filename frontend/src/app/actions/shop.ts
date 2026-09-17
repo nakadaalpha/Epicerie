@@ -559,7 +559,11 @@ export async function getMidtransSnapTokenAction(payload: {
     email?: string;
     no_hp?: string;
   };
-}) {
+}): Promise<{
+  success: boolean;
+  data?: { token: string; redirect_url: string; order_id: string };
+  error?: string;
+}> {
   try {
     const res = await apiFetch<{ token: string; redirect_url: string; order_id: string }>(
       '/api/transactions/snap-token',
@@ -571,6 +575,46 @@ export async function getMidtransSnapTokenAction(payload: {
     return res;
   } catch (error: any) {
     return { success: false, error: error.message || 'Gagal membuat Snap token.' };
+  }
+}
+
+// 9. Customer Order & Tracking Actions
+export async function getMyOrdersAction(status?: string): Promise<Transaksi[]> {
+  try {
+    const url = status && status !== 'semua'
+      ? `/api/transactions?status=${encodeURIComponent(status)}`
+      : '/api/transactions';
+    const res = await apiFetch<Transaksi[]>(url);
+    return res.success && res.data ? res.data : [];
+  } catch (error) {
+    console.error('Failed to get my orders:', error);
+    return [];
+  }
+}
+
+export async function getOrderByIdAction(id: number): Promise<Transaksi | null> {
+  try {
+    const res = await apiFetch<Transaksi>(`/api/transactions/${id}`);
+    return res.success && res.data ? res.data : null;
+  } catch (error) {
+    console.error(`Failed to get order #${id}:`, error);
+    return null;
+  }
+}
+
+export async function completeMyOrderAction(id: number): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await apiFetch<any>(`/api/transactions/${id}/complete`, {
+      method: 'POST',
+    });
+    if (res.success) {
+      revalidatePath('/riwayat');
+      revalidatePath(`/tracking/${id}`);
+      revalidatePath('/');
+    }
+    return res;
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Gagal menyelesaikan pesanan.' };
   }
 }
 

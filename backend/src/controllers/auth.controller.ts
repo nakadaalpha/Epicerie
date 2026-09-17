@@ -24,12 +24,13 @@ function hashPassword(password: string): string {
 
 export async function login(req: Request, res: Response) {
   try {
-    const { identifier, password } = req.body;
-    if (!identifier || !password) {
+    const { identifier, username, password } = req.body;
+    const rawIdentifier = identifier || username;
+    if (!rawIdentifier || !password) {
       return res.status(400).json({ success: false, error: 'Username/Email/No. HP dan Password wajib diisi.' });
     }
 
-    const cleanIdentifier = String(identifier).trim().toLowerCase();
+    const cleanIdentifier = String(rawIdentifier).trim().toLowerCase();
 
     const rows = await query<any>(
       `SELECT * FROM "user" 
@@ -37,7 +38,7 @@ export async function login(req: Request, res: Response) {
           OR LOWER(email) = $1 
           OR no_hp = $2 
        LIMIT 1`,
-      [cleanIdentifier, String(identifier).trim()]
+      [cleanIdentifier, String(rawIdentifier).trim()]
     );
 
     if (rows.length === 0) {
@@ -196,13 +197,13 @@ export async function getMe(req: AuthenticatedRequest, res: Response) {
     let totalSpent = 0;
     let totalCompletedOrders = 0;
 
-    if (user.role === 'pelanggan') {
+    if ((user.role || '').toLowerCase() === 'pelanggan') {
       const stats = await query<any>(
         `SELECT 
           COALESCE(SUM(total_bayar), 0) as total_spent,
           COUNT(id_transaksi) as total_completed
          FROM transaksi 
-         WHERE id_user_pembeli = $1 AND status = 'selesai'`,
+         WHERE id_user_pembeli = $1 AND LOWER(status) = 'selesai'`,
         [user.id_user]
       );
 
@@ -306,6 +307,79 @@ export async function resetPassword(req: Request, res: Response) {
     res.status(200).json({ success: true, message: 'Password berhasil diubah. Silakan login kembali.' });
   } catch (error: any) {
     res.status(500).json({ success: false, error: error.message || 'Gagal mengubah password.' });
+  }
+}
+
+export async function updateProfile(req: AuthenticatedRequest, res: Response) {
+  try {
+    const userId = req.user?.id_user;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Silakan login terlebih dahulu.' });
+    }
+
+    const { nama, email, no_hp } = req.body;
+    if (!nama || String(nama).trim() === '') {
+      return res.status(400).json({ success: false, error: 'Nama tidak boleh kosong.' });
+    }
+
+    const now = new Date().toISOString();
+    const result = await query<any>(
+      `UPDATE "user" 
+       SET nama = $1, email = $2, no_hp = $3, updated_at = $4 
+       WHERE id_user = $5 
+       RETURNING id_user, nama, username, email, no_hp, role`,
+      [String(nama).trim(), email || null, no_hp || null, now, userId]
+    );
+
+    await logActivity(userId, 'Memperbarui profil pengguna');
+
+    res.status(200).json({
+      success: true,
+      message: 'Profil berhasil diperbarui.',
+      user: result[0],
+    });
+  } catch (error: any) {
+    console.error('Update profile error:', error);
+    res.status(500).json({ success: false, error: error.message || 'Gagal memperbarui profil.' });
+  }
+}
+
+export async function requestCardPrint(req: AuthenticatedRequest, res: Response) {
+  try {
+    const userId = req.user?.id_user;
+    if (!userId) {
+      return res.status(401).json({ success: false, error: 'Silakan login terlebih dahulu.' });
+    }
+
+    const rows = await query<any>('SELECT status_cetak_kartu FROM "user" WHERE id_user = $1', [userId]);
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Pengguna tidak ditemukan.' });
+    }
+
+    const currentStatus = (rows[0].status_cetak_kartu || '').toLowerCase();
+    if (currentStatus === 'pending') {
+      return res.status(400).json({
+        success: false,
+        error: 'Permintaan cetak kartu fisik Anda sedang diproses oleh admin.',
+      });
+    }
+
+    const now = new Date().toISOString();
+    await query('UPDATE "user" SET status_cetak_kartu = $1, updated_at = $2 WHERE id_user = $3', [
+      'pending',
+      now,
+      userId,
+    ]);
+
+    await logActivity(userId, 'Mengajukan permintaan cetak kartu fisik member');
+
+    res.status(200).json({
+      success: true,
+      message: 'Permintaan cetak kartu fisik berhasil dikirim ke antrian admin.',
+    });
+  } catch (error: any) {
+    console.error('Request card print error:', error);
+    res.status(500).json({ success: false, error: error.message || 'Gagal mengajukan cetak kartu.' });
   }
 }
 

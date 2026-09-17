@@ -8,6 +8,7 @@ const SECRET_KEY = new TextEncoder().encode(
     process.env.SESSION_SECRET ||
     'epicerie-super-secret-jwt-key-2026-production'
 );
+const FALLBACK_SECRET_KEY = new TextEncoder().encode('epicerie-jwt-secret-dev');
 
 const COOKIE_NAME = 'epicerie_session';
 
@@ -27,7 +28,12 @@ async function getSessionFromRequest(req: NextRequest): Promise<DecodedSession |
     const { payload } = await jwtVerify(token, SECRET_KEY);
     return payload as unknown as DecodedSession;
   } catch (err) {
-    return null;
+    try {
+      const { payload } = await jwtVerify(token, FALLBACK_SECRET_KEY);
+      return payload as unknown as DecodedSession;
+    } catch {
+      return null;
+    }
   }
 }
 

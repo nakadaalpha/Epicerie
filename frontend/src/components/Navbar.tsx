@@ -13,6 +13,7 @@ import {
   MapPin,
   ChevronDown,
   User,
+  ShoppingBag,
   LogOut,
   Star,
   Home,
@@ -215,6 +216,20 @@ export const Navbar: React.FC<NavbarProps> = ({
                   {/* Dropdown Menu on Hover */}
                   <div className="hidden group-hover:block absolute top-full right-0 pt-2 w-60 z-50">
                     <div className="bg-white rounded-xl shadow-xl border border-gray-100 p-1.5 space-y-0.5">
+                      <Link
+                        href="/profile"
+                        className="flex items-center w-full px-3 py-2 text-xs font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition"
+                      >
+                        <User className="w-4 h-4 mr-2.5 text-blue-600" />
+                        <span>Profil Saya</span>
+                      </Link>
+                      <Link
+                        href="/riwayat"
+                        className="flex items-center w-full px-3 py-2 text-xs font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition"
+                      >
+                        <ShoppingBag className="w-4 h-4 mr-2.5 text-emerald-600" />
+                        <span>Pesanan Saya</span>
+                      </Link>
                       <Link
                         href="/ulasan"
                         className="flex items-center w-full px-3 py-2 text-xs font-medium text-gray-700 rounded-lg hover:bg-blue-50 hover:text-blue-600 transition"

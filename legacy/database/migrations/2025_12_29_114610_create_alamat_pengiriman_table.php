@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('penerima', 100)->nullable();
             $table->string('no_hp_penerima', 20)->nullable();
             $table->text('detail_alamat')->nullable();
-            $table->boolean('is_utama')->default(false);
+            $table->boolean('is_primary')->default(false);
             $table->timestamps();
         });
     }

@@ -6,6 +6,7 @@ import {
   updateTransactionStatus,
   createSnapToken,
   handleMidtransNotification,
+  completeCustomerOrder,
 } from '../controllers/transaction.controller';
 import {
   verifyAuth,
@@ -54,5 +55,8 @@ router.patch(
   requirePermission('deliveries:update_status', 'orders:cancel', 'orders:read_all'),
   updateTransactionStatus
 );
+
+// 5. Customer marks order as completed / received
+router.post('/:id/complete', verifyAuth, completeCustomerOrder);
 
 export default router;

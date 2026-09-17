@@ -36,7 +36,7 @@ export async function loginAction(formData: {
       foto_profil: res.user.foto_profil,
     };
 
-    await setSessionCookie(sessionPayload);
+    await setSessionCookie(sessionPayload, res.token);
 
     // Determine redirect destination based on permissions
     let redirectTo = '/';
@@ -195,6 +195,52 @@ export async function resetPasswordAction(formData: {
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message || 'Gagal mengubah password.' };
+  }
+}
+
+export async function updateProfileAction(formData: {
+  nama: string;
+  email?: string;
+  no_hp?: string;
+}): Promise<{ success: boolean; error?: string; user?: any }> {
+  try {
+    const res = await apiFetch<any>('/api/auth/profile', {
+      method: 'PUT',
+      body: JSON.stringify(formData),
+    });
+
+    if (res.success && res.user) {
+      // Update session cookie with new nama & no_hp
+      const currentSession = await getSession();
+      if (currentSession) {
+        await setSessionCookie({
+          ...currentSession,
+          nama: res.user.nama,
+          no_hp: res.user.no_hp,
+        });
+      }
+      revalidatePath('/profile');
+      revalidatePath('/');
+    }
+
+    return res;
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Gagal memperbarui profil.' };
+  }
+}
+
+export async function requestCardPrintAction(): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await apiFetch<any>('/api/auth/request-card', {
+      method: 'POST',
+    });
+    if (res.success) {
+      revalidatePath('/profile');
+      revalidatePath('/admin/card');
+    }
+    return res;
+  } catch (error: any) {
+    return { success: false, error: error.message || 'Gagal mengajukan cetak kartu.' };
   }
 }
 

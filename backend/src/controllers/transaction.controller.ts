@@ -450,3 +450,46 @@ export async function updateTransactionStatus(req: AuthenticatedRequest, res: Re
     res.status(500).json({ success: false, error: error.message });
   }
 }
+
+export async function completeCustomerOrder(req: AuthenticatedRequest, res: Response) {
+  try {
+    const id = Number(req.params.id);
+    const userId = req.user?.id_user;
+
+    if (!id || isNaN(id)) {
+      return res.status(400).json({ success: false, error: 'ID transaksi tidak valid.' });
+    }
+
+    const rows = await query<any>(
+      'SELECT id_transaksi, id_user_pembeli, status FROM transaksi WHERE id_transaksi = $1 LIMIT 1',
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ success: false, error: 'Pesanan tidak ditemukan.' });
+    }
+
+    const trx = rows[0];
+    // Must be buyer or staff
+    if (trx.id_user_pembeli !== userId && !hasPermission(req.user?.role, 'orders:read_all')) {
+      return res.status(403).json({ success: false, error: 'Anda tidak memiliki akses ke pesanan ini.' });
+    }
+
+    const now = new Date().toISOString();
+    await query('UPDATE transaksi SET status = $1, updated_at = $2 WHERE id_transaksi = $3', [
+      'selesai',
+      now,
+      id,
+    ]);
+
+    await logActivity(userId, `Pelanggan mengonfirmasi pesanan #${id} telah selesai diterima`);
+
+    res.status(200).json({
+      success: true,
+      message: 'Terima kasih! Pesanan telah selesai.',
+    });
+  } catch (error: any) {
+    console.error('Failed to complete order:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+}

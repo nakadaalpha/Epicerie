@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Menu,
   Palette,
@@ -9,6 +9,8 @@ import {
   CreditCard,
   QrCode,
   Sparkles,
+  RotateCcw,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { AdminSidebar } from './AdminSidebar';
 
@@ -17,6 +19,9 @@ interface CardSettingsClientProps {
   pendingCardCount: number;
 }
 
+const DEFAULT_FRONT = '/images/card_bg.png';
+const DEFAULT_BACK = '/images/card_bg_back.png';
+
 export function CardSettingsClient({
   currentUser,
   pendingCardCount,
@@ -24,15 +29,60 @@ export function CardSettingsClient({
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  const [frontBg, setFrontBg] = useState(
-    'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000'
-  );
-  const [backBg, setBackBg] = useState(
-    'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?q=80&w=1000'
-  );
+  const [frontBg, setFrontBg] = useState<string>(DEFAULT_FRONT);
+  const [backBg, setBackBg] = useState<string>(DEFAULT_BACK);
+
+  const frontFileInputRef = useRef<HTMLInputElement>(null);
+  const backFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Load persisted custom card backgrounds from localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedFront = localStorage.getItem('epicerie_card_front_bg');
+      const savedBack = localStorage.getItem('epicerie_card_back_bg');
+      if (savedFront) setFrontBg(savedFront);
+      if (savedBack) setBackBg(savedBack);
+    }
+  }, []);
+
+  const handleFileUpload = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: (val: string) => void
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Mohon pilih berkas gambar valid (PNG / JPG / WEBP).');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setter(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleResetToDefault = () => {
+    setFrontBg(DEFAULT_FRONT);
+    setBackBg(DEFAULT_BACK);
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('epicerie_card_front_bg');
+      localStorage.removeItem('epicerie_card_back_bg');
+    }
+    setSavedSuccess(true);
+    setTimeout(() => setSavedSuccess(false), 3000);
+  };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('epicerie_card_front_bg', frontBg);
+      localStorage.setItem('epicerie_card_back_bg', backBg);
+    }
     setSavedSuccess(true);
     setTimeout(() => setSavedSuccess(false), 4000);
   };
@@ -64,13 +114,22 @@ export function CardSettingsClient({
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-4 md:p-8 relative scrollbar-thin">
           <div className="max-w-7xl mx-auto space-y-6">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-black text-white drop-shadow-sm">
-                Pengaturan Desain Kartu Member
-              </h1>
-              <p className="text-white/80 text-sm mt-0.5">
-                Kustomisasi latar belakang kartu digital dan cetak untuk member Épicerie.
-              </p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl md:text-3xl font-black text-white drop-shadow-sm">
+                  Pengaturan Desain Kartu Member
+                </h1>
+                <p className="text-white/80 text-sm mt-0.5">
+                  Kustomisasi latar belakang kartu digital dan cetak untuk member Épicerie (Standar ISO ID-1).
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleResetToDefault}
+                className="self-start md:self-auto px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer backdrop-blur-xs"
+              >
+                <RotateCcw className="w-3.5 h-3.5" /> Reset Default Épicerie
+              </button>
             </div>
 
             {savedSuccess && (
@@ -81,7 +140,7 @@ export function CardSettingsClient({
                 <div>
                   <p className="font-bold text-sm">Pengaturan Berhasil Disimpan!</p>
                   <p className="text-xs text-green-700">
-                    Template desain kartu fisik dan digital member kini diperbarui.
+                    Template desain kartu fisik dan digital member kini telah diperbarui.
                   </p>
                 </div>
               </div>
@@ -106,20 +165,45 @@ export function CardSettingsClient({
                     </div>
 
                     <div className="space-y-4">
+                      {/* Upload Box */}
                       <div>
                         <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                          URL Background Depan
+                          Upload Berkas Gambar (PNG / JPG)
                         </label>
                         <input
-                          type="url"
+                          ref={frontFileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleFileUpload(e, setFrontBg)}
+                        />
+                        <div
+                          onClick={() => frontFileInputRef.current?.click()}
+                          className="border-2 border-dashed border-gray-300 hover:border-blue-500 rounded-2xl p-6 text-center bg-gray-50 hover:bg-blue-50/50 transition cursor-pointer flex flex-col items-center justify-center gap-2 group"
+                        >
+                          <div className="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center group-hover:scale-110 transition">
+                            <Upload className="w-6 h-6" />
+                          </div>
+                          <p className="text-xs font-bold text-gray-700">
+                            Klik di sini untuk memilih gambar latar sisi depan
+                          </p>
+                          <p className="text-[10px] text-gray-400">
+                            Ukuran Rekomendasi: 1026 × 648 piksel (Rasio 85.6mm × 54mm)
+                          </p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                          Atau Masukkan URL Background Depan
+                        </label>
+                        <input
+                          type="text"
                           value={frontBg}
                           onChange={(e) => setFrontBg(e.target.value)}
-                          placeholder="https://..."
+                          placeholder="/images/card_bg.png atau https://..."
                           className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
                         />
-                        <p className="text-[11px] text-gray-400 mt-1">
-                          Rekomendasi rasio kartu ID-1: 85.6mm x 53.98mm (sekitar 1026 x 648 piksel).
-                        </p>
                       </div>
                     </div>
                   </div>
@@ -139,15 +223,43 @@ export function CardSettingsClient({
                     </div>
 
                     <div className="space-y-4">
+                      {/* Upload Box */}
                       <div>
                         <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                          URL Background Belakang
+                          Upload Berkas Gambar (PNG / JPG)
                         </label>
                         <input
-                          type="url"
+                          ref={backFileInputRef}
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleFileUpload(e, setBackBg)}
+                        />
+                        <div
+                          onClick={() => backFileInputRef.current?.click()}
+                          className="border-2 border-dashed border-gray-300 hover:border-gray-500 rounded-2xl p-6 text-center bg-gray-50 hover:bg-gray-100 transition cursor-pointer flex flex-col items-center justify-center gap-2 group"
+                        >
+                          <div className="w-12 h-12 rounded-xl bg-gray-200 text-gray-700 flex items-center justify-center group-hover:scale-110 transition">
+                            <Upload className="w-6 h-6" />
+                          </div>
+                          <p className="text-xs font-bold text-gray-700">
+                            Klik di sini untuk memilih gambar latar sisi belakang
+                          </p>
+                          <p className="text-[10px] text-gray-400">
+                            Ukuran Rekomendasi: 1026 × 648 piksel
+                          </p>
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                          Atau Masukkan URL Background Belakang
+                        </label>
+                        <input
+                          type="text"
                           value={backBg}
                           onChange={(e) => setBackBg(e.target.value)}
-                          placeholder="https://..."
+                          placeholder="/images/card_bg_back.png atau https://..."
                           className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm font-medium"
                         />
                       </div>
@@ -167,7 +279,7 @@ export function CardSettingsClient({
               <div className="space-y-6">
                 <div className="bg-white rounded-[2rem] p-6 shadow-xl border border-white/40">
                   <h3 className="font-bold text-gray-800 text-base mb-4 flex items-center gap-2">
-                    <Sparkles className="w-5 h-5 text-amber-500" /> Preview Kartu Depan
+                    <Sparkles className="w-5 h-5 text-amber-500" /> Live Preview Sisi Depan
                   </h3>
 
                   <div className="aspect-[85.6/53.98] rounded-2xl overflow-hidden shadow-xl border border-gray-200 relative bg-slate-900 group">
@@ -184,16 +296,20 @@ export function CardSettingsClient({
                     <div className="absolute inset-0 p-5 flex flex-col justify-between text-white drop-shadow-md">
                       <div className="flex justify-between items-start">
                         <span className="font-black text-lg tracking-widest">ÉPICERIE</span>
-                        <span className="bg-amber-400/90 text-slate-900 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">
+                        <span className="bg-amber-400 text-slate-900 text-[10px] font-black px-2.5 py-0.5 rounded-full uppercase">
                           Gold Member
                         </span>
                       </div>
 
                       <div className="flex justify-between items-end">
                         <div>
-                          <p className="text-xs font-semibold text-white/80">NAMA MEMBER</p>
-                          <p className="font-extrabold text-sm tracking-wide">ALEXANDER GOUV</p>
-                          <p className="text-[10px] text-white/70 font-mono mt-0.5">ID: 240926001234</p>
+                          <p className="text-[10px] font-semibold text-white/80 uppercase">NAMA MEMBER</p>
+                          <p className="font-extrabold text-sm tracking-wide">
+                            {currentUser?.nama?.toUpperCase() || 'PELANGGAN SETIA'}
+                          </p>
+                          <p className="text-[10px] text-white/70 font-mono mt-0.5">
+                            ID: {String(currentUser?.id_user || 1001).padStart(8, '0')}
+                          </p>
                         </div>
                         <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-slate-900 shadow-sm">
                           <QrCode className="w-7 h-7" />
@@ -205,7 +321,7 @@ export function CardSettingsClient({
 
                 <div className="bg-white rounded-[2rem] p-6 shadow-xl border border-white/40">
                   <h3 className="font-bold text-gray-800 text-base mb-4 flex items-center gap-2">
-                    <CreditCard className="w-5 h-5 text-gray-500" /> Preview Kartu Belakang
+                    <CreditCard className="w-5 h-5 text-gray-500" /> Live Preview Sisi Belakang
                   </h3>
 
                   <div className="aspect-[85.6/53.98] rounded-2xl overflow-hidden shadow-xl border border-gray-200 relative bg-slate-900">
@@ -218,10 +334,10 @@ export function CardSettingsClient({
                       }}
                     />
                     <div className="absolute inset-0 p-5 flex flex-col justify-between text-white">
-                      <div className="w-full h-8 bg-black/60 rounded-sm -mx-5 px-5 flex items-center">
+                      <div className="w-full h-8 bg-black/80 rounded-sm -mx-5 px-5 flex items-center">
                         <span className="text-[9px] font-mono text-gray-300">MAGNETIC STRIPE SIMULATION</span>
                       </div>
-                      <p className="text-[9px] text-white/70 leading-relaxed">
+                      <p className="text-[9px] text-white/80 leading-relaxed">
                         Kartu ini adalah milik Épicerie Gourmet Store. Gunakan saat transaksi di kasir untuk menikmati cashback & promo eksklusif.
                       </p>
                     </div>

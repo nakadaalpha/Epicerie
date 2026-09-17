@@ -43,70 +43,218 @@ export function CardClient({
   };
 
   const handlePrint = (member: any) => {
-    // Generate printable card window
+    // Generate printable card window (ISO/IEC 7810 ID-1 standard: 85.6mm x 53.98mm)
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
+
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&margin=0&data=${encodeURIComponent(String(member.id_user))}`;
 
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
       <head>
-        <title>Cetak Kartu Member - ${member.nama}</title>
+        <meta charset="utf-8">
+        <title>Kartu Member - ${member.nama}</title>
         <style>
+          @page {
+            size: 85.6mm 53.98mm;
+            margin: 0;
+          }
+          * {
+            box-sizing: border-box;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
           body {
-            font-family: sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: #f1f5f9;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
-            margin: 0;
-            background: #f8fafc;
+            gap: 10mm;
           }
-          .card {
+          .card-container {
             width: 85.6mm;
             height: 53.98mm;
-            border-radius: 4mm;
-            background: linear-gradient(135deg, #1e3a8a, #0d9488);
-            color: white;
-            padding: 5mm;
-            box-sizing: border-box;
+            border-radius: 3.18mm;
+            overflow: hidden;
             position: relative;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            background: #0f172a;
           }
-          .title {
-            font-size: 14pt;
-            font-weight: bold;
-            letter-spacing: 1px;
+          .card-front {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e3a8a 0%, #0d9488 100%), url('/images/card_bg.png') center/cover no-repeat;
+            background-blend-mode: overlay;
+            padding: 5mm;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: #ffffff;
+            position: relative;
+          }
+          .card-back {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%), url('/images/card_bg_back.png') center/cover no-repeat;
+            background-blend-mode: overlay;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+          }
+          .mag-stripe {
+            width: 100%;
+            height: 9mm;
+            background: #000000;
+            margin-top: 3mm;
+          }
+          .back-content {
+            padding: 4mm 5mm 5mm 5mm;
+            font-size: 6pt;
+            line-height: 1.4;
+            color: #cbd5e1;
+          }
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+          }
+          .brand-title {
+            font-size: 11pt;
+            font-weight: 900;
+            letter-spacing: 2px;
+            color: #ffffff;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.4);
+          }
+          .tier-badge {
+            background: #f59e0b;
+            color: #1e293b;
+            font-size: 6.5pt;
+            font-weight: 800;
+            text-transform: uppercase;
+            padding: 1.5px 6px;
+            border-radius: 20px;
+            letter-spacing: 0.5px;
+          }
+          .footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
           }
           .member-info {
-            position: absolute;
-            bottom: 5mm;
-            left: 5mm;
+            max-width: 58mm;
           }
-          .name {
-            font-size: 11pt;
-            font-weight: bold;
+          .member-label {
+            font-size: 5.5pt;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: rgba(255,255,255,0.75);
+            margin-bottom: 1px;
           }
-          .id {
-            font-size: 8pt;
-            opacity: 0.8;
+          .member-name {
+            font-size: 9.5pt;
+            font-weight: 800;
+            letter-spacing: 0.5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+          }
+          .member-id {
+            font-size: 6.5pt;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.8px;
+            color: rgba(255,255,255,0.85);
+            margin-top: 2px;
+          }
+          .qr-box {
+            width: 13mm;
+            height: 13mm;
+            background: #ffffff;
+            border-radius: 1.5mm;
+            padding: 1mm;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+          }
+          .qr-box img {
+            width: 100%;
+            height: 100%;
+            display: block;
           }
           @media print {
-            body { background: transparent; }
-            .card { box-shadow: none; }
+            body {
+              background: transparent;
+              gap: 0;
+            }
+            .card-container {
+              box-shadow: none;
+              page-break-after: always;
+            }
+            .no-print {
+              display: none;
+            }
           }
         </style>
       </head>
       <body>
-        <div class="card">
-          <div class="title">ÉPICERIE MEMBER</div>
-          <div class="member-info">
-            <div class="name">${member.nama}</div>
-            <div class="id">ID: ${member.id_user} | Tier: ${member.membership || 'Gold'}</div>
+        <div class="no-print" style="position: fixed; top: 10px; right: 10px; z-index: 1000;">
+          <button onclick="window.print()" style="background: #2563eb; color: #fff; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+            🖨️ Cetak / Simpan PDF
+          </button>
+        </div>
+
+        <!-- SISI DEPAN -->
+        <div class="card-container">
+          <div class="card-front">
+            <div class="header">
+              <div class="brand-title">ÉPICERIE</div>
+              <div class="tier-badge">${member.membership || 'GOLD'}</div>
+            </div>
+            <div class="footer">
+              <div class="member-info">
+                <div class="member-label">NAMA KEANGGOTAAN</div>
+                <div class="member-name">${member.nama.toUpperCase()}</div>
+                <div class="member-id">NO: ${String(member.id_user).padStart(8, '0')}</div>
+              </div>
+              <div class="qr-box">
+                <img src="${qrUrl}" alt="QR" />
+              </div>
+            </div>
           </div>
         </div>
+
+        <!-- SISI BELAKANG -->
+        <div class="card-container">
+          <div class="card-back">
+            <div class="mag-stripe"></div>
+            <div class="back-content">
+              <p style="margin: 0 0 4px 0; font-weight: bold;">SYARAT & KETENTUAN KARTU MEMBER</p>
+              <p style="margin: 0 0 3px 0;">1. Kartu ini merupakan properti resmi dari Épicerie Gourmet Store.</p>
+              <p style="margin: 0 0 3px 0;">2. Tunjukkan kartu ini atau scan barcode kasir pada saat berbelanja untuk mendapatkan poin & diskon khusus.</p>
+              <p style="margin: 0;">3. Jika menemukan kartu ini, mohon kembalikan ke gerai Épicerie terdekat.</p>
+            </div>
+            <div style="padding: 0 5mm 4mm 5mm; display: flex; justify-content: space-between; font-size: 5pt; color: #94a3b8;">
+              <span>CS: support@epicerie.local</span>
+              <span>www.epicerie.local</span>
+            </div>
+          </div>
+        </div>
+
         <script>
-          window.onload = function() { window.print(); }
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          }
         </script>
       </body>
       </html>
